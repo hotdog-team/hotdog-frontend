@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, Circle, CircleAlert, CircleCheck, Info } from 'lucide-react'
+import { ArrowRight, Circle, CircleAlert, CircleCheck, Eye, Info, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo'
 
@@ -13,6 +13,25 @@ const passwordPattern =
 
 const passwordRequirement =
   '영문 대문자와 소문자, 숫자, 특수문자를 포함해 8자 이상 16자 이하로 입력해 주세요.'
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function isValidEmail(value) {
+  return emailPattern.test(value)
+}
+
+function ClearButton({ label, onClick }) {
+  return (
+    <button
+      className="absolute top-1/2 right-[22px] inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-[#4b515d] hover:bg-[#f3f4f6] max-sm:right-3"
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+    >
+      <X size={18} strokeWidth={2.5} aria-hidden="true" />
+    </button>
+  )
+}
 
 const passwordRules = [
   {
@@ -50,11 +69,17 @@ function PasswordRequirementItem({ isActive, isValid, label }) {
 }
 
 function SignUpPage() {
+  const [name, setName] = useState('')
+  const [employeeId, setEmployeeId] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const [isPasswordConfirmVisible, setIsPasswordConfirmVisible] = useState(false)
   const hasPassword = password.length > 0
   const hasPasswordConfirm = passwordConfirm.length > 0
   const isPasswordConfirmValid = hasPasswordConfirm && password === passwordConfirm
+  const isEmailInvalid = email.length > 0 && !isValidEmail(email)
 
   return (
     <main className="flex min-h-svh flex-col bg-[#fbfafa] text-[#222633]">
@@ -73,63 +98,143 @@ function SignUpPage() {
           </p>
         </div>
 
-        <form className="grid gap-7" onSubmit={(event) => event.preventDefault()}>
-          <label className={labelClass}>
-            <span>이름</span>
-            <input className={fieldClass} type="text" placeholder="홍길동" autoComplete="name" />
-          </label>
+        <form className="grid gap-7" aria-describedby="signup-required-fields" onSubmit={(event) => event.preventDefault()}>
+          <p id="signup-required-fields" className="sr-only">
+            이름, 임직원 아이디, 회사 이메일, 비밀번호, 비밀번호 확인, 서비스 이용약관 동의는 필수 입력 항목입니다.
+          </p>
 
-          <label className={labelClass}>
-            <span>임직원 아이디</span>
+          <div className={labelClass}>
+            <label htmlFor="signup-name">이름</label>
             <span className="relative block">
-              <input className={`${fieldClass} pr-14`} type="text" placeholder="예: 사번-123456" />
+              <input
+                id="signup-name"
+                className={`${fieldClass} ${name ? 'pr-[58px]' : ''}`}
+                type="text"
+                placeholder="홍길동"
+                autoComplete="name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                required
+                aria-required="true"
+                aria-describedby="signup-required-fields"
+              />
+              {name && <ClearButton label="이름 지우기" onClick={() => setName('')} />}
+            </span>
+          </div>
+
+          <div className={labelClass}>
+            <label htmlFor="signup-employee-id">임직원 아이디</label>
+            <span className="relative block">
+              <input
+                id="signup-employee-id"
+                className={`${fieldClass} ${employeeId ? 'pr-24' : 'pr-14'}`}
+                type="text"
+                placeholder="예: 사번-123456"
+                value={employeeId}
+                onChange={(event) => setEmployeeId(event.target.value)}
+                required
+                aria-required="true"
+                aria-describedby="signup-employee-id-description signup-required-fields"
+              />
               <Info
-                className="absolute top-1/2 right-[30px] -translate-y-1/2 text-[#727782] max-sm:right-4"
+                className={`absolute top-1/2 -translate-y-1/2 text-[#727782] ${
+                  employeeId ? 'right-[70px] max-sm:right-14' : 'right-[30px] max-sm:right-4'
+                }`}
                 size={21}
                 strokeWidth={2}
                 aria-hidden="true"
               />
+              {employeeId && <ClearButton label="임직원 아이디 지우기" onClick={() => setEmployeeId('')} />}
             </span>
-          </label>
+            <p id="signup-employee-id-description" className="sr-only">
+              회사에서 발급한 사번 또는 임직원 아이디를 입력하세요.
+            </p>
+          </div>
 
-          <label className={labelClass}>
-            <span>회사 이메일</span>
-            <input className={fieldClass} type="email" placeholder="이름@회사.com" autoComplete="email" />
-          </label>
+          <div className={labelClass}>
+            <label htmlFor="signup-email">회사 이메일</label>
+            <span className="relative block">
+              <input
+                id="signup-email"
+                className={`${fieldClass} ${email ? 'pr-[58px]' : ''}`}
+                type="email"
+                placeholder="이름@회사.com"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                aria-required="true"
+                aria-invalid={isEmailInvalid}
+                aria-describedby={isEmailInvalid ? 'signup-required-fields signup-email-error' : 'signup-required-fields'}
+              />
+              {email && <ClearButton label="회사 이메일 지우기" onClick={() => setEmail('')} />}
+            </span>
+            {isEmailInvalid && (
+              <p id="signup-email-error" className="text-sm font-semibold tracking-normal text-[#bc210e]" role="alert">
+                회사 이메일 형식이 올바르지 않습니다.
+              </p>
+            )}
+          </div>
 
           <div className="grid gap-7">
-            <label className={labelClass}>
-              <span>비밀번호</span>
-              <input
-                className={fieldClass}
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete="new-password"
-                minLength={8}
-                maxLength={16}
-                pattern={passwordPattern}
-                required
-                aria-describedby="password-requirement"
-                title={passwordRequirement}
-              />
-            </label>
-            <label className={labelClass}>
-              <span>비밀번호 확인</span>
-              <input
-                className={fieldClass}
-                type="password"
-                value={passwordConfirm}
-                onChange={(event) => setPasswordConfirm(event.target.value)}
-                autoComplete="new-password"
-                minLength={8}
-                maxLength={16}
-                pattern={passwordPattern}
-                required
-                aria-describedby="password-requirement"
-                title={passwordRequirement}
-              />
-            </label>
+            <div className={labelClass}>
+              <label htmlFor="signup-password">비밀번호</label>
+              <span className="relative block">
+                <input
+                  id="signup-password"
+                  className={`${fieldClass} pr-[58px]`}
+                  type={isPasswordVisible ? 'text' : 'password'}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete="new-password"
+                  minLength={8}
+                  maxLength={16}
+                  pattern={passwordPattern}
+                  required
+                  aria-required="true"
+                  aria-describedby="password-requirement"
+                  title={passwordRequirement}
+                />
+                <button
+                  className="absolute top-1/2 right-[22px] inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-[#4b515d] hover:bg-[#f3f4f6] max-sm:right-3"
+                  type="button"
+                  aria-label={isPasswordVisible ? '비밀번호 숨기기' : '비밀번호 보기'}
+                  aria-pressed={isPasswordVisible}
+                  onClick={() => setIsPasswordVisible((current) => !current)}
+                >
+                  <Eye size={20} strokeWidth={2.5} aria-hidden="true" />
+                </button>
+              </span>
+            </div>
+            <div className={labelClass}>
+              <label htmlFor="signup-password-confirm">비밀번호 확인</label>
+              <span className="relative block">
+                <input
+                  id="signup-password-confirm"
+                  className={`${fieldClass} pr-[58px]`}
+                  type={isPasswordConfirmVisible ? 'text' : 'password'}
+                  value={passwordConfirm}
+                  onChange={(event) => setPasswordConfirm(event.target.value)}
+                  autoComplete="new-password"
+                  minLength={8}
+                  maxLength={16}
+                  pattern={passwordPattern}
+                  required
+                  aria-required="true"
+                  aria-describedby="password-requirement"
+                  title={passwordRequirement}
+                />
+                <button
+                  className="absolute top-1/2 right-[22px] inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-[#4b515d] hover:bg-[#f3f4f6] max-sm:right-3"
+                  type="button"
+                  aria-label={isPasswordConfirmVisible ? '비밀번호 확인 숨기기' : '비밀번호 확인 보기'}
+                  aria-pressed={isPasswordConfirmVisible}
+                  onClick={() => setIsPasswordConfirmVisible((current) => !current)}
+                >
+                  <Eye size={20} strokeWidth={2.5} aria-hidden="true" />
+                </button>
+              </span>
+            </div>
           </div>
           <ul
             id="password-requirement"
@@ -152,9 +257,16 @@ function SignUpPage() {
           </ul>
 
           <div className="mt-5 grid gap-5 text-[17px] leading-snug text-[#121722] max-sm:text-[15px]">
-            <label className="flex items-start gap-5">
-              <input className="mt-0.5 size-[26px] shrink-0 accent-[#ff4b11]" type="checkbox" />
-              <span>
+            <div className="flex items-start gap-5">
+              <input
+                id="signup-terms"
+                className="mt-0.5 size-[26px] shrink-0 accent-[#ff4b11]"
+                type="checkbox"
+                required
+                aria-required="true"
+                aria-describedby="signup-required-fields"
+              />
+              <label htmlFor="signup-terms">
                 <a className="font-semibold underline underline-offset-2" href="#privacy">
                   서비스 이용약관
                 </a>
@@ -163,13 +275,21 @@ function SignUpPage() {
                   개인정보 처리방침
                 </a>
                 에 동의합니다.
-              </span>
-            </label>
+              </label>
+            </div>
 
-            <label className="flex items-start gap-5">
-              <input className="mt-0.5 size-[26px] shrink-0 accent-[#ff4b11]" type="checkbox" />
-              <span>임직원 전용 혜택 알림과 스토어 업데이트를 받겠습니다.</span>
-            </label>
+            <div className="flex items-start gap-5">
+              <input
+                id="signup-marketing"
+                className="mt-0.5 size-[26px] shrink-0 accent-[#ff4b11]"
+                type="checkbox"
+                aria-describedby="signup-marketing-description"
+              />
+              <label htmlFor="signup-marketing">임직원 전용 혜택 알림과 스토어 업데이트를 받겠습니다.</label>
+              <p id="signup-marketing-description" className="sr-only">
+                선택 입력 항목입니다.
+              </p>
+            </div>
           </div>
 
           <button
@@ -177,7 +297,7 @@ function SignUpPage() {
             type="submit"
           >
             계정 만들기
-            <ArrowRight size={30} strokeWidth={2.2} />
+            <ArrowRight size={30} strokeWidth={2.2} aria-hidden="true" />
           </button>
         </form>
 
