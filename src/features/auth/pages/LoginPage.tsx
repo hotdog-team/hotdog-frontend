@@ -26,11 +26,13 @@ function ClearButton({ label, onClick }) {
   )
 }
 
-function NaverLoginButton() {
+// onClick
+function NaverLoginButton({ onClick }) {
   return (
     <button
       className="inline-flex h-14 w-full items-center justify-center gap-4 rounded-lg bg-[#03A94D] px-4 text-base font-bold text-white hover:bg-[#029744]"
       type="button"
+      onClick={onClick}
     >
       <strong className="flex size-6 items-center justify-center text-[24px] leading-none font-extrabold" aria-hidden="true">
         N
@@ -40,11 +42,13 @@ function NaverLoginButton() {
   )
 }
 
-function KakaoLoginButton() {
+// onClick
+function KakaoLoginButton({ onClick }) {
   return (
     <button
       className="inline-flex h-14 w-full items-center justify-center gap-4 rounded-lg bg-[#FEE500] px-4 text-base font-bold text-[#191600] hover:bg-[#f4dc00]"
       type="button"
+      onClick={onClick}
     >
       <MessageSquare className="size-6" fill="currentColor" strokeWidth={0} aria-hidden="true" />
       카카오 로그인
@@ -52,11 +56,13 @@ function KakaoLoginButton() {
   )
 }
 
-function GoogleLoginButton() {
+// onClick
+function GoogleLoginButton({ onClick }) {
   return (
     <button
       className="inline-flex h-14 min-w-11 w-full items-center justify-center gap-4 rounded-xl border border-[#F7F7F7] bg-white px-4 py-3.5 text-sm leading-[17px] font-semibold text-[#121212] shadow-[0_5px_35px_rgba(18,18,18,0.05)] hover:bg-[#fafafa]"
       type="button"
+      onClick={onClick}
     >
       <svg className="size-5 shrink-0" viewBox="0 0 20 20" aria-hidden="true">
         <path
@@ -86,6 +92,11 @@ function LoginPage() {
   const [password, setPassword] = useState('')
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const isEmailInvalid = email.length > 0 && !isValidEmail(email)
+
+  // 소셜 로그인 리다이렉트 핸들러
+  const handleSocialLogin = (provider) => {
+    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
+  };
 
   return (
     <main className="flex min-h-svh flex-col bg-[linear-gradient(90deg,rgba(255,255,255,0.98)_0%,rgba(255,250,247,0.94)_100%)] text-[#222633]">
@@ -206,9 +217,10 @@ function LoginPage() {
           </div>
 
           <div className="grid gap-5 justify-items-center">
-            <NaverLoginButton />
-            <KakaoLoginButton />
-            <GoogleLoginButton />
+            {/* 핸들러 연결 */}
+            <NaverLoginButton onClick={() => handleSocialLogin('naver')} />
+            <KakaoLoginButton onClick={() => handleSocialLogin('kakao')} />
+            <GoogleLoginButton onClick={() => handleSocialLogin('google')} />
           </div>
 
           <p className="mt-10 text-center text-lg text-[#2d3038] max-sm:mt-8 max-sm:text-[15px]">
