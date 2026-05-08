@@ -1,29 +1,37 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect, useMemo } from 'react';
+import { useA11yStore } from '../store/useA11yStore';
 
-const AccessibilityContext = createContext();
+const AccessibilityContext = createContext(null);
 
 export const AccessibilityProvider = ({ children }) => {
-  const [settings, setSettings] = useState({
-    fontSizeStep: 1,
-    highContrastEnabled: false,
-    screenReaderOptimized: false
-  });
+  const settings = useA11yStore((state) => state.settings);
+  const setSettings = useA11yStore((state) => state.setSettings);
+  const hydrate = useA11yStore((state) => state.hydrate);
 
-  // 페이지 로드 시 백엔드에서 접근성 설정 가져오기
+  //html에 [data-*] 속성을 반영해 CSS로 전역 적용합니다. (예: fontStep → data-font-step)
   useEffect(() => {
-    fetch('/api/accessibility')
-      .then(res => res.json())
-      .then(data => setSettings(data));
-  }, []);
+    const root = document.documentElement
+    root.dataset.fontStep = String(settings.fontSizeStep ?? 1);
+    root.dataset.highContrast = String(!!settings.highContrastEnabled);
+    root.dataset.screenReader = String(!!settings.screenReaderOptimized);
+  }, [settings.fontSizeStep, settings.highContrastEnabled, settings.screenReaderOptimized])
+
+  // 초기 진입 시 서버 설정 동기화
+  useEffect(() => {
+    hydrate().catch(() => {
+    })
+  }, [hydrate])
+
+  //useMemo 사용하여 매 렌더시마다 리렌더되지 않도록 처리
+  const value = useMemo(() => ({ settings, setSettings }), [settings, setSettings]);
 
   return (
-    <AccessibilityContext.Provider value={{ settings, setSettings }}>
-      <div className={`
-        ${settings.highContrastEnabled ? 'high-contrast' : ''}
-        text-step-${settings.fontSizeStep}
-      `}>
-        {children}
-      </div>
-    </AccessibilityContext.Provider>
-  );
+    <AccessibilityContext.Provider value={value}>{children}</AccessibilityContext.Provider>
+  )
 };
+
+export const useAccessibility = () => {
+  const ctx = useContext(AccessibilityContext);
+  if (!ctx) throw new Error('useAccessibility는 AccessibilityProvider 내부에서만 사용할 수 있습니다.');
+  return ctx;
+}
