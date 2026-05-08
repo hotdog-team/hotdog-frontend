@@ -1,8 +1,45 @@
+import { useState } from 'react'
 import { ArrowLeft, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo'
 
 function ResetPasswordPage() {
+  // 1. 상태 관리 추가
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState('idle');
+  const [message, setMessage] = useState('');
+
+  // 2. 폼 제출 핸들러
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!email) return;
+
+    setStatus('loading');
+    setMessage('');
+
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/password-reset/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        // 백엔드에서 에러를 던진 경우
+        throw new Error('등록되지 않은 이메일이거나 서버 오류가 발생했습니다.');
+      }
+
+      // 성공 처리
+      setStatus('success');
+      setMessage('입력하신 이메일로 비밀번호 재설정 링크가 발송되었습니다.');
+    } catch (error) {
+      setStatus('error');
+      setMessage(error.message);
+    }
+  };
+
   return (
     <main className="relative flex min-h-svh flex-col overflow-hidden bg-[#fbfafa] text-[#222633]">
       <div
@@ -23,7 +60,7 @@ function ResetPasswordPage() {
 
         <form
           className="w-full border border-[#c7ccd6] bg-white px-[51px] pt-[55px] pb-[53px] shadow-[0_1px_2px_rgba(7,20,49,0.04)] max-sm:px-[22px] max-sm:py-[30px]"
-          onSubmit={(event) => event.preventDefault()}
+          onSubmit={handleSubmit}
         >
           <h1 id="reset-title" className="mb-3 text-[34px] leading-tight font-extrabold text-[#071431] max-sm:text-3xl">
             비밀번호를 잊으셨나요?
@@ -43,18 +80,29 @@ function ResetPasswordPage() {
               />
               <input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="이름@회사.com"
                 autoComplete="email"
-                className="h-[61px] w-full rounded border border-[#c7ccd6] bg-white pr-5 pl-14 text-[21px] text-[#071431] outline-none placeholder:text-[#697283] focus:border-[#ff4b11] focus:ring-3 focus:ring-[#ff4b11]/15 max-sm:h-[54px] max-sm:text-[17px]"
+                required
+                disabled={status === 'loading'}
+                className="h-[61px] w-full rounded border border-[#c7ccd6] bg-white pr-5 pl-14 text-[21px] text-[#071431] outline-none placeholder:text-[#697283] focus:border-[#ff4b11] focus:ring-3 focus:ring-[#ff4b11]/15 max-sm:h-[54px] max-sm:text-[17px] disabled:bg-gray-100"
               />
             </span>
           </label>
 
+          {message && (
+            <p className={`mt-3 text-[15px] font-bold ${status === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+              {message}
+            </p>
+          )}
+
           <button
-            className="mt-[31px] inline-flex h-[60px] w-full items-center justify-center bg-[#ff4b11] text-xl font-extrabold text-white hover:bg-[#e83f09] max-sm:h-[54px] max-sm:text-[17px]"
+            className="mt-[31px] inline-flex h-[60px] w-full items-center justify-center bg-[#ff4b11] text-xl font-extrabold text-white hover:bg-[#e83f09] max-sm:h-[54px] max-sm:text-[17px] disabled:opacity-50 disabled:cursor-not-allowed"
             type="submit"
+            disabled={status === 'loading' || !email} // 로딩 중이거나 이메일이 없으면 버튼 비활성화
           >
-            재설정 링크 보내기
+            {status === 'loading' ? '발송 중...' : '재설정 링크 보내기'}
           </button>
 
           <div className="mt-[52px] border-t border-[#c7ccd6] pt-[31px] text-center text-[17px] text-[#20232b] max-sm:text-[15px] max-sm:leading-normal">
