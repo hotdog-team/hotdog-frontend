@@ -179,6 +179,7 @@ function SignUpPage() {
           <p id="signup-required-fields" className="sr-only">
             이름, 임직원 아이디, 회사 이메일, 비밀번호, 비밀번호 확인, 직종, 서비스 이용약관 동의는 필수 입력 항목입니다.
           </p>
+
           <div className={labelClass}>
             <label htmlFor="signup-name">이름</label>
             <span className="relative block">
@@ -192,10 +193,11 @@ function SignUpPage() {
                 onChange={(event) => setName(event.target.value)}
                 required
                 aria-required="true"
-                aria-describedby="signup-required-fields"
+                aria-describedby="signup-name-description"
               />
               {name && <ClearButton label="이름 지우기" onClick={() => setName('')} />}
             </span>
+            <p id="signup-name-description" className="sr-only">이름은 필수 입력 항목입니다.</p>
           </div>
 
           <div className={labelClass}>
@@ -210,7 +212,7 @@ function SignUpPage() {
                 onChange={(event) => setEmployeeId(event.target.value)}
                 required
                 aria-required="true"
-                aria-describedby="signup-employee-id-description signup-required-fields"
+                aria-describedby="signup-employee-id-description"
               />
               <Info
                 className={`absolute top-1/2 -translate-y-1/2 text-[#727782] ${
@@ -222,6 +224,7 @@ function SignUpPage() {
               />
               {employeeId && <ClearButton label="임직원 아이디 지우기" onClick={() => setEmployeeId('')} />}
             </span>
+            <p id="signup-employee-id-description" className="sr-only">회사에서 발급한 사번 또는 임직원 아이디를 입력하세요.</p>
           </div>
 
           <div className={labelClass}>
@@ -242,6 +245,7 @@ function SignUpPage() {
               />
               {email && <ClearButton label="회사 이메일 지우기" onClick={() => setEmail('')} />}
             </span>
+            <p id="signup-email-description" className="sr-only">회사 이메일은 필수 입력 항목입니다.</p>
             {isEmailInvalid && (
               <p id="signup-email-error" className="text-sm font-semibold tracking-normal text-[#bc210e]" role="alert">
                 회사 이메일 형식이 올바르지 않습니다.
@@ -264,6 +268,7 @@ function SignUpPage() {
                   maxLength={16}
                   required
                   aria-required="true"
+                  aria-describedby="signup-password-description password-requirement-list"
                 />
                 <button
                   className="absolute top-1/2 right-[22px] -translate-y-1/2"
@@ -275,7 +280,9 @@ function SignUpPage() {
                   <Eye size={20} strokeWidth={2.5} aria-hidden="true" />
                 </button>
               </span>
+              <p id="signup-password-description" className="sr-only">비밀번호는 필수 입력 항목입니다. {passwordRequirement}</p>
             </div>
+
             <div className={labelClass}>
               <label htmlFor="signup-password-confirm">비밀번호 확인</label>
               <span className="relative block">
@@ -290,6 +297,7 @@ function SignUpPage() {
                   maxLength={16}
                   required
                   aria-required="true"
+                  aria-describedby="signup-password-confirm-description"
                 />
                 <button
                   className="absolute top-1/2 right-[22px] inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-[#4b515d] hover:bg-[#f3f4f6] max-sm:right-3"
@@ -301,15 +309,16 @@ function SignUpPage() {
                   <Eye size={20} strokeWidth={2.5} aria-hidden="true" />
                 </button>
               </span>
+              <p id="signup-password-confirm-description" className="sr-only">위에서 입력한 비밀번호와 동일하게 입력해 주세요.</p>
             </div>
           </div>
-
-          <ul className="-mt-3 grid gap-2 text-[14px] leading-relaxed max-sm:text-[13px]" aria-live="polite">
+          <ul id="password-requirement-list" className="-mt-3 grid gap-2 text-[14px] leading-relaxed max-sm:text-[13px]" aria-live="polite">
             {passwordRules.map((rule) => (
               <PasswordRequirementItem key={rule.label} isActive={hasPassword} isValid={rule.validate(password)} label={rule.label} />
             ))}
             <PasswordRequirementItem isActive={hasPasswordConfirm} isValid={isPasswordConfirmValid} label="비밀번호 확인 일치" />
           </ul>
+
 
           <div className="mt-6 border-t border-[#dfe3ea] pt-10">
             <h2 className="mb-8 text-[28px] font-bold text-[#071431]">맞춤 추천 정보</h2>
@@ -351,14 +360,19 @@ function SignUpPage() {
                   <button type="button" onClick={() => togglePreference('UNKNOWN')} className={`px-4 py-2 rounded-full border text-[16px] font-semibold transition-all ${isPreferenceUnknown ? 'bg-[#ff4b11]/10 text-[#ff4b11] border-[#ff4b11]' : 'bg-white text-[#4b515d] border-[#c7ccd6]'}`} aria-pressed={isPreferenceUnknown}>모르겠어요</button>
                 </div>
               </div>
+
             </div>
           </div>
-
-          <div className="mt-5 grid gap-5 text-[17px] leading-snug text-[#121722] max-sm:text-[15px]">
-            <div className="flex items-start gap-5">
-              <input id="signup-terms" className="mt-0.5 size-[26px] shrink-0 accent-[#ff4b11]" type="checkbox" required aria-required="true" />
-              <label htmlFor="signup-terms"><a className="font-semibold underline underline-offset-2" href="#privacy">서비스 이용약관</a> 및 <a className="font-semibold underline underline-offset-2" href="#terms">개인정보 처리방침</a>에 동의합니다.</label>
+            <div className="mt-5 grid gap-5 text-[17px] leading-snug text-[#121722] max-sm:text-[15px]">
+            {/* 서비스 이용약관 섹션 */}
+            <div>
+              <div className="flex items-start gap-5">
+                <input id="signup-terms" className="mt-0.5 size-[26px] shrink-0 accent-[#ff4b11]" type="checkbox" required aria-required="true" aria-describedby="signup-terms-desc" />
+                <label htmlFor="signup-terms"><a className="font-semibold underline underline-offset-2" href="#privacy">서비스 이용약관</a> 및 <a className="font-semibold underline underline-offset-2" href="#terms">개인정보 처리방침</a>에 동의합니다.</label>
+              </div>
+              <p id="signup-terms-desc" className="sr-only">필수 이용약관 동의 항목입니다.</p>
             </div>
+
             {/* 마케팅 동의 섹션 */}
             <div className="flex items-start gap-5">
               <input id="signup-marketing" className="mt-0.5 size-[26px] shrink-0 accent-[#ff4b11]" type="checkbox" />
