@@ -26,7 +26,6 @@ function ClearButton({ label, onClick }) {
   )
 }
 
-// onClick
 function NaverLoginButton({ onClick }) {
   return (
     <button
@@ -42,7 +41,6 @@ function NaverLoginButton({ onClick }) {
   )
 }
 
-// onClick
 function KakaoLoginButton({ onClick }) {
   return (
     <button
@@ -56,7 +54,6 @@ function KakaoLoginButton({ onClick }) {
   )
 }
 
-// onClick
 function GoogleLoginButton({ onClick }) {
   return (
     <button
@@ -217,7 +214,6 @@ function LoginPage() {
           </div>
 
           <div className="grid gap-5 justify-items-center">
-            {/* 핸들러 연결 */}
             <NaverLoginButton onClick={() => handleSocialLogin('naver')} />
             <KakaoLoginButton onClick={() => handleSocialLogin('kakao')} />
             <GoogleLoginButton onClick={() => handleSocialLogin('google')} />
