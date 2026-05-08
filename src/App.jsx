@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import LoginPage from './features/auth/pages/LoginPage.tsx'
+import LoginPage from './features/auth/pages/LoginPage.jsx'
 import ResetPasswordPage from './features/auth/pages/ResetPasswordPage.jsx'
-import SignUpPage from './features/auth/pages/SignUpPage.tsx'
+import SignUpPage from './features/auth/pages/SignUpPage.jsx'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
