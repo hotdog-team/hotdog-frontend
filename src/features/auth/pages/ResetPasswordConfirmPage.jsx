@@ -109,7 +109,7 @@ function ResetPasswordConfirmPage() {
   const passwordDescriptionIds = 'reset-confirm-description reset-password-requirements'
   const passwordConfirmDescriptionIds = 'reset-confirm-description reset-password-requirements reset-password-match-error'
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     if (!canSubmit) {
@@ -117,7 +117,27 @@ function ResetPasswordConfirmPage() {
       return
     }
 
-    navigate('/reset-password/complete')
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/password-reset/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: token,
+          newPassword: password
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('비밀번호 재설정에 실패했습니다. 다시 시도해 주세요.')
+      }
+
+      navigate('/reset-password/complete')
+    } catch (error) {
+      console.error('에러 발생:', error)
+      setStatusMessage(error.message)
+    }
   }
 
   return (
