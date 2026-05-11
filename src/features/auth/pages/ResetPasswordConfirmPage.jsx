@@ -109,7 +109,7 @@ function ResetPasswordConfirmPage() {
   const passwordDescriptionIds = 'reset-confirm-description reset-password-requirements'
   const passwordConfirmDescriptionIds = 'reset-confirm-description reset-password-requirements reset-password-match-error'
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     if (!canSubmit) {
