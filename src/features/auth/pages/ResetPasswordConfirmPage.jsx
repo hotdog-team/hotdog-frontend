@@ -117,7 +117,27 @@ function ResetPasswordConfirmPage() {
       return
     }
 
-    navigate('/reset-password/complete')
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/password-reset/confirm', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: token,
+          newPassword: password
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('비밀번호 재설정에 실패했습니다. 다시 시도해 주세요.')
+      }
+
+      navigate('/reset-password/complete')
+    } catch (error) {
+      console.error('에러 발생:', error)
+      setStatusMessage(error.message)
+    }
   }
 
   return (
