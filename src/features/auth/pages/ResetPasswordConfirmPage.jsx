@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Circle, CircleAlert, CircleCheck, Eye, EyeOff } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo'
 
 const passwordPattern =
@@ -90,6 +90,7 @@ function PasswordInput({
 
 function ResetPasswordConfirmPage() {
   const { token = '' } = useParams()
+  const navigate = useNavigate()
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
@@ -116,7 +117,7 @@ function ResetPasswordConfirmPage() {
       return
     }
 
-    setStatusMessage('비밀번호 변경 요청이 접수되었습니다.')
+    navigate('/reset-password/complete')
   }
 
   return (
