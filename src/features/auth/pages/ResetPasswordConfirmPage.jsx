@@ -118,7 +118,7 @@ function ResetPasswordConfirmPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/password-reset/confirm', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/password-reset/confirm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
