@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Heart, Search, ShoppingCart, User } from 'lucide-react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { fetchCategories } from '../../api/categoryApi'
 import dtoLogo from '../../assets/d-to-logo.png'
 
 const DEFAULT_CATEGORIES = [
@@ -11,36 +12,94 @@ const DEFAULT_CATEGORIES = [
   { label: '가전', to: '/shop?category=appliance' },
 ]
 
+function getCategoryCodeFromPath(path) {
+  const queryString = path.includes('?') ? path.slice(path.indexOf('?')) : ''
+  return new URLSearchParams(queryString).get('category')
+}
+
 function GlobalHeader({
   activeCategory = '건강',
-  categories = DEFAULT_CATEGORIES,
+  categories,
   searchPlaceholder = '상품을 검색해 보세요',
   onSearchSubmit,
 }) {
+  const { pathname, search } = useLocation()
+  const navigate = useNavigate()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [apiCategories, setApiCategories] = useState(DEFAULT_CATEGORIES)
+  const headerCategories = useMemo(() => categories ?? apiCategories, [apiCategories, categories])
+  const currentCategoryCode = useMemo(() => new URLSearchParams(search).get('category'), [search])
+
+  useEffect(() => {
+    if (categories) {
+      return undefined
+    }
+
+    let isMounted = true
+
+    async function loadCategories() {
+      try {
+        const categoryResponse = await fetchCategories()
+        const nextCategories = Array.isArray(categoryResponse)
+          ? categoryResponse
+              .filter((category) => category?.name && category?.code)
+              .map((category) => ({
+                label: category.name,
+                to: `/shop?category=${category.code}`,
+              }))
+          : []
+
+        if (isMounted && nextCategories.length > 0) {
+          setApiCategories(nextCategories)
+        }
+      } catch {
+        if (isMounted) {
+          setApiCategories(DEFAULT_CATEGORIES)
+        }
+      }
+    }
+
+    loadCategories()
+
+    return () => {
+      isMounted = false
+    }
+  }, [categories])
 
   const handleSubmit = (event) => {
     event.preventDefault()
 
-    if (!onSearchSubmit) {
+    const formData = new FormData(event.currentTarget)
+    const searchValue = formData.get('search')?.toString().trim() ?? ''
+
+    if (onSearchSubmit) {
+      onSearchSubmit(searchValue)
       return
     }
 
-    const formData = new FormData(event.currentTarget)
-    onSearchSubmit(formData.get('search')?.toString().trim() ?? '')
+    if (searchValue) {
+      navigate(`/shop?query=${encodeURIComponent(searchValue)}`)
+    }
+  }
+
+  const handleSearchFocus = () => {
+    if (pathname !== '/shop') {
+      navigate('/shop')
+    }
   }
 
   return (
     <header className="border-b border-[#e1e7f0] bg-white">
       <div className="mx-auto flex min-h-[79px] w-full max-w-[1250px] items-center gap-7 px-6 max-lg:max-w-none max-lg:flex-wrap max-lg:gap-x-6 max-lg:gap-y-3 max-lg:py-4 max-sm:px-4">
-        <Link className="inline-flex shrink-0 items-center" to="/" aria-label="D-TO 홈">
+        <Link className="inline-flex shrink-0 items-center" to="/home" aria-label="D-TO 홈">
           <img className="h-[31px] w-auto object-contain" src={dtoLogo} alt="D-TO" />
         </Link>
 
         <nav className="min-w-0 shrink-0 overflow-x-auto" aria-label="상품 카테고리">
           <ul className="flex items-center gap-8 whitespace-nowrap max-sm:gap-5">
-            {categories.map((category) => {
-              const isActive = category.label === activeCategory
+            {headerCategories.map((category) => {
+              const categoryCode = getCategoryCodeFromPath(category.to)
+              const isActive = currentCategoryCode ? categoryCode === currentCategoryCode : category.label === activeCategory
 
               return (
                 <li key={category.label}>
@@ -74,6 +133,8 @@ function GlobalHeader({
               name="search"
               type="search"
               placeholder={searchPlaceholder}
+              onFocus={handleSearchFocus}
+              onClick={handleSearchFocus}
             />
           </div>
         </form>

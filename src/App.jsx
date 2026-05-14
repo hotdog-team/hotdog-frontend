@@ -2,9 +2,12 @@ import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import LoginPage from './features/auth/pages/LoginPage.jsx'
 import HomePage from './features/main/pages/HomePage.jsx'
+import MyOrders from './features/mypage/pages/MyOrders.jsx'
 import ResetPasswordCompletePage from './features/auth/pages/ResetPasswordCompletePage.jsx'
 import ResetPasswordPage from './features/auth/pages/ResetPasswordPage.jsx'
 import ResetPasswordConfirmPage from './features/auth/pages/ResetPasswordConfirmPage.jsx'
+import ProductDetailPage from './features/shop/pages/ProductDetailPage.jsx'
+import ProductListPage from './features/shop/pages/ProductListPage.jsx'
 import SignUpPage from './features/auth/pages/SignUpPage.jsx'
 
 function ScrollToTop() {
@@ -24,6 +27,9 @@ function App() {
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/home" element={<HomePage />} />
+        <Route path="/shop" element={<ProductListPage />} />
+        <Route path="/shop/:productId" element={<ProductDetailPage />} />
+        <Route path="/orders" element={<MyOrders />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/reset-password/complete" element={<ResetPasswordCompletePage />} />

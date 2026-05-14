@@ -136,7 +136,7 @@ function SignUpPage() {
       name,
       ageRange,
       jobType,
-      lifestyleTagIds
+      lifestyleTagIds,
     };
 
     try {
@@ -182,7 +182,7 @@ function SignUpPage() {
 
           <div className={labelClass}>
             <label htmlFor="signup-name">이름</label>
-            <span className="relative block">
+            <span className="block relative">
               <input
                 id="signup-name"
                 className={`${fieldClass} ${name ? 'pr-[58px]' : ''}`}
@@ -202,7 +202,7 @@ function SignUpPage() {
 
           <div className={labelClass}>
             <label htmlFor="signup-employee-id">임직원 아이디</label>
-            <span className="relative block">
+            <span className="block relative">
               <input
                 id="signup-employee-id"
                 className={`${fieldClass} ${employeeId ? 'pr-24' : 'pr-14'}`}
@@ -229,7 +229,7 @@ function SignUpPage() {
 
           <div className={labelClass}>
             <label htmlFor="signup-email">회사 이메일</label>
-            <span className="relative block">
+            <span className="block relative">
               <input
                 id="signup-email"
                 className={`${fieldClass} ${email ? 'pr-[58px]' : ''}`}
@@ -256,7 +256,7 @@ function SignUpPage() {
           <div className="grid gap-7">
             <div className={labelClass}>
               <label htmlFor="signup-password">비밀번호</label>
-              <span className="relative block">
+              <span className="block relative">
                 <input
                   id="signup-password"
                   className={`${fieldClass} pr-[58px]`}
@@ -285,7 +285,7 @@ function SignUpPage() {
 
             <div className={labelClass}>
               <label htmlFor="signup-password-confirm">비밀번호 확인</label>
-              <span className="relative block">
+              <span className="block relative">
                 <input
                   id="signup-password-confirm"
                   className={`${fieldClass} pr-[58px]`}
@@ -366,7 +366,7 @@ function SignUpPage() {
             <div className="mt-5 grid gap-5 text-[17px] leading-snug text-[#121722] max-sm:text-[15px]">
             {/* 서비스 이용약관 섹션 */}
             <div>
-              <div className="flex items-start gap-5">
+              <div className="flex gap-5 items-start">
                 <input id="signup-terms" className="mt-0.5 size-[26px] shrink-0 accent-[#ff4b11]" type="checkbox" required aria-required="true" aria-describedby="signup-terms-desc" />
                 <label htmlFor="signup-terms"><a className="font-semibold underline underline-offset-2" href="#privacy">서비스 이용약관</a> 및 <a className="font-semibold underline underline-offset-2" href="#terms">개인정보 처리방침</a>에 동의합니다.</label>
               </div>
@@ -374,7 +374,7 @@ function SignUpPage() {
             </div>
 
             {/* 마케팅 동의 섹션 */}
-            <div className="flex items-start gap-5">
+            <div className="flex gap-5 items-start">
               <input id="signup-marketing" className="mt-0.5 size-[26px] shrink-0 accent-[#ff4b11]" type="checkbox" />
               <label htmlFor="signup-marketing">임직원 전용 혜택 알림과 스토어 업데이트를 받겠습니다.</label>
             </div>

@@ -1,16 +1,40 @@
 import { Heart, ShoppingCart, Star } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
-function ProductCard({ product, onWishlistClick, onAddToCartClick }) {
-  const handleWishlistClick = () => {
+function ProductCard({ product, to, onWishlistClick, onAddToCartClick }) {
+  const navigate = useNavigate()
+
+  const handleCardClick = () => {
+    if (to) {
+      navigate(to)
+    }
+  }
+
+  const handleCardKeyDown = (event) => {
+    if (to && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault()
+      navigate(to)
+    }
+  }
+
+  const handleWishlistClick = (event) => {
+    event.stopPropagation()
     onWishlistClick?.(product)
   }
 
-  const handleAddToCartClick = () => {
+  const handleAddToCartClick = (event) => {
+    event.stopPropagation()
     onAddToCartClick?.(product)
   }
 
   return (
-    <article className="overflow-hidden rounded-md border border-[#dfe6ef] bg-white shadow-[0_1px_2px_rgba(7,20,49,0.03)]">
+    <article
+      className={`overflow-hidden rounded-md border border-[#dfe6ef] bg-white shadow-[0_1px_2px_rgba(7,20,49,0.03)] ${to ? 'cursor-pointer transition-shadow hover:shadow-[0_8px_24px_rgba(7,20,49,0.12)]' : ''}`}
+      role={to ? 'link' : undefined}
+      tabIndex={to ? 0 : undefined}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+    >
       <div className="relative aspect-[1.05/1] overflow-hidden bg-[#f2f5f8]">
         <img className="h-full w-full object-cover" src={product.image} alt={product.name} />
         <span className="absolute bottom-3 left-3 rounded-sm bg-[#071431] px-2 py-1 text-[10px] font-bold text-white">

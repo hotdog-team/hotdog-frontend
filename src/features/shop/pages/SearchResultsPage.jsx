@@ -1,24 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { GlobalFooter, GlobalHeader, ProductCard } from '../../../common/components'
+import { ProductCard } from '../../../common/components'
 import ProductFilters from '../components/ProductFilters'
 import {
   categoryCatalog,
   filterProducts,
   getAvailableBrands,
   getAvailableFeatures,
-  getCategoryByCode,
   getPriceBounds,
-  getProductsByCategory,
-  searchProducts,
 } from '../data/catalog'
-import EmptySearchResultsPage from './EmptySearchResultsPage'
-import SearchPage from './SearchPage'
-import SearchResultsPage from './SearchResultsPage'
 
-function ProductGrid({ title, eyebrow, products, category }) {
-  const navigate = useNavigate()
+function SearchResultsPage({ query, products }) {
   const handleWishlistClick = () => {}
   const handleAddToCartClick = () => {}
   const priceBounds = useMemo(() => getPriceBounds(products), [products])
@@ -47,35 +39,25 @@ function ProductGrid({ title, eyebrow, products, category }) {
     <main className="mx-auto w-full max-w-[1110px] px-6 pt-10 pb-24 max-sm:px-4">
       <div className="mb-10 flex items-end justify-between gap-6 max-md:flex-col max-md:items-start">
         <div>
-          <p className="text-[13px] text-[#657186]">홈 〉 {eyebrow}</p>
-          <h1 className="mt-5 text-[34px] font-medium">{title}</h1>
-          {category?.description && <p className="mt-4 text-[17px] text-[#4b515d]">{category.description}</p>}
+          <p className="text-[13px] text-[#657186]">홈 〉 검색 결과</p>
+          <h1 className="mt-5 text-[34px] font-medium">'{query}'에 대한 {filteredProducts.length}개의 결과</h1>
         </div>
+        <label className="flex items-center gap-3 text-[14px]">
+          <span className="text-[#7b8798]">정렬 기준:</span>
+          <select className="h-11 rounded border border-[#c7ccd6] bg-white px-4 text-[#071431]">
+            <option>판매 인기순</option>
+            <option>낮은 가격순</option>
+            <option>높은 가격순</option>
+          </select>
+        </label>
       </div>
-
-      {category && (
-        <section
-          className="mb-14 h-[296px] overflow-hidden rounded-md bg-[#071431] px-10 pt-[104px] text-white"
-          style={{
-            backgroundImage: `linear-gradient(90deg, rgba(3,17,43,0.92), rgba(3,17,43,0.44)), url(${category.image})`,
-            backgroundPosition: 'center',
-            backgroundSize: 'cover',
-          }}
-        >
-          <span className="rounded-sm bg-[#d84a0a] px-3 py-2 text-[11px] font-bold">시즌 이벤트</span>
-          <h2 className="mt-5 text-[28px] font-light">{category.heroTitle}</h2>
-          <p className="mt-4 max-w-[520px] text-[15px] leading-6 text-[#ecf1f8]">{category.heroDescription}</p>
-        </section>
-      )}
 
       <div className="grid grid-cols-[240px_1fr] gap-10 max-lg:grid-cols-1">
         <ProductFilters
           availableBrands={availableBrands}
           availableFeatures={availableFeatures}
-          category={category}
-          categoryOptions={category ? categoryCatalog.slice(0, 4) : categoryCatalog.filter((item) => ['appliance', 'wellness', 'health'].includes(item.code))}
+          categoryOptions={categoryCatalog.filter((item) => ['appliance', 'wellness', 'health'].includes(item.code))}
           filters={filters}
-          onCategorySelect={(categoryCode) => navigate(`/shop?category=${categoryCode}`)}
           onFilterChange={setFilters}
           priceBounds={priceBounds}
         />
@@ -113,32 +95,4 @@ function ProductGrid({ title, eyebrow, products, category }) {
   )
 }
 
-function ProductListPage() {
-  const [searchParams] = useSearchParams()
-  const query = searchParams.get('query')?.trim() ?? ''
-  const categoryCode = searchParams.get('category') ?? ''
-  const category = getCategoryByCode(categoryCode)
-  const products = query ? searchProducts(query) : getProductsByCategory(categoryCode)
-
-  let content
-
-  if (query && products.length === 0) {
-    content = <EmptySearchResultsPage query={query} />
-  } else if (query) {
-    content = <SearchResultsPage query={query} products={products} />
-  } else if (category) {
-    content = <ProductGrid eyebrow={category.navLabel} title={category.label} products={products} category={category} />
-  } else {
-    content = <SearchPage />
-  }
-
-  return (
-    <div className="min-h-svh bg-[#fbfaf9] text-[#071431]">
-      <GlobalHeader activeCategory={category?.navLabel ?? '건강'} />
-      {content}
-      <GlobalFooter />
-    </div>
-  )
-}
-
-export default ProductListPage
+export default SearchResultsPage
