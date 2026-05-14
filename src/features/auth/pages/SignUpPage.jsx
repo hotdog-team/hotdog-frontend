@@ -87,6 +87,7 @@ function SignUpPage() {
   const [selectedPurposeId, setSelectedPurposeId] = useState(null);
   const [selectedPreferenceIds, setSelectedPreferenceIds] = useState([]);
   const [isPreferenceUnknown, setIsPreferenceUnknown] = useState(false);
+  const [isJobRecommendEnabled, setIsJobRecommendEnabled] = useState(false);
 
   const hasPassword = password.length > 0
   const hasPasswordConfirm = passwordConfirm.length > 0
@@ -136,7 +137,8 @@ function SignUpPage() {
       name,
       ageRange,
       jobType,
-      lifestyleTagIds
+      lifestyleTagIds,
+      isJobRecommendEnabled
     };
 
     try {
@@ -371,6 +373,20 @@ function SignUpPage() {
                 <label htmlFor="signup-terms"><a className="font-semibold underline underline-offset-2" href="#privacy">서비스 이용약관</a> 및 <a className="font-semibold underline underline-offset-2" href="#terms">개인정보 처리방침</a>에 동의합니다.</label>
               </div>
               <p id="signup-terms-desc" className="sr-only">필수 이용약관 동의 항목입니다.</p>
+            </div>
+
+            {/* 직종 기반 맞춤 추천 동의 섹션 */}
+            <div className="flex items-start gap-5">
+              <input
+                id="signup-recommend-agree"
+                className="mt-0.5 size-[26px] shrink-0 accent-[#ff4b11]"
+                type="checkbox"
+                checked={isJobRecommendEnabled}
+                onChange={(e) => setIsJobRecommendEnabled(e.target.checked)}
+              />
+              <label htmlFor="signup-recommend-agree">
+                <span className="font-bold text-[#ff4b11]"></span> 나의 직종에 맞는 맞춤 상품 추천 서비스를 이용하겠습니다.
+              </label>
             </div>
 
             {/* 마케팅 동의 섹션 */}
