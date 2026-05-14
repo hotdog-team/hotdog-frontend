@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ProductCard } from '../../../common/components'
 import ProductFilters from '../components/ProductFilters'
@@ -24,16 +24,6 @@ function SearchResultsPage({ query, products }) {
     features: [],
   })
   const filteredProducts = useMemo(() => filterProducts(products, filters), [filters, products])
-
-  useEffect(() => {
-    setFilters({
-      minPrice: priceBounds.min,
-      maxPrice: priceBounds.max,
-      categoryCodes: [],
-      brands: [],
-      features: [],
-    })
-  }, [priceBounds.max, priceBounds.min])
 
   return (
     <main className="mx-auto w-full max-w-[1110px] px-6 pt-10 pb-24 max-sm:px-4">

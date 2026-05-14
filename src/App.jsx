@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import LoginPage from './features/auth/pages/LoginPage.jsx'
 import HomePage from './features/main/pages/HomePage.jsx'
 import MyOrders from './features/mypage/pages/MyOrders.jsx'
@@ -36,6 +38,15 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPasswordConfirmPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ToastContainer
+        position="top-right"
+        autoClose={1800}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        theme="light"
+      />
     </>
   )
 }

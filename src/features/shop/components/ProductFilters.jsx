@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useState } from 'react'
+
 function ProductFilters({
   availableBrands,
   availableFeatures,
@@ -8,12 +10,43 @@ function ProductFilters({
   onFilterChange,
   priceBounds,
 }) {
-  const updateFilter = (nextFilter) => {
+  const [priceInput, setPriceInput] = useState({
+    minPrice: String(filters.minPrice),
+    maxPrice: String(filters.maxPrice),
+  })
+
+  const updateFilter = useCallback((nextFilter) => {
     onFilterChange({
       ...filters,
       ...nextFilter,
     })
-  }
+  }, [filters, onFilterChange])
+
+  useEffect(() => {
+    if (priceInput.minPrice.trim() === '' || priceInput.maxPrice.trim() === '') {
+      return undefined
+    }
+
+    const nextMinPrice = Number(priceInput.minPrice)
+    const nextMaxPrice = Number(priceInput.maxPrice)
+
+    if (!Number.isFinite(nextMinPrice) || !Number.isFinite(nextMaxPrice)) {
+      return undefined
+    }
+
+    if (nextMinPrice === Number(filters.minPrice) && nextMaxPrice === Number(filters.maxPrice)) {
+      return undefined
+    }
+
+    const debounceId = window.setTimeout(() => {
+      updateFilter({
+        minPrice: nextMinPrice,
+        maxPrice: nextMaxPrice,
+      })
+    }, 500)
+
+    return () => window.clearTimeout(debounceId)
+  }, [filters.maxPrice, filters.minPrice, priceInput.maxPrice, priceInput.minPrice, updateFilter])
 
   const toggleBrand = (brand) => {
     const nextBrands = filters.brands.includes(brand)
@@ -41,11 +74,17 @@ function ProductFilters({
   }
 
   const handleMinPriceChange = (event) => {
-    updateFilter({ minPrice: event.target.value })
+    setPriceInput((currentPriceInput) => ({
+      ...currentPriceInput,
+      minPrice: event.target.value,
+    }))
   }
 
   const handleMaxPriceChange = (event) => {
-    updateFilter({ maxPrice: event.target.value })
+    setPriceInput((currentPriceInput) => ({
+      ...currentPriceInput,
+      maxPrice: event.target.value,
+    }))
   }
 
   return (
@@ -90,7 +129,7 @@ function ProductFilters({
               type="number"
               min={priceBounds.min}
               max={priceBounds.max}
-              value={filters.minPrice}
+              value={priceInput.minPrice}
               onChange={handleMinPriceChange}
             />
           </label>
@@ -101,7 +140,7 @@ function ProductFilters({
               type="number"
               min={priceBounds.min}
               max={priceBounds.max}
-              value={filters.maxPrice}
+              value={priceInput.maxPrice}
               onChange={handleMaxPriceChange}
             />
           </label>
