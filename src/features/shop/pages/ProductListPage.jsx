@@ -1,0 +1,355 @@
+import { useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { fetchCategories } from '../../../api/categoryApi'
+import { GlobalFooter, GlobalHeader, ProductCard } from '../../../common/components'
+import { useCategoryProductsQuery, useProductsQuery } from '../../../hooks/queries/useProductQuery'
+import ProductFilters from '../components/ProductFilters'
+import {
+  categoryCatalog,
+  filterProducts,
+  getAvailableBrands,
+  getAvailableFeatures,
+  getCategoryByCode,
+  getPriceBounds,
+} from '../data/catalog'
+import EmptySearchResultsPage from './EmptySearchResultsPage'
+import SearchPage from './SearchPage'
+
+const DEFAULT_PAGE_SIZE = 20
+const DEFAULT_SORT = 'weight'
+
+const SORT_OPTIONS = [
+  { label: '관련도순', value: 'weight' },
+  { label: '최신순', value: 'latest' },
+  { label: '판매순', value: 'sales' },
+  { label: '낮은 가격순', value: 'priceAsc' },
+]
+
+function parsePage(value) {
+  const page = Number(value)
+  return Number.isInteger(page) && page >= 0 ? page : 0
+}
+
+function normalizeCategory(category) {
+  const id = category?.id ?? category?.code
+
+  if (id == null) {
+    return null
+  }
+
+  const fallbackCategory = getCategoryByCode(category.code)
+
+  return {
+    ...fallbackCategory,
+    ...category,
+    id: String(id),
+    code: String(id),
+    label: category.name ?? category.label ?? fallbackCategory?.label ?? '상품',
+    navLabel: category.name ?? category.navLabel ?? fallbackCategory?.navLabel ?? '상품',
+    description: category.description ?? fallbackCategory?.description ?? '',
+    heroTitle: category.heroTitle ?? fallbackCategory?.heroTitle ?? `${category.name ?? fallbackCategory?.label ?? '상품'} 추천 상품`,
+    heroDescription: category.heroDescription ?? fallbackCategory?.heroDescription ?? '카테고리별 추천 상품을 확인해 보세요.',
+    image: category.image ?? category.imageUrl ?? fallbackCategory?.image ?? '',
+  }
+}
+
+function buildFallbackCategories() {
+  return categoryCatalog.map((category) => normalizeCategory({ ...category, id: category.code, name: category.label })).filter(Boolean)
+}
+
+function buildSearchCategory() {
+  return {
+    id: 'search',
+    code: 'search',
+    label: '검색 결과',
+    navLabel: '검색 결과',
+    description: '',
+    heroTitle: '',
+    heroDescription: '',
+    image: '',
+  }
+}
+
+function ProductGrid({
+  category,
+  categories,
+  error,
+  isLoading,
+  onPageChange,
+  onRetry,
+  onSortChange,
+  page,
+  pageData,
+  products,
+  query,
+  sort,
+}) {
+  const navigate = useNavigate()
+  const handleWishlistClick = () => {}
+  const handleAddToCartClick = () => {}
+  const priceBounds = useMemo(() => getPriceBounds(products), [products])
+  const boundsKey = `${priceBounds.min}-${priceBounds.max}`
+  const defaultFilters = useMemo(() => ({
+    minPrice: priceBounds.min,
+    maxPrice: priceBounds.max,
+    categoryCodes: [],
+    brands: [],
+    features: [],
+    boundsKey,
+  }), [boundsKey, priceBounds.max, priceBounds.min])
+  const availableBrands = useMemo(() => getAvailableBrands(products), [products])
+  const availableFeatures = useMemo(() => getAvailableFeatures(products), [products])
+  const [filters, setFilters] = useState(defaultFilters)
+  const effectiveFilters = filters.boundsKey === boundsKey ? filters : defaultFilters
+  const filteredProducts = useMemo(() => filterProducts(products, effectiveFilters), [effectiveFilters, products])
+  const totalElements = pageData?.totalElements ?? 0
+  const totalPages = Math.max(1, pageData?.totalPages ?? 1)
+  const visibleStart = totalElements === 0 ? 0 : page * (pageData?.size ?? DEFAULT_PAGE_SIZE) + 1
+  const visibleEnd = Math.min(page * (pageData?.size ?? DEFAULT_PAGE_SIZE) + filteredProducts.length, totalElements)
+  const title = query ? `'${query}' 검색 결과` : category.label
+
+  return (
+    <main className="mx-auto w-full max-w-[1110px] px-6 pt-10 pb-24 max-sm:px-4">
+      <div className="mb-10 flex items-end justify-between gap-6 max-md:flex-col max-md:items-start">
+        <div>
+          <p className="text-[13px] text-[#657186]">홈 〉 {category.navLabel}</p>
+          <h1 className="mt-5 text-[34px] font-medium">{title}</h1>
+          {category.description && <p className="mt-4 text-[17px] text-[#4b515d]">{category.description}</p>}
+        </div>
+        <label className="flex items-center gap-3 text-[14px]">
+          <span className="text-[#7b8798]">정렬 기준:</span>
+          <select
+            className="h-11 rounded border border-[#c7ccd6] bg-white px-4 text-[#071431]"
+            value={sort}
+            onChange={(event) => onSortChange(event.target.value)}
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option value={option.value} key={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {category.image && (
+        <section
+          className="mb-14 h-[296px] overflow-hidden rounded-md bg-[#071431] px-10 pt-[104px] text-white"
+          style={{
+            backgroundImage: `linear-gradient(90deg, rgba(3,17,43,0.92), rgba(3,17,43,0.44)), url(${category.image})`,
+            backgroundPosition: 'center',
+            backgroundSize: 'cover',
+          }}
+        >
+          <span className="rounded-sm bg-[#d84a0a] px-3 py-2 text-[11px] font-bold">시즌 이벤트</span>
+          <h2 className="mt-5 text-[28px] font-light">{category.heroTitle}</h2>
+          <p className="mt-4 max-w-[520px] text-[15px] leading-6 text-[#ecf1f8]">{category.heroDescription}</p>
+        </section>
+      )}
+
+      <div className="grid grid-cols-[240px_1fr] gap-10 max-lg:grid-cols-1">
+        <ProductFilters
+          availableBrands={availableBrands}
+          availableFeatures={availableFeatures}
+          category={category}
+          categoryOptions={categories}
+          filters={effectiveFilters}
+          key={`${category.id}-${boundsKey}`}
+          onCategorySelect={(categoryId) => navigate(`/shop?categoryId=${encodeURIComponent(categoryId)}&sort=${DEFAULT_SORT}&page=0`)}
+          onFilterChange={setFilters}
+          priceBounds={priceBounds}
+        />
+
+        <section>
+          {isLoading && (
+            <div className="rounded border border-[#dfe6ef] bg-white px-6 py-10 text-center text-[15px] text-[#657186]">
+              상품을 불러오는 중입니다.
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded border border-[#f0b8aa] bg-white px-6 py-10 text-center text-[15px] text-[#8a2f1d]">
+              <p>상품 목록을 불러오지 못했습니다.</p>
+              <button className="mt-4 rounded-sm bg-[#071431] px-5 py-2 text-[13px] font-bold text-white" type="button" onClick={onRetry}>
+                다시 시도
+              </button>
+            </div>
+          )}
+
+          {!isLoading && !error && (
+            <>
+              <p className="mb-6 text-[14px] font-semibold text-[#4b515d]">
+                총 {totalElements}개 상품 중 {visibleStart}-{visibleEnd}개 표시
+              </p>
+              <div className="grid grid-cols-3 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />
+                ))}
+              </div>
+              {filteredProducts.length === 0 && (
+                <div className="rounded border border-[#dfe6ef] bg-white px-6 py-10 text-center text-[15px] text-[#657186]">
+                  선택한 조건과 일치하는 상품이 없습니다.
+                </div>
+              )}
+              <nav className="mt-16 flex justify-center gap-3" aria-label="상품 페이지">
+                <button
+                  className="inline-flex size-10 items-center justify-center rounded border border-[#c7ccd6] bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                  type="button"
+                  aria-label="이전 페이지"
+                  disabled={page === 0}
+                  onClick={() => onPageChange(page - 1)}
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+                {Array.from({ length: totalPages }, (_, index) => index).map((pageIndex) => (
+                  <button
+                    className={`inline-flex size-10 items-center justify-center rounded border ${pageIndex === page ? 'border-[#071431] bg-[#071431] text-white' : 'border-[#c7ccd6] bg-white'}`}
+                    type="button"
+                    key={pageIndex}
+                    aria-current={pageIndex === page ? 'page' : undefined}
+                    onClick={() => onPageChange(pageIndex)}
+                  >
+                    {pageIndex + 1}
+                  </button>
+                ))}
+                <button
+                  className="inline-flex size-10 items-center justify-center rounded border border-[#c7ccd6] bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                  type="button"
+                  aria-label="다음 페이지"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => onPageChange(page + 1)}
+                >
+                  <ChevronRight className="size-5" />
+                </button>
+              </nav>
+            </>
+          )}
+        </section>
+      </div>
+    </main>
+  )
+}
+
+function ProductListPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const query = searchParams.get('query')?.trim() ?? ''
+  const categoryIdParam = searchParams.get('categoryId') ?? ''
+  const legacyCategoryCode = searchParams.get('category') ?? ''
+  const page = parsePage(searchParams.get('page'))
+  const sort = SORT_OPTIONS.some((option) => option.value === searchParams.get('sort')) ? searchParams.get('sort') : DEFAULT_SORT
+  const [categories, setCategories] = useState(() => buildFallbackCategories())
+  const legacyCategory = useMemo(() => {
+    const fallbackCategory = getCategoryByCode(legacyCategoryCode)
+
+    return categories.find((item) => (
+      item.id === legacyCategoryCode ||
+      item.code === legacyCategoryCode ||
+      item.label === fallbackCategory?.label ||
+      item.navLabel === fallbackCategory?.navLabel
+    ))
+  }, [categories, legacyCategoryCode])
+  const categoryId = categoryIdParam || legacyCategory?.id || legacyCategoryCode
+  const category = useMemo(() => categories.find((item) => item.id === categoryId) ?? normalizeCategory({ id: categoryId, name: '상품' }), [categories, categoryId])
+  const categoryProductsQuery = useCategoryProductsQuery({ categoryId, page, size: DEFAULT_PAGE_SIZE, sort, query })
+  const productsQuery = useProductsQuery({ keyword: query, page, size: DEFAULT_PAGE_SIZE, sort })
+  const activeProductsQuery = categoryId ? categoryProductsQuery : productsQuery
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadCategories() {
+      try {
+        const categoryResponse = await fetchCategories()
+        const nextCategories = Array.isArray(categoryResponse)
+          ? categoryResponse.map(normalizeCategory).filter(Boolean)
+          : []
+
+        if (isMounted && nextCategories.length > 0) {
+          setCategories(nextCategories)
+        }
+      } catch {
+        if (isMounted) {
+          setCategories(buildFallbackCategories())
+        }
+      }
+    }
+
+    loadCategories()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const updateListParams = (nextValues) => {
+    const nextSearchParams = new URLSearchParams(searchParams)
+
+    Object.entries(nextValues).forEach(([key, value]) => {
+      if (value == null || value === '') {
+        nextSearchParams.delete(key)
+        return
+      }
+
+      nextSearchParams.set(key, String(value))
+    })
+
+    setSearchParams(nextSearchParams)
+  }
+
+  const handleSortChange = (nextSort) => {
+    updateListParams({ sort: nextSort, page: 0 })
+  }
+
+  const handlePageChange = (nextPage) => {
+    updateListParams({ page: Math.max(0, nextPage) })
+  }
+
+  const getCategoryPath = (categoryCode) => {
+    const fallbackCategory = getCategoryByCode(categoryCode)
+    const nextCategory = categories.find((item) => (
+      item.id === categoryCode ||
+      item.code === categoryCode ||
+      item.label === fallbackCategory?.label ||
+      item.navLabel === fallbackCategory?.navLabel
+    ))
+    const nextCategoryId = nextCategory?.id ?? categoryCode
+
+    return `/shop?categoryId=${encodeURIComponent(nextCategoryId)}&sort=${DEFAULT_SORT}&page=0`
+  }
+
+  let content
+
+  if (!categoryId && !query) {
+    content = <SearchPage getCategoryPath={getCategoryPath} />
+  } else if (query && !activeProductsQuery.isLoading && !activeProductsQuery.error && activeProductsQuery.data?.totalElements === 0) {
+    content = <EmptySearchResultsPage getCategoryPath={getCategoryPath} query={query} />
+  } else {
+    content = (
+      <ProductGrid
+        category={categoryId ? category : buildSearchCategory()}
+        categories={categories}
+        error={activeProductsQuery.error}
+        isLoading={activeProductsQuery.isLoading}
+        onPageChange={handlePageChange}
+        onRetry={activeProductsQuery.refetch}
+        onSortChange={handleSortChange}
+        page={page}
+        pageData={activeProductsQuery.data}
+        products={activeProductsQuery.data?.content ?? []}
+        query={query}
+        sort={sort}
+      />
+    )
+  }
+
+  return (
+    <div className="flex min-h-svh flex-col bg-[#fbfaf9] text-[#071431]">
+      <GlobalHeader activeCategory={categoryId ? category?.navLabel : '검색 결과'} />
+      <div className="flex-1">
+        {content}
+      </div>
+      <GlobalFooter />
+    </div>
+  )
+}
+
+export default ProductListPage

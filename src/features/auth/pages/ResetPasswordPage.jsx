@@ -71,7 +71,7 @@ function ResetPasswordPage() {
 
           <label className="grid gap-2.5 text-[15px] font-extrabold text-[#071431]">
             <span>회사 이메일 주소</span>
-            <span className="relative block">
+            <span className="block relative">
               <Mail
                 className="absolute top-1/2 left-5 -translate-y-1/2 text-[#434955]"
                 size={22}

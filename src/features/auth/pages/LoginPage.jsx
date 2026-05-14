@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Eye, MessageSquare, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo'
-import React from 'react'
+import { GlobalFooter } from '../../../common/components'
 
 const inputClass =
   'h-[61px] w-full rounded border border-[#c7ccd6] bg-white px-5 text-[21px] text-[#071431] outline-none placeholder:text-[#697283] focus:border-[#ff4b11] focus:ring-3 focus:ring-[#ff4b11]/15 max-sm:h-[54px] max-sm:text-[17px]'
@@ -232,25 +232,7 @@ function LoginPage() {
         </p>
       </section>
 
-      <footer className="flex min-h-[166px] items-end justify-between gap-8 border-t border-[#dfe3ea] bg-[#f3f6fa] px-[30px] pt-[33px] pb-[31px] max-[900px]:flex-col max-[900px]:items-start max-sm:px-[18px] max-sm:py-7">
-        <div>
-          <AuthLogo className="mb-[13px] h-10 max-sm:h-8" />
-          <p className="m-0 text-lg text-[#536984] max-sm:text-[15px]">
-            © 2024 임직원 전용 스토어. 모든 권리 보유.
-          </p>
-        </div>
-        <nav
-          className="flex items-center gap-10 whitespace-nowrap text-[17px] text-[#405777] max-[900px]:flex-wrap max-[900px]:gap-x-6 max-[900px]:gap-y-4 max-[900px]:whitespace-normal"
-          aria-label="푸터 링크"
-        >
-          <a href="#privacy">개인정보 처리방침</a>
-          <a href="#terms">서비스 이용약관</a>
-          <a href="#handbook">임직원 안내서</a>
-          <a href="#security">보안 정책</a>
-          <a href="#status">시스템 상태</a>
-          <a href="#help">고객센터</a>
-        </nav>
-      </footer>
+      <GlobalFooter />
     </main>
   )
 }
