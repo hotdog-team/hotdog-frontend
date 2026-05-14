@@ -1,5 +1,6 @@
 import { Heart, ShoppingCart, Star } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 function ProductCard({ product, to, onWishlistClick, onAddToCartClick }) {
   const navigate = useNavigate()
@@ -20,11 +21,13 @@ function ProductCard({ product, to, onWishlistClick, onAddToCartClick }) {
   const handleWishlistClick = (event) => {
     event.stopPropagation()
     onWishlistClick?.(product)
+    toast.success(`${product.name}을(를) 찜 목록에 추가했습니다.`)
   }
 
   const handleAddToCartClick = (event) => {
     event.stopPropagation()
     onAddToCartClick?.(product)
+    toast.success(`${product.name}을(를) 장바구니에 담았습니다.`)
   }
 
   return (

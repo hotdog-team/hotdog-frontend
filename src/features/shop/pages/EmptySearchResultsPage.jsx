@@ -2,7 +2,7 @@ import { CircleHelp, SlidersHorizontal, Sparkles, TextCursorInput } from 'lucide
 import { Link } from 'react-router-dom'
 import { getCategoryByCode, quickCategories } from '../data/catalog'
 
-function EmptySearchResultsPage({ query }) {
+function EmptySearchResultsPage({ getCategoryPath = (categoryCode) => `/shop?categoryId=${encodeURIComponent(categoryCode)}`, query }) {
   return (
     <section className="mx-auto w-full max-w-[1110px] px-6 pt-16 pb-28 text-center max-sm:px-4">
       <div className="mx-auto grid size-24 place-items-center rounded-xl border border-[#dfe6ef] bg-white text-[#516985]">
@@ -32,7 +32,7 @@ function EmptySearchResultsPage({ query }) {
         </div>
         <div className="grid grid-cols-4 gap-7 max-md:grid-cols-2 max-sm:grid-cols-1">
           {quickCategories.map((category) => (
-            <Link className="text-center" to={`/shop?category=${category.categoryCode}`} key={category.categoryCode}>
+            <Link className="text-center" to={getCategoryPath(category.categoryCode)} key={category.categoryCode}>
               <div className="relative aspect-[1.32/1] border border-[#071431] bg-[#d9d9d9]">
                 <span className="absolute bottom-2 left-2 bg-[#071431] px-3 py-1 text-[14px] font-medium text-white">{getCategoryByCode(category.categoryCode)?.label.toUpperCase() ?? category.label}</span>
               </div>

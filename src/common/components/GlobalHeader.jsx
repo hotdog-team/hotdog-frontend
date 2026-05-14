@@ -5,16 +5,16 @@ import { fetchCategories } from '../../api/categoryApi'
 import dtoLogo from '../../assets/d-to-logo.png'
 
 const DEFAULT_CATEGORIES = [
-  { label: '건강', to: '/shop?category=health' },
-  { label: '교육', to: '/shop?category=education' },
-  { label: '여행', to: '/shop?category=travel' },
-  { label: '선물', to: '/shop?category=gift' },
-  { label: '가전', to: '/shop?category=appliance' },
+  { label: '건강', to: '/shop?categoryId=health' },
+  { label: '교육', to: '/shop?categoryId=education' },
+  { label: '여행', to: '/shop?categoryId=travel' },
+  { label: '선물', to: '/shop?categoryId=gift' },
+  { label: '가전', to: '/shop?categoryId=appliance' },
 ]
 
-function getCategoryCodeFromPath(path) {
+function getCategoryIdFromPath(path) {
   const queryString = path.includes('?') ? path.slice(path.indexOf('?')) : ''
-  return new URLSearchParams(queryString).get('category')
+  return new URLSearchParams(queryString).get('categoryId')
 }
 
 function GlobalHeader({
@@ -28,7 +28,7 @@ function GlobalHeader({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [apiCategories, setApiCategories] = useState(DEFAULT_CATEGORIES)
   const headerCategories = useMemo(() => categories ?? apiCategories, [apiCategories, categories])
-  const currentCategoryCode = useMemo(() => new URLSearchParams(search).get('category'), [search])
+  const currentCategoryId = useMemo(() => new URLSearchParams(search).get('categoryId'), [search])
 
   useEffect(() => {
     if (categories) {
@@ -42,10 +42,10 @@ function GlobalHeader({
         const categoryResponse = await fetchCategories()
         const nextCategories = Array.isArray(categoryResponse)
           ? categoryResponse
-              .filter((category) => category?.name && category?.code)
+              .filter((category) => category?.name && category?.id != null)
               .map((category) => ({
                 label: category.name,
-                to: `/shop?category=${category.code}`,
+                to: `/shop?categoryId=${encodeURIComponent(category.id)}`,
               }))
           : []
 
@@ -78,7 +78,17 @@ function GlobalHeader({
     }
 
     if (searchValue) {
-      navigate(`/shop?query=${encodeURIComponent(searchValue)}`)
+      const nextSearchParams = new URLSearchParams()
+      const categoryId = new URLSearchParams(search).get('categoryId')
+
+      if (categoryId) {
+        nextSearchParams.set('categoryId', categoryId)
+      }
+
+      nextSearchParams.set('query', searchValue)
+      nextSearchParams.set('sort', 'weight')
+      nextSearchParams.set('page', '0')
+      navigate(`/shop?${nextSearchParams.toString()}`)
     }
   }
 
@@ -98,8 +108,8 @@ function GlobalHeader({
         <nav className="min-w-0 shrink-0 overflow-x-auto" aria-label="상품 카테고리">
           <ul className="flex items-center gap-8 whitespace-nowrap max-sm:gap-5">
             {headerCategories.map((category) => {
-              const categoryCode = getCategoryCodeFromPath(category.to)
-              const isActive = currentCategoryCode ? categoryCode === currentCategoryCode : category.label === activeCategory
+              const categoryId = getCategoryIdFromPath(category.to)
+              const isActive = currentCategoryId ? categoryId === currentCategoryId : category.label === activeCategory
 
               return (
                 <li key={category.label}>

@@ -8,9 +8,6 @@ const fieldClass =
 
 const labelClass = 'grid gap-2.5 text-[15px] font-extrabold tracking-[0.08em] text-[#071431] uppercase'
 
-const passwordPattern =
-  '(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};\':"\\\\|,.<>/?])[A-Za-z\\d!@#$%^&*()_+\\-=\\[\\]{};\':"\\\\|,.<>/?]{8,16}'
-
 const passwordRequirement =
   '영문 대문자와 소문자, 숫자, 특수문자를 포함해 8자 이상 16자 이하로 입력해 주세요.'
 
@@ -153,7 +150,7 @@ function SignUpPage() {
         const errorData = await response.json();
         alert(errorData.message || '회원가입에 실패했습니다.');
       }
-    } catch (error) {
+    } catch {
       alert('서버 연결 중 오류가 발생했습니다.');
     }
   };
