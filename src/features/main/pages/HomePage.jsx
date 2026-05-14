@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GlobalFooter, GlobalHeader, ProductCard } from '../../../common/components'
+import { productCatalog } from '../../shop/data/catalog'
 
 const HERO_CAROUSEL_INTERVAL = 5000
 
@@ -40,63 +41,6 @@ const heroSlides = [
     description: '동료와 가족에게 전하기 좋은 프리미엄 선물 아이템을 D-TO 전용 조건으로 준비했습니다.',
     primaryCta: { label: '선물 둘러보기', to: '/shop?category=gift' },
     secondaryCta: { label: '베스트 셀러', to: '/shop' },
-  },
-]
-
-const products = [
-  {
-    id: 1,
-    name: 'Eco-Grip Performance Mat',
-    category: '건강',
-    price: '$89.00',
-    rating: '4.8',
-    reviews: 120,
-    image: 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&w=700&q=80',
-  },
-  {
-    id: 2,
-    name: 'ProWork Multi-Sync Device',
-    category: '테크',
-    price: '$1,199.00',
-    rating: '4.8',
-    reviews: 120,
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=700&q=80',
-  },
-  {
-    id: 3,
-    name: 'Precision Brew System',
-    category: '가전',
-    price: '$349.00',
-    rating: '4.8',
-    reviews: 120,
-    image: 'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&w=700&q=80',
-  },
-  {
-    id: 4,
-    name: 'Exec Commuter Backpack',
-    category: '여행',
-    price: '$155.00',
-    rating: '4.8',
-    reviews: 120,
-    image: 'https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=700&q=80',
-  },
-  {
-    id: 5,
-    name: 'FocusFlow NC Headphones',
-    category: '테크',
-    price: '$320.00',
-    rating: '4.8',
-    reviews: 120,
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=700&q=80',
-  },
-  {
-    id: 6,
-    name: 'Signature Series Watch',
-    category: '선물',
-    price: '$195.00',
-    rating: '4.8',
-    reviews: 120,
-    image: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=700&q=80',
   },
 ]
 
@@ -234,6 +178,10 @@ function HeroBanner({ slides }) {
 }
 
 function HomePage() {
+  const handleWishlistClick = () => {}
+  const handleAddToCartClick = () => {}
+  const homeProducts = productCatalog.slice(0, 6)
+
   return (
     <div className="min-h-svh bg-[#fbfaf9] text-[#071431]">
       <GlobalHeader />
@@ -244,8 +192,8 @@ function HomePage() {
         <section className="mx-auto mt-16 w-full max-w-[1110px] px-6 max-sm:px-4">
           <SectionHeader eyebrow="최신 상품" title="신규 입고" />
           <div className="grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
-            {products.slice(0, 4).map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {homeProducts.slice(0, 4).map((product) => (
+              <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />
             ))}
           </div>
         </section>
@@ -253,8 +201,8 @@ function HomePage() {
         <section className="mx-auto mt-16 w-full max-w-[1110px] px-6 max-sm:px-4">
           <SectionHeader eyebrow="임직원 추천" title="베스트 셀러" />
           <div className="grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
-            {products.slice(4).map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {homeProducts.slice(4).map((product) => (
+              <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />
             ))}
           </div>
         </section>
@@ -265,7 +213,7 @@ function HomePage() {
             <span className="mx-auto mt-3 block h-0.5 w-16 bg-[#ff4b11]" aria-hidden="true" />
           </div>
           <div className="grid grid-cols-5 gap-6 max-lg:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
-            {products.slice(2).concat(products.slice(1, 2)).map((product, index) => (
+            {homeProducts.slice(2).concat(homeProducts.slice(1, 2)).map((product, index) => (
               <ReviewCard key={`${product.id}-${index}`} product={product} copy={reviewCopy[index]} />
             ))}
           </div>
