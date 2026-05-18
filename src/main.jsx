@@ -4,6 +4,9 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import { useAuthStore } from './store/useAuthStore'
+
+useAuthStore.getState().hydrate()
 
 const queryClient = new QueryClient()
 

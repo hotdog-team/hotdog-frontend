@@ -3,6 +3,7 @@ import { Heart, Search, ShoppingCart, User } from 'lucide-react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { fetchCategories } from '../../api/categoryApi'
 import dtoLogo from '../../assets/d-to-logo.png'
+import { useAuthStore } from '../../store/useAuthStore'
 
 const DEFAULT_CATEGORIES = [
   { label: '건강', to: '/shop?categoryId=health' },
@@ -11,6 +12,9 @@ const DEFAULT_CATEGORIES = [
   { label: '선물', to: '/shop?categoryId=gift' },
   { label: '가전', to: '/shop?categoryId=appliance' },
 ]
+
+const navLinkClass =
+  'relative inline-flex h-14 items-center text-sm font-medium transition-colors hover:text-ink max-lg:h-9'
 
 function getCategoryIdFromPath(path) {
   const queryString = path.includes('?') ? path.slice(path.indexOf('?')) : ''
@@ -29,6 +33,7 @@ function GlobalHeader({
   const [apiCategories, setApiCategories] = useState(DEFAULT_CATEGORIES)
   const headerCategories = useMemo(() => categories ?? apiCategories, [apiCategories, categories])
   const currentCategoryId = useMemo(() => new URLSearchParams(search).get('categoryId'), [search])
+  const logout = useAuthStore((s) => s.logout)
 
   useEffect(() => {
     if (categories) {
@@ -98,31 +103,39 @@ function GlobalHeader({
     }
   }
 
+  const handleLogout = () => {
+    logout()
+    navigate('/', { replace: true })
+  }
+
   return (
-    <header className="border-b border-[#e1e7f0] bg-white">
-      <div className="mx-auto flex min-h-[79px] w-full max-w-[1250px] items-center gap-7 px-6 max-lg:max-w-none max-lg:flex-wrap max-lg:gap-x-6 max-lg:gap-y-3 max-lg:py-4 max-sm:px-4">
+    <header className="border-b border-border-soft bg-surface">
+      <div className="mx-auto flex min-h-20 w-full max-w-7xl items-center gap-7 px-6 max-lg:max-w-none max-lg:flex-wrap max-lg:gap-x-6 max-lg:gap-y-3 max-lg:py-4 max-sm:px-4">
         <Link className="inline-flex shrink-0 items-center" to="/home" aria-label="D-TO 홈">
-          <img className="h-[31px] w-auto object-contain" src={dtoLogo} alt="D-TO" />
+          <img className="h-8 w-auto object-contain" src={dtoLogo} alt="D-TO" />
         </Link>
 
         <nav className="min-w-0 shrink-0 overflow-x-auto" aria-label="상품 카테고리">
           <ul className="flex items-center gap-8 whitespace-nowrap max-sm:gap-5">
             {headerCategories.map((category) => {
               const categoryId = getCategoryIdFromPath(category.to)
-              const isActive = currentCategoryId ? categoryId === currentCategoryId : category.label === activeCategory
+              const isActive = currentCategoryId
+                ? categoryId === currentCategoryId
+                : category.label === activeCategory
 
               return (
                 <li key={category.label}>
                   <NavLink
-                    className={`relative inline-flex h-[55px] items-center text-[15px] font-medium transition-colors hover:text-[#071431] max-lg:h-9 ${
-                      isActive ? 'text-[#071431]' : 'text-[#657186]'
-                    }`}
+                    className={`${navLinkClass} ${isActive ? 'text-ink' : 'text-muted'}`}
                     to={category.to}
                     aria-current={isActive ? 'page' : undefined}
                   >
                     {category.label}
                     {isActive && (
-                      <span className="absolute right-0 bottom-2 left-0 h-0.5 rounded-full bg-[#071431] max-lg:bottom-0" aria-hidden="true" />
+                      <span
+                        className="absolute right-0 bottom-2 left-0 h-0.5 rounded-full bg-ink max-lg:bottom-0"
+                        aria-hidden="true"
+                      />
                     )}
                   </NavLink>
                 </li>
@@ -131,15 +144,23 @@ function GlobalHeader({
           </ul>
         </nav>
 
-        <form className="ml-auto w-full max-w-[394px] min-w-[260px] max-lg:order-last max-lg:max-w-none max-sm:min-w-0" role="search" onSubmit={handleSubmit}>
+        <form
+          className="ml-auto w-full min-w-64 max-w-96 max-lg:order-last max-lg:max-w-none max-sm:min-w-0"
+          role="search"
+          onSubmit={handleSubmit}
+        >
           <label className="sr-only" htmlFor="global-header-search">
             상품 검색
           </label>
           <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-[#7f94b2]" strokeWidth={2.25} aria-hidden="true" />
+            <Search
+              className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted"
+              strokeWidth={2.25}
+              aria-hidden="true"
+            />
             <input
               id="global-header-search"
-              className="h-[36px] w-full rounded-[3px] border border-transparent bg-[#f1f5fa] pr-4 pl-12 text-sm font-medium text-[#071431] outline-none placeholder:text-[#6f8199] focus:border-[#ff4b11] focus:bg-white focus:ring-3 focus:ring-[#ff4b11]/15"
+              className="h-9 w-full rounded-sm border border-transparent bg-surface-muted pr-4 pl-12 text-sm font-medium text-ink outline-none placeholder:text-muted focus:border-brand focus:bg-surface focus:ring-3 focus:ring-brand/15"
               name="search"
               type="search"
               placeholder={searchPlaceholder}
@@ -149,16 +170,24 @@ function GlobalHeader({
           </div>
         </form>
 
-        <nav className="flex shrink-0 items-center gap-6 text-[#071431] max-sm:gap-4" aria-label="사용자 메뉴">
-          <Link className="inline-flex size-8 items-center justify-center rounded-full hover:bg-[#f1f5fa]" to="/wishlist" aria-label="찜 목록">
-            <Heart className="size-[21px]" strokeWidth={2.4} aria-hidden="true" />
+        <nav className="flex shrink-0 items-center gap-6 text-ink max-sm:gap-4" aria-label="사용자 메뉴">
+          <Link
+            className="inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted"
+            to="/wishlist"
+            aria-label="찜 목록"
+          >
+            <Heart className="size-5" strokeWidth={2.4} aria-hidden="true" />
           </Link>
-          <Link className="inline-flex size-8 items-center justify-center rounded-full hover:bg-[#f1f5fa]" to="/cart" aria-label="장바구니">
-            <ShoppingCart className="size-[21px]" strokeWidth={2.4} aria-hidden="true" />
+          <Link
+            className="inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted"
+            to="/cart"
+            aria-label="장바구니"
+          >
+            <ShoppingCart className="size-5" strokeWidth={2.4} aria-hidden="true" />
           </Link>
           <div className="relative">
             <button
-              className="inline-flex size-8 items-center justify-center rounded-full hover:bg-[#f1f5fa]"
+              className="inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted"
               type="button"
               aria-label="유저 메뉴"
               aria-controls="global-header-user-menu"
@@ -166,28 +195,43 @@ function GlobalHeader({
               aria-haspopup="menu"
               onClick={() => setIsUserMenuOpen((current) => !current)}
             >
-              <User className="size-[21px]" strokeWidth={2.4} aria-hidden="true" />
+              <User className="size-5" strokeWidth={2.4} aria-hidden="true" />
             </button>
 
             {isUserMenuOpen && (
               <div
                 id="global-header-user-menu"
-                className="absolute top-[calc(100%+10px)] right-0 z-50 w-[240px] rounded-md border border-[#dfe6ef] bg-white py-2 text-left text-[#071431] shadow-[0_12px_28px_rgba(7,20,49,0.14)]"
+                className="absolute top-full right-0 z-50 mt-3 w-60 rounded-md border border-border-soft bg-surface py-2 text-left text-ink shadow-card-hover"
                 role="menu"
                 aria-label="유저 메뉴"
               >
-                <div className="border-b border-[#edf1f5] px-4 py-3">
-                  <p className="m-0 text-[11px] font-bold tracking-[0.08em] text-[#7b8798] uppercase">이메일</p>
-                  <p className="m-0 mt-1 truncate text-[13px] font-semibold text-[#071431]">employee@d-to.example</p>
+                <div className="border-b border-border-soft px-4 py-3">
+                  <p className="m-0 text-caption font-bold tracking-wide text-muted uppercase">이메일</p>
+                  <p className="m-0 mt-1 truncate text-body-sm font-semibold text-ink">
+                    employee@d-to.example
+                  </p>
                 </div>
                 <div className="py-1">
-                  <button className="block w-full px-4 py-2.5 text-left text-[14px] font-medium hover:bg-[#f1f5fa]" type="button" role="menuitem">
+                  <button
+                    className="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-muted"
+                    type="button"
+                    role="menuitem"
+                  >
                     프로필
                   </button>
-                  <button className="block w-full px-4 py-2.5 text-left text-[14px] font-medium hover:bg-[#f1f5fa]" type="button" role="menuitem">
+                  <button
+                    className="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-muted"
+                    type="button"
+                    role="menuitem"
+                  >
                     설정
                   </button>
-                  <button className="block w-full px-4 py-2.5 text-left text-[14px] font-bold text-[#bc210e] hover:bg-[#fff2ee]" type="button" role="menuitem">
+                  <button
+                    className="block w-full px-4 py-2 text-left text-sm font-bold text-danger hover:bg-danger-soft"
+                    onClick={handleLogout}
+                    type="button"
+                    role="menuitem"
+                  >
                     로그아웃
                   </button>
                 </div>

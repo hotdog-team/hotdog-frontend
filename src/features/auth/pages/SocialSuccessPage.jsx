@@ -1,9 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import {useAuthStore} from "../../../store/useAuthStore.js";
 
-/**
- * 소셜 로그인 성공 후 백엔드에서 리다이렉트되는 페이지
- */
 export default function SocialSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -17,6 +15,8 @@ export default function SocialSuccessPage() {
       if (refreshToken) {
         localStorage.setItem('refreshToken', refreshToken);
       }
+      useAuthStore.setState({ accessToken, refreshToken, isAuthenticated: true, });
+
       navigate('/', { replace: true });
     } else {
       alert('인증 토큰을 찾을 수 없습니다. 다시 로그인해 주세요.');
