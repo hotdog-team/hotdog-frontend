@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Eye, MessageSquare, X } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import AuthLogo from '../components/AuthLogo'
-import { GlobalFooter } from '../../../common/components'
+import { Eye, X } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import AuthLogo from '../components/AuthLogo.jsx'
+import { useAuthStore } from '../../../store/useAuthStore'
+import { toast } from 'react-toastify'
+import { Button, GlobalFooter, SocialLoginGroup } from '../../../common/components'
 
 const inputClass =
-  'h-[61px] w-full rounded border border-[#c7ccd6] bg-white px-5 text-[21px] text-[#071431] outline-none placeholder:text-[#697283] focus:border-[#ff4b11] focus:ring-3 focus:ring-[#ff4b11]/15 max-sm:h-[54px] max-sm:text-[17px]'
+  'h-15 w-full rounded border border-border bg-white px-5 text-xl text-ink outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/15 max-sm:h-14 max-sm:text-base'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -16,7 +18,7 @@ function isValidEmail(value) {
 function ClearButton({ label, onClick }) {
   return (
     <button
-      className="absolute top-1/2 right-[17px] inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-[#4b515d] hover:bg-[#f3f4f6]"
+      className="absolute top-1/2 right-4 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-muted hover:bg-surface-muted"
       type="button"
       aria-label={label}
       onClick={onClick}
@@ -26,106 +28,57 @@ function ClearButton({ label, onClick }) {
   )
 }
 
-function NaverLoginButton({ onClick }) {
-  return (
-    <button
-      className="inline-flex h-14 w-full items-center justify-center gap-4 rounded-lg bg-[#03A94D] px-4 text-base font-bold text-white hover:bg-[#029744]"
-      type="button"
-      onClick={onClick}
-    >
-      <strong className="flex size-6 items-center justify-center text-[24px] leading-none font-extrabold" aria-hidden="true">
-        N
-      </strong>
-      네이버 로그인
-    </button>
-  )
-}
-
-function KakaoLoginButton({ onClick }) {
-  return (
-    <button
-      className="inline-flex h-14 w-full items-center justify-center gap-4 rounded-lg bg-[#FEE500] px-4 text-base font-bold text-[#191600] hover:bg-[#f4dc00]"
-      type="button"
-      onClick={onClick}
-    >
-      <MessageSquare className="size-6" fill="currentColor" strokeWidth={0} aria-hidden="true" />
-      카카오 로그인
-    </button>
-  )
-}
-
-function GoogleLoginButton({ onClick }) {
-  return (
-    <button
-      className="inline-flex h-14 min-w-11 w-full items-center justify-center gap-4 rounded-xl border border-[#F7F7F7] bg-white px-4 py-3.5 text-sm leading-[17px] font-semibold text-[#121212] shadow-[0_5px_35px_rgba(18,18,18,0.05)] hover:bg-[#fafafa]"
-      type="button"
-      onClick={onClick}
-    >
-      <svg className="size-5 shrink-0" viewBox="0 0 20 20" aria-hidden="true">
-        <path
-          fill="#4285F4"
-          d="M19.6 10.23c0-.71-.06-1.4-.18-2.05H10v3.87h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.9-1.75 2.98-4.33 2.98-7.35Z"
-        />
-        <path
-          fill="#34A853"
-          d="M10 20c2.7 0 4.97-.9 6.62-2.42l-3.24-2.51c-.9.6-2.04.96-3.38.96-2.6 0-4.81-1.76-5.6-4.12H1.05v2.59A10 10 0 0 0 10 20Z"
-        />
-        <path
-          fill="#FBBC05"
-          d="M4.4 11.91a6.01 6.01 0 0 1 0-3.82V5.5H1.05a10 10 0 0 0 0 9l3.35-2.59Z"
-        />
-        <path
-          fill="#EA4335"
-          d="M10 3.97c1.47 0 2.8.5 3.84 1.5l2.86-2.87A9.61 9.61 0 0 0 10 0a10 10 0 0 0-8.95 5.5L4.4 8.09C5.19 5.73 7.4 3.97 10 3.97Z"
-        />
-      </svg>
-      구글로 로그인
-    </button>
-  )
-}
-
 function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+
+  const navigate = useNavigate()
+  const login = useAuthStore((s) => s.login)
   const isEmailInvalid = email.length > 0 && !isValidEmail(email)
 
-  // 소셜 로그인 리다이렉트 핸들러
-  const handleSocialLogin = (provider) => {
-    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
-  };
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    if (isEmailInvalid) return
+    try {
+      await login({ email, password })
+      navigate('/home', { replace: true })
+    } catch (err) {
+      toast.error(err.message ?? '로그인에 실패했습니다.')
+    }
+  }
 
   return (
-    <main className="flex min-h-svh flex-col bg-[linear-gradient(90deg,rgba(255,255,255,0.98)_0%,rgba(255,250,247,0.94)_100%)] text-[#222633]">
-      <header className="flex h-[82px] items-center border-b border-[#dfe3ea] px-[30px] max-sm:h-[68px] max-sm:px-[18px]">
+    <main className="flex min-h-svh flex-col bg-[linear-gradient(90deg,rgba(255,255,255,0.98)_0%,rgba(255,250,247,0.94)_100%)] text-body">
+      <header className="flex h-20 items-center border-b border-border-soft px-8 max-sm:h-17 max-sm:px-4.5">
         <AuthLogo className="h-9 max-sm:h-8" linkClassName="inline-flex items-center w-fit" to="/" />
       </header>
 
       <section
-        className="mx-auto w-full max-w-[560px] flex-1 px-5 pt-12 pb-16 text-center max-sm:px-4 max-sm:pt-10 max-sm:pb-10"
+        className="mx-auto w-full max-w-140 flex-1 px-5 pt-12 pb-16 text-center max-sm:px-4 max-sm:pt-10 max-sm:pb-10"
         aria-labelledby="login-title"
       >
         <h1
           id="login-title"
-          className="mt-0.5 mb-2 text-[42px] leading-[1.1] font-extrabold text-[#071431] max-sm:text-[34px]"
+          className="mt-0.5 mb-2 text-4xl leading-tight font-extrabold text-ink max-sm:text-3xl"
         >
           다시 오신 것을 환영합니다
         </h1>
-        <p className="mb-[54px] text-[23px] leading-snug text-[#252938] max-sm:mb-8 max-sm:text-lg">
+        <p className="mb-14 text-2xl leading-snug text-[#252938] max-sm:mb-8 max-sm:text-lg">
           임직원 전용 혜택을 확인하세요.
         </p>
 
         <form
-          className="min-h-[820px] w-full border border-[#c7ccd6] bg-white px-[51px] py-[47px] text-left shadow-[0_1px_2px_rgba(7,20,49,0.04)] max-sm:min-h-0 max-sm:px-[22px] max-sm:pt-[30px] max-sm:pb-4"
+          className="min-h-205 w-full border border-border bg-white px-12 py-12 text-left shadow-card max-sm:min-h-0 max-sm:px-5.5 max-sm:pt-8 max-sm:pb-4"
           aria-describedby="login-form-description"
-          onSubmit={(event) => event.preventDefault()}
+          onSubmit={handleSubmit}
         >
           <p id="login-form-description" className="sr-only">
             회사 이메일과 비밀번호는 필수 입력 항목입니다.
           </p>
 
           <div className="grid gap-2.5">
-            <label className="text-[15px] font-extrabold text-[#071431] uppercase" htmlFor="login-email">
+            <label className="text-sm font-extrabold uppercase text-ink" htmlFor="login-email">
               회사 이메일
             </label>
             <span className="block relative">
@@ -134,7 +87,7 @@ function LoginPage() {
                 type="email"
                 placeholder="이름@회사.com"
                 autoComplete="email"
-                className={`${inputClass} ${email ? 'pr-[58px]' : ''}`}
+                className={`${inputClass} ${email ? 'pr-14' : ''}`}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -145,18 +98,18 @@ function LoginPage() {
               {email && <ClearButton label="회사 이메일 지우기" onClick={() => setEmail('')} />}
             </span>
             {isEmailInvalid && (
-              <p id="login-email-error" className="text-sm font-semibold text-[#bc210e]" role="alert">
+              <p id="login-email-error" className="text-sm font-semibold text-error" role="alert">
                 회사 이메일 형식이 올바르지 않습니다.
               </p>
             )}
           </div>
 
           <div className="mt-7 grid gap-2.5">
-            <div className="flex gap-4 justify-between items-center">
-              <label className="text-[15px] font-extrabold text-[#071431] uppercase" htmlFor="login-password">
+            <div className="flex items-center justify-between gap-4">
+              <label className="text-sm font-extrabold uppercase text-ink" htmlFor="login-password">
                 비밀번호
               </label>
-              <Link className="text-[15px] font-extrabold text-[#bc210e] normal-case" to="/reset-password">
+              <Link className="text-sm font-extrabold text-brand normal-case" to="/reset-password">
                 비밀번호 찾기
               </Link>
             </div>
@@ -166,7 +119,7 @@ function LoginPage() {
                 type={isPasswordVisible ? 'text' : 'password'}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className={`${inputClass} pr-[58px]`}
+                className={`${inputClass} pr-14`}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
@@ -174,7 +127,7 @@ function LoginPage() {
                 aria-describedby="login-form-description"
               />
               <button
-                className="absolute top-1/2 right-[17px] inline-flex -translate-y-1/2 items-center justify-center bg-transparent text-[#4b515d]"
+                className="absolute top-1/2 right-4 inline-flex -translate-y-1/2 items-center justify-center bg-transparent text-muted"
                 type="button"
                 aria-label={isPasswordVisible ? '비밀번호 숨기기' : '비밀번호 보기'}
                 aria-pressed={isPasswordVisible}
@@ -185,49 +138,21 @@ function LoginPage() {
             </span>
           </div>
 
-          <label className="mt-8 flex items-center gap-[11px] text-lg leading-snug text-[#232733] max-sm:text-[15px]" htmlFor="login-remember">
-            <input
-              id="login-remember"
-              className="m-0 size-[21px] accent-[#ff4b11]"
-              type="checkbox"
-              aria-describedby="login-remember-description"
-            />
-            <span>이 기기에서 로그인 상태 유지</span>
-          </label>
-          <p id="login-remember-description" className="sr-only">
-            선택하면 현재 기기에서 로그인 상태를 유지합니다.
-          </p>
-
-          <button
-            className="mt-[42px] inline-flex h-[60px] w-full items-center justify-center rounded bg-[#ff4b11] text-xl font-medium text-white hover:bg-[#e83f09] max-sm:h-[54px] max-sm:text-[17px]"
-            type="submit"
-          >
+          <Button type="submit" variant="primary" size="md" fullWidth className="mt-8">
             로그인
-          </button>
+          </Button>
 
-          <div className="my-10 grid grid-cols-[1fr_auto_1fr] items-center gap-[30px] max-sm:my-8 max-sm:gap-[15px]">
-            <span className="h-px bg-[#c7ccd6]" aria-hidden="true"></span>
-            <p className="m-0 text-[15px] font-extrabold text-[#071431] uppercase max-sm:whitespace-nowrap max-sm:text-xs">
-              다른 계정으로 계속하기
-            </p>
-            <span className="h-px bg-[#c7ccd6]" aria-hidden="true"></span>
-          </div>
+          <SocialLoginGroup />
 
-          <div className="grid gap-5 justify-items-center">
-            <NaverLoginButton onClick={() => handleSocialLogin('naver')} />
-            <KakaoLoginButton onClick={() => handleSocialLogin('kakao')} />
-            <GoogleLoginButton onClick={() => handleSocialLogin('google')} />
-          </div>
-
-          <p className="mt-10 text-center text-lg text-[#2d3038] max-sm:mt-8 max-sm:text-[15px]">
+          <p className="mt-10 text-center text-lg text-[#2d3038] max-sm:mt-8 max-sm:text-sm">
             계정이 없으신가요?{' '}
-            <Link className="font-extrabold text-[#071431]" to="/signup">
+            <Link className="font-extrabold text-ink" to="/signup">
               회원가입
             </Link>
           </p>
         </form>
 
-        <p className="mt-[50px] text-center text-[15px] font-bold text-[#8b9099]">
+        <p className="mt-12.5 text-center text-sm font-bold text-[#8b9099]">
           인증된 임직원 전용 비공개 스토어
         </p>
       </section>
