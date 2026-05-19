@@ -40,7 +40,7 @@ function ResetPasswordCompletePage() {
         aria-labelledby="reset-complete-title"
       >
         <div className="mb-12 grid justify-items-center max-sm:mb-8">
-          <AuthLogo className="h-9 max-sm:h-8" linkClassName="inline-flex w-fit items-center" to="/" />
+          <AuthLogo className="h-9 max-sm:h-8" />
         </div>
 
         <div className="w-full border border-[#d7dce4] bg-white px-13 pt-13 pb-13 text-center shadow-card max-sm:px-6 max-sm:py-9">

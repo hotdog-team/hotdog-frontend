@@ -13,12 +13,38 @@ const DEFAULT_CATEGORIES = [
   { label: '가전', to: '/shop?categoryId=appliance' },
 ]
 
-const navLinkClass =
-  'relative inline-flex h-14 items-center text-sm font-medium transition-colors hover:text-ink max-lg:h-9'
+const focusRingClass =
+  'focus-ring rounded-sm focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-surface'
+
+const categoryNavLinkBase =
+  'focus-ring focus-ring-inset inline-flex items-center px-1 pt-2 pb-1 text-base font-medium transition-[color,box-shadow] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink'
 
 function getCategoryIdFromPath(path) {
   const queryString = path.includes('?') ? path.slice(path.indexOf('?')) : ''
   return new URLSearchParams(queryString).get('categoryId')
+}
+
+function isCategoryNavActive(category, location, fallbackLabel) {
+  const categoryId = getCategoryIdFromPath(category.to)
+  const currentCategoryId = new URLSearchParams(location.search).get('categoryId')
+
+  if (currentCategoryId) {
+    return categoryId === currentCategoryId
+  }
+
+  if (location.pathname === '/shop') {
+    return category.label === fallbackLabel
+  }
+
+  return false
+}
+
+function getCategoryNavLinkClass(isActive) {
+  return `${categoryNavLinkBase} ${
+    isActive
+      ? 'font-semibold text-ink shadow-[inset_0_-2px_0_0_var(--color-brand)]'
+      : 'text-muted'
+  }`
 }
 
 function GlobalHeader({
@@ -27,12 +53,12 @@ function GlobalHeader({
   searchPlaceholder = '상품을 검색해 보세요',
   onSearchSubmit,
 }) {
-  const { pathname, search } = useLocation()
+  const location = useLocation()
+  const { pathname, search } = location
   const navigate = useNavigate()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [apiCategories, setApiCategories] = useState(DEFAULT_CATEGORIES)
   const headerCategories = useMemo(() => categories ?? apiCategories, [apiCategories, categories])
-  const currentCategoryId = useMemo(() => new URLSearchParams(search).get('categoryId'), [search])
   const logout = useAuthStore((s) => s.logout)
 
   useEffect(() => {
@@ -111,32 +137,27 @@ function GlobalHeader({
   return (
     <header className="border-b border-border-soft bg-surface">
       <div className="mx-auto flex min-h-20 w-full max-w-7xl items-center gap-7 px-6 max-lg:max-w-none max-lg:flex-wrap max-lg:gap-x-6 max-lg:gap-y-3 max-lg:py-4 max-sm:px-4">
-        <Link className="inline-flex shrink-0 items-center" to="/home" aria-label="D-TO 홈">
-          <img className="h-8 w-auto object-contain" src={dtoLogo} alt="D-TO" />
+        <Link
+          className={`inline-flex shrink-0 items-center rounded-md ${focusRingClass}`}
+          to="/home"
+          aria-label="메인으로 가기"
+        >
+          <img className="h-8 w-auto object-contain" src={dtoLogo} aria-hidden="true" />
         </Link>
 
-        <nav className="min-w-0 shrink-0 overflow-x-auto" aria-label="상품 카테고리">
-          <ul className="flex items-center gap-8 whitespace-nowrap max-sm:gap-5">
+        <nav className="min-w-0 shrink-0 overflow-x-auto py-1" aria-label="상품 카테고리">
+          <ul className="flex items-center gap-8 whitespace-nowrap px-0.5 max-sm:gap-5">
             {headerCategories.map((category) => {
-              const categoryId = getCategoryIdFromPath(category.to)
-              const isActive = currentCategoryId
-                ? categoryId === currentCategoryId
-                : category.label === activeCategory
+              const isTabActive = isCategoryNavActive(category, location, activeCategory)
 
               return (
                 <li key={category.label}>
                   <NavLink
-                    className={`${navLinkClass} ${isActive ? 'text-ink' : 'text-muted'}`}
+                    className={getCategoryNavLinkClass(isTabActive)}
+                    isActive={() => isTabActive}
                     to={category.to}
-                    aria-current={isActive ? 'page' : undefined}
                   >
                     {category.label}
-                    {isActive && (
-                      <span
-                        className="absolute right-0 bottom-2 left-0 h-0.5 rounded-full bg-ink max-lg:bottom-0"
-                        aria-hidden="true"
-                      />
-                    )}
                   </NavLink>
                 </li>
               )
@@ -172,14 +193,14 @@ function GlobalHeader({
 
         <nav className="flex shrink-0 items-center gap-6 text-ink max-sm:gap-4" aria-label="사용자 메뉴">
           <Link
-            className="inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted"
+            className={`inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted ${focusRingClass}`}
             to="/wishlist"
             aria-label="찜 목록"
           >
             <Heart className="size-5" strokeWidth={2.4} aria-hidden="true" />
           </Link>
           <Link
-            className="inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted"
+            className={`inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted ${focusRingClass}`}
             to="/cart"
             aria-label="장바구니"
           >
@@ -187,7 +208,7 @@ function GlobalHeader({
           </Link>
           <div className="relative">
             <button
-              className="inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted"
+              className={`inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted ${focusRingClass}`}
               type="button"
               aria-label="유저 메뉴"
               aria-controls="global-header-user-menu"

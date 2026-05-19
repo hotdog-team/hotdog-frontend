@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import AuthLogo from '../components/AuthLogo.jsx'
 import { signup } from '../../../api/authApi.js'
-import { Button, GlobalFooter } from '../../../common/components'
+import { Button } from '../../../common/components'
 
 const fieldClass =
   'h-15 w-full border border-border bg-surface px-8 text-xl text-ink outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/15 max-sm:h-14 max-sm:px-4 max-sm:text-body'
@@ -174,7 +174,7 @@ function SignUpPage() {
         className="mx-auto w-full max-w-155 flex-1 px-5 pt-24 pb-16 max-sm:px-4 max-sm:pt-14 max-sm:pb-10"
         aria-labelledby="signup-title"
       >
-        <AuthLogo className="h-12 max-sm:h-10" linkClassName="mx-auto mb-16 flex w-fit items-center" to="/" />
+        <AuthLogo className="mx-auto mb-16 h-12 max-sm:mb-12 max-sm:h-10" />
 
         <div className="mb-13">
           <h1 id="signup-title" className="mb-4 text-4xl leading-tight font-extrabold text-ink max-sm:text-3xl">
@@ -449,8 +449,6 @@ function SignUpPage() {
           <Link className="font-extrabold text-ink" to="/">로그인하기</Link>
         </p>
       </section>
-
-      <GlobalFooter />
     </main>
   )
 }

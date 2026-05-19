@@ -1,6 +1,6 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
+import { apiFetch } from './apiClient.js'
 
-function buildCategoryProductsUrl({ categoryId, page = 0, size = 20, sort = 'weight', query = '' }) {
+function buildCategoryProductsPath({ categoryId, page = 0, size = 20, sort = 'weight', query = '' }) {
   const searchParams = new URLSearchParams({
     page: String(page),
     size: String(size),
@@ -11,10 +11,10 @@ function buildCategoryProductsUrl({ categoryId, page = 0, size = 20, sort = 'wei
     searchParams.set('query', query)
   }
 
-  return `${BASE_URL}/api/categories/${encodeURIComponent(categoryId)}/products?${searchParams.toString()}`
+  return `/api/categories/${encodeURIComponent(categoryId)}/products?${searchParams.toString()}`
 }
 
-function buildProductsUrl({ keyword = '', page = 0, size = 20, sort = 'weight' }) {
+function buildProductsPath({ keyword = '', page = 0, size = 20, sort = 'weight' }) {
   const searchParams = new URLSearchParams({
     keyword,
     page: String(page),
@@ -22,7 +22,7 @@ function buildProductsUrl({ keyword = '', page = 0, size = 20, sort = 'weight' }
     sort,
   })
 
-  return `${BASE_URL}/api/products?${searchParams.toString()}`
+  return `/api/products?${searchParams.toString()}`
 }
 
 function normalizeProduct(product) {
@@ -64,18 +64,11 @@ export async function fetchCategoryProducts({ categoryId, page = 0, size = 20, s
     return normalizePageResponse({ content: [], totalElements: 0, totalPages: 0, number: page, size }, size)
   }
 
-  const response = await fetch(buildCategoryProductsUrl({ categoryId, page, size, sort, query }), {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+  const responseBody = await apiFetch(
+    buildCategoryProductsPath({ categoryId, page, size, sort, query }),
+  )
 
-  if (!response.ok) {
-    throw new Error(`API ${response.status} ${response.statusText}`)
-  }
-
-  return normalizePageResponse(await response.json(), size)
+  return normalizePageResponse(responseBody, size)
 }
 
 export async function fetchProducts({ keyword = '', page = 0, size = 20, sort = 'weight' }) {
@@ -83,16 +76,7 @@ export async function fetchProducts({ keyword = '', page = 0, size = 20, sort = 
     return normalizePageResponse({ content: [], totalElements: 0, totalPages: 0, number: page, size }, size)
   }
 
-  const response = await fetch(buildProductsUrl({ keyword, page, size, sort }), {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+  const responseBody = await apiFetch(buildProductsPath({ keyword, page, size, sort }))
 
-  if (!response.ok) {
-    throw new Error(`API ${response.status} ${response.statusText}`)
-  }
-
-  return normalizePageResponse(await response.json(), size)
+  return normalizePageResponse(responseBody, size)
 }

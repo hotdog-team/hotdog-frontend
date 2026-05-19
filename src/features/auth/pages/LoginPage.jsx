@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo.jsx'
 import { useAuthStore } from '../../../store/useAuthStore'
 import { toast } from 'react-toastify'
-import { Button, GlobalFooter, Input, SocialLoginGroup } from '../../../common/components'
+import { Button, Input, SocialLoginGroup } from '../../../common/components'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -47,14 +47,12 @@ function LoginPage() {
 
   return (
     <main className="flex min-h-svh flex-col bg-[linear-gradient(90deg,rgba(255,255,255,0.98)_0%,rgba(255,250,247,0.94)_100%)] text-body">
-      <header className="flex h-20 items-center border-b border-border-soft px-8 max-sm:h-17 max-sm:px-4.5">
-        <AuthLogo className="h-9 max-sm:h-8" linkClassName="inline-flex items-center w-fit" to="/" />
-      </header>
-
       <section
         className="mx-auto w-full max-w-140 flex-1 px-5 pt-12 pb-16 text-center max-sm:px-4 max-sm:pt-10 max-sm:pb-10"
         aria-labelledby="login-title"
       >
+        <AuthLogo className="mx-auto mb-12 h-9 max-sm:mb-8 max-sm:h-8" />
+
         <h1
           id="login-title"
           className="mt-0.5 mb-2 text-4xl leading-tight font-extrabold text-ink max-sm:text-3xl"
@@ -155,8 +153,6 @@ function LoginPage() {
           인증된 임직원 전용 비공개 스토어
         </p>
       </section>
-
-      <GlobalFooter />
     </main>
   )
 }

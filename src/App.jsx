@@ -14,6 +14,7 @@ import SignUpPage from './features/auth/pages/SignUpPage.jsx'
 import { useAuthStore } from './store/useAuthStore';
 import SocialSuccessPage from './features/auth/pages/SocialSuccessPage.jsx';
 import RequireAuth from "./features/auth/RequireAuth.jsx";
+import GlobalLayout from "./common/GlobalLayout.jsx";
 
 function LoginEntry() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -47,10 +48,12 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPasswordConfirmPage />} />
         <Route path="/social-success" element={<SocialSuccessPage />} />
         <Route element={<RequireAuth />}>
+          <Route element={<GlobalLayout />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/shop" element={<ProductListPage />} />
           <Route path="/shop/:productId" element={<ProductDetailPage />} />
           <Route path="/orders" element={<MyOrders />} />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -47,7 +47,7 @@ function ResetPasswordPage() {
         aria-labelledby="reset-title"
       >
         <div className="mb-20 grid justify-items-center gap-2.5 max-sm:mb-12">
-          <AuthLogo className="h-14 max-sm:h-12" linkClassName="inline-flex w-fit items-center" to="/" />
+          <AuthLogo className="h-14 max-sm:h-12" />
           <p className="m-0 text-base font-extrabold text-ink uppercase max-sm:text-xs">
             임직원 전용 플랫폼
           </p>
@@ -122,20 +122,6 @@ function ResetPasswordPage() {
           로그인으로 돌아가기
         </Link>
       </section>
-
-      <footer className="relative z-10 flex min-h-20 items-end justify-between gap-8 border-t border-border-soft bg-surface/70 px-8 pt-8 pb-8 max-[900px]:flex-col max-[900px]:items-start max-sm:px-4 max-sm:py-7">
-        <p className="m-0 text-base font-semibold text-body">
-          © 2026 임직원 전용 스토어. 모든 권리 보유.
-        </p>
-        <nav
-          className="flex items-center gap-10 whitespace-nowrap text-base font-semibold text-body max-[900px]:flex-wrap max-[900px]:gap-x-6 max-[900px]:gap-y-4 max-[900px]:whitespace-normal"
-          aria-label="푸터 링크"
-        >
-          <a href="#privacy">개인정보 처리방침</a>
-          <a href="#terms">서비스 이용약관</a>
-          <a href="#help">고객센터</a>
-        </nav>
-      </footer>
     </main>
   )
 }
