@@ -5,6 +5,7 @@ import AuthLogo from '../components/AuthLogo.jsx'
 import { useAuthStore } from '../../../store/useAuthStore'
 import { toast } from 'react-toastify'
 import { Button, GlobalFooter, SocialLoginGroup } from '../../../common/components'
+import { startSocialLogin } from '../../../api/authApi.js';
 
 const inputClass =
   'h-15 w-full rounded border border-border bg-white px-5 text-xl text-ink outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/15 max-sm:h-14 max-sm:text-base'
