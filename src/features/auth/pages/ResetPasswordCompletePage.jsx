@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Check, ShieldCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import AuthLogo from '../components/AuthLogo'
+import AuthLogo from '../components/AuthLogo.jsx'
+import { Button } from '../../../common/components'
 
 function ResetPasswordCompletePage() {
   const navigate = useNavigate()
@@ -35,44 +36,47 @@ function ResetPasswordCompletePage() {
       </a>
       <section
         id="reset-complete-content"
-        className="grid w-full max-w-[610px] justify-items-center"
+        className="grid w-full max-w-152 justify-items-center"
         aria-labelledby="reset-complete-title"
       >
-        <div className="mb-[49px] grid justify-items-center max-sm:mb-8">
-          <AuthLogo className="h-[34px] max-sm:h-8" linkClassName="inline-flex w-fit items-center" to="/" />
+        <div className="mb-12 grid justify-items-center max-sm:mb-8">
+          <AuthLogo className="h-9 max-sm:h-8" linkClassName="inline-flex w-fit items-center" to="/" />
         </div>
 
-        <div className="w-full border border-[#d7dce4] bg-white px-[51px] pt-[52px] pb-[51px] text-center shadow-[0_1px_2px_rgba(7,20,49,0.08)] max-sm:px-6 max-sm:py-9">
-          <div className="mx-auto mb-[31px] flex size-[106px] items-center justify-center rounded-[15px] bg-[#fff7ef] max-sm:size-[88px]">
-            <span className="flex size-[54px] items-center justify-center rounded-full bg-[#ff5a12] text-white max-sm:size-12">
+        <div className="w-full border border-[#d7dce4] bg-white px-13 pt-13 pb-13 text-center shadow-card max-sm:px-6 max-sm:py-9">
+          <div className="mx-auto mb-8 flex size-28 items-center justify-center rounded-2xl bg-[#fff7ef] max-sm:size-22">
+            <span className="flex size-14 items-center justify-center rounded-full bg-[#ff5a12] text-white max-sm:size-12">
               <Check size={35} strokeWidth={4} aria-hidden="true" />
             </span>
           </div>
 
           <h1
             id="reset-complete-title"
-            className="mb-[25px] text-[32px] leading-tight font-medium text-[#071431] max-sm:text-2xl"
+            className="mb-6 text-3xl leading-tight font-medium text-[#071431] max-sm:text-2xl"
           >
             비밀번호가 변경되었습니다
           </h1>
-          <p className="mx-auto mb-[28px] max-w-[390px] text-[19px] leading-[1.55] font-medium text-[#65768f] max-sm:mb-6 max-sm:text-base">
+          <p className="mx-auto mb-7 max-w-96 text-xl leading-relaxed font-medium text-[#65768f] max-sm:mb-6 max-sm:text-base">
             새로운 비밀번호로 안전하게 변경되었습니다. 이제 다시 로그인하여 서비스를 이용하실 수 있습니다.
           </p>
 
-          <p className="mb-[34px] text-[16px] font-semibold text-[#8a96a8] max-sm:mb-7 max-sm:text-sm" role="status" aria-live="polite">
+          <p className="mb-9 text-sm font-semibold text-[#8a96a8] max-sm:mb-7" role="status" aria-live="polite">
             {remainingSeconds}초 후 로그인 페이지로 이동합니다.
           </p>
 
-          <button
-            className="inline-flex h-[62px] w-full items-center justify-center bg-[#ff4b11] text-[16px] font-medium tracking-[0.08em] text-white transition hover:bg-[#e83f09] max-sm:h-[56px] max-sm:text-sm"
+          <Button
+            className="tracking-[0.08em]"
             type="button"
+            variant="primary"
+            size="md"
+            fullWidth
             onClick={handleLoginClick}
           >
             로그인 페이지로 이동
-          </button>
+          </Button>
         </div>
 
-        <p className="mt-[52px] inline-flex items-center gap-2 text-[15px] font-bold tracking-[0.17em] text-[#b7bcc6] max-sm:mt-9 max-sm:text-xs">
+        <p className="mt-13 inline-flex items-center gap-2 text-sm font-bold tracking-[0.17em] text-[#b7bcc6] max-sm:mt-9 max-sm:text-xs">
           <ShieldCheck size={16} strokeWidth={2.2} aria-hidden="true" />
           SECURE CORPORATE PORTAL
         </p>
