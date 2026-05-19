@@ -63,7 +63,7 @@ const META_TAGS = {
   PURPOSES: [
     { id: 6, name: '나를 위한 구매' }, { id: 7, name: '선물용' }, { id: 8, name: '가족/아이' }, { id: 9, name: '업무/직장' }, { id: 10, name: '취미/여가' }
   ],
-  PREFERENCES: [
+  MERCHANDISING: [
     { id: 11, name: '가성비' }, { id: 12, name: '고품질' }, { id: 13, name: '실용적' }, { id: 14, name: '트렌디' }, { id: 15, name: '친환경' }
   ]
 };
@@ -85,8 +85,10 @@ function SignUpPage() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
   const [isCategoryUnknown, setIsCategoryUnknown] = useState(false);
   const [selectedPurposeId, setSelectedPurposeId] = useState(null);
-  const [selectedPreferenceIds, setSelectedPreferenceIds] = useState([]);
-  const [isPreferenceUnknown, setIsPreferenceUnknown] = useState(false);
+
+  const [selectedMerchandisingIds, setSelectedMerchandisingIds] = useState([]);
+  const [isMerchandisingUnknown, setIsMerchandisingUnknown] = useState(false);
+
   const [isJobRecommendEnabled, setIsJobRecommendEnabled] = useState(false);
 
   const hasPassword = password.length > 0
@@ -110,13 +112,13 @@ function SignUpPage() {
     setSelectedPurposeId(id === 'UNKNOWN' ? -1 : id);
   };
 
-  const togglePreference = (id) => {
+  const toggleMerchandising = (id) => {
     if (id === 'UNKNOWN') {
-      setIsPreferenceUnknown(true);
-      setSelectedPreferenceIds([]);
+      setIsMerchandisingUnknown(true);
+      setSelectedMerchandisingIds([]);
     } else {
-      setIsPreferenceUnknown(false);
-      setSelectedPreferenceIds(prev =>
+      setIsMerchandisingUnknown(false);
+      setSelectedMerchandisingIds(prev =>
         prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
       );
     }
@@ -125,11 +127,8 @@ function SignUpPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const lifestyleTagIds = [
-      ...selectedCategoryIds,
-      selectedPurposeId !== -1 ? selectedPurposeId : null,
-      ...selectedPreferenceIds
-    ].filter((id) => id !== null && id !== -1);
+    const validCategoryIds = selectedCategoryIds.filter(id => id !== null && id !== -1);
+    const validMerchandisingIds = selectedMerchandisingIds.filter(id => id !== null && id !== -1);
 
     const signupData = {
       email,
@@ -137,7 +136,9 @@ function SignUpPage() {
       name,
       ageRange,
       jobType,
-      lifestyleTagIds,
+      purposeId: selectedPurposeId !== -1 ? selectedPurposeId : null,
+      categoryTagIds: validCategoryIds,
+      merchandisingTagIds: validMerchandisingIds,
       isJobRecommendEnabled
     };
 
@@ -356,10 +357,10 @@ function SignUpPage() {
               </div>
               <div className={labelClass}><label id="label-preference">어떤 상품을 주로 선호하시나요? (중복 선택 가능)</label>
                 <div className="flex flex-wrap gap-2" role="group" aria-labelledby="label-preference">
-                  {META_TAGS.PREFERENCES.map(tag => (
-                    <button key={tag.id} type="button" onClick={() => togglePreference(tag.id)} className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[16px] font-semibold transition-all ${selectedPreferenceIds.includes(tag.id) ? 'bg-[#ff4b11]/10 text-[#ff4b11] border-[#ff4b11]' : 'bg-white text-[#4b515d] border-[#c7ccd6]'}`} aria-pressed={selectedPreferenceIds.includes(tag.id)}>{selectedPreferenceIds.includes(tag.id) && <Check size={16} aria-hidden="true" />}{tag.name}</button>
+                  {META_TAGS.MERCHANDISING.map(tag => (
+                    <button key={tag.id} type="button" onClick={() => toggleMerchandising(tag.id)} className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[16px] font-semibold transition-all ${selectedMerchandisingIds.includes(tag.id) ? 'bg-[#ff4b11]/10 text-[#ff4b11] border-[#ff4b11]' : 'bg-white text-[#4b515d] border-[#c7ccd6]'}`} aria-pressed={selectedMerchandisingIds.includes(tag.id)}>{selectedMerchandisingIds.includes(tag.id) && <Check size={16} aria-hidden="true" />}{tag.name}</button>
                   ))}
-                  <button type="button" onClick={() => togglePreference('UNKNOWN')} className={`px-4 py-2 rounded-full border text-[16px] font-semibold transition-all ${isPreferenceUnknown ? 'bg-[#ff4b11]/10 text-[#ff4b11] border-[#ff4b11]' : 'bg-white text-[#4b515d] border-[#c7ccd6]'}`} aria-pressed={isPreferenceUnknown}>모르겠어요</button>
+                  <button type="button" onClick={() => toggleMerchandising('UNKNOWN')} className={`px-4 py-2 rounded-full border text-[16px] font-semibold transition-all ${isMerchandisingUnknown ? 'bg-[#ff4b11]/10 text-[#ff4b11] border-[#ff4b11]' : 'bg-white text-[#4b515d] border-[#c7ccd6]'}`} aria-pressed={isMerchandisingUnknown}>모르겠어요</button>
                 </div>
               </div>
 
@@ -385,7 +386,7 @@ function SignUpPage() {
                 onChange={(e) => setIsJobRecommendEnabled(e.target.checked)}
               />
               <label htmlFor="signup-recommend-agree">
-                <span className="font-bold text-[#ff4b11]"></span> 나의 직종에 맞는 맞춤 상품 추천 서비스를 이용하겠습니다.
+                  <span className="font-bold text-[#ff4b11]"></span> 나의 직종에 맞는 맞춤 상품 추천 서비스를 이용하겠습니다.
               </label>
             </div>
 
