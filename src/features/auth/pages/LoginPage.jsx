@@ -4,11 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo.jsx'
 import { useAuthStore } from '../../../store/useAuthStore'
 import { toast } from 'react-toastify'
-import { Button, GlobalFooter, SocialLoginGroup } from '../../../common/components'
-import { startSocialLogin } from '../../../api/authApi.js';
-
-const inputClass =
-  'h-15 w-full rounded border border-border bg-white px-5 text-xl text-ink outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/15 max-sm:h-14 max-sm:text-base'
+import { Button, GlobalFooter, Input, SocialLoginGroup } from '../../../common/components'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -83,17 +79,18 @@ function LoginPage() {
               회사 이메일
             </label>
             <span className="block relative">
-              <input
+              <Input
                 id="login-email"
                 type="email"
+                size="xl"
                 placeholder="이름@회사.com"
                 autoComplete="email"
-                className={`${inputClass} ${email ? 'pr-14' : ''}`}
+                className={`${email ? 'pr-14' : ''}`}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
                 aria-required="true"
-                aria-invalid={isEmailInvalid}
+                invalid={isEmailInvalid}
                 aria-describedby={isEmailInvalid ? 'login-form-description login-email-error' : 'login-form-description'}
               />
               {email && <ClearButton label="회사 이메일 지우기" onClick={() => setEmail('')} />}
@@ -115,12 +112,13 @@ function LoginPage() {
               </Link>
             </div>
             <span className="block relative">
-              <input
+              <Input
                 id="login-password"
                 type={isPasswordVisible ? 'text' : 'password'}
+                size="xl"
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className={`${inputClass} pr-14`}
+                className={`pr-14`}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required

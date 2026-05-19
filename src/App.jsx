@@ -13,6 +13,7 @@ import ProductListPage from './features/shop/pages/ProductListPage.jsx'
 import SignUpPage from './features/auth/pages/SignUpPage.jsx'
 import { useAuthStore } from './store/useAuthStore';
 import SocialSuccessPage from './features/auth/pages/SocialSuccessPage.jsx';
+import RequireAuth from "./features/auth/RequireAuth.jsx";
 
 function LoginEntry() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -40,15 +41,17 @@ function App() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<LoginEntry />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/shop" element={<ProductListPage />} />
-        <Route path="/shop/:productId" element={<ProductDetailPage />} />
-        <Route path="/orders" element={<MyOrders />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/reset-password/complete" element={<ResetPasswordCompletePage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordConfirmPage />} />
         <Route path="/social-success" element={<SocialSuccessPage />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/shop" element={<ProductListPage />} />
+          <Route path="/shop/:productId" element={<ProductDetailPage />} />
+          <Route path="/orders" element={<MyOrders />} />
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ToastContainer

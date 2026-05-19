@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Circle, CircleAlert, CircleCheck, Eye, EyeOff } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import AuthLogo from '../components/AuthLogo'
+import AuthLogo from '../components/AuthLogo.jsx'
+import { Button } from '../../../common/components'
 
 const passwordPattern =
   '(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9])[\\s\\S]{8,16}'
@@ -25,16 +26,20 @@ const passwordRules = [
 ]
 
 const inputClass =
-  'h-[70px] w-full bg-[#eef2f7] px-8 pr-[72px] text-[20px] text-[#071431] outline-none placeholder:text-[#7d8796] focus:bg-white focus:ring-3 focus:ring-[#ff4b11]/20 max-sm:h-[58px] max-sm:px-5 max-sm:pr-[58px] max-sm:text-base'
+  'h-18 w-full bg-surface-muted px-8 pr-18 text-xl text-ink outline-none placeholder:text-muted focus:bg-surface focus:ring-3 focus:ring-brand/20 max-sm:h-14 max-sm:px-5 max-sm:pr-14 max-sm:text-base'
 
 function PasswordRequirementItem({ isActive, isValid, label }) {
   const Icon = !isActive ? Circle : isValid ? CircleCheck : CircleAlert
-  const statusClass = !isActive ? 'text-[#6f819a]' : isValid ? 'text-[#1f8a4c]' : 'text-[#bc210e]'
+  const statusClass = !isActive ? 'text-muted' : isValid ? 'text-success' : 'text-error'
+  const statusLabel = !isActive ? '' : isValid ? '충족' : '미충족'
 
   return (
-    <li className={`flex items-center gap-3 ${statusClass}`}>
-      <Icon className="size-[18px] shrink-0" strokeWidth={2.2} aria-hidden="true" />
-      <span>{label}</span>
+    <li
+      className={`flex items-center gap-3 ${statusClass}`}
+      aria-label={`${label}${statusLabel ? ` — ${statusLabel}` : ''}`}
+    >
+      <Icon className="size-5 shrink-0" strokeWidth={2.2} aria-hidden="true" />
+      <span aria-hidden="true">{label}</span>
     </li>
   )
 }
@@ -53,7 +58,7 @@ function PasswordInput({
   const VisibilityIcon = isVisible ? EyeOff : Eye
 
   return (
-    <div className="grid gap-3 text-[16px] font-bold text-[#071431] max-sm:text-sm">
+    <div className="grid gap-3 text-base font-bold text-ink max-sm:text-sm">
       <label htmlFor={id}>{label}</label>
       <span className="relative block">
         <input
@@ -75,7 +80,7 @@ function PasswordInput({
           title={passwordRequirement}
         />
         <button
-          className="absolute top-1/2 right-5 inline-flex -translate-y-1/2 items-center justify-center text-[#61718a] hover:text-[#071431] max-sm:right-4"
+          className="absolute top-1/2 right-5 inline-flex -translate-y-1/2 items-center justify-center text-muted hover:text-ink max-sm:right-4"
           type="button"
           onClick={onToggleVisibility}
           aria-label={isVisible ? `${label} 숨기기` : `${label} 보기`}
@@ -106,8 +111,8 @@ function ResetPasswordConfirmPage() {
   const isPasswordValid = passwordRules.every((rule) => rule.validate(password))
   const isPasswordConfirmValid = hasPasswordConfirm && password === passwordConfirm
   const canSubmit = isPasswordValid && isPasswordConfirmValid
-  const passwordDescriptionIds = 'reset-confirm-description reset-password-requirements'
-  const passwordConfirmDescriptionIds = 'reset-confirm-description reset-password-requirements reset-password-match-error'
+  const passwordDescriptionIds = 'reset-confirm-description reset-password-hint'
+  const passwordConfirmDescriptionIds = 'reset-confirm-description reset-password-match-error'
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -120,13 +125,8 @@ function ResetPasswordConfirmPage() {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/password-reset/confirm`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: token,
-          newPassword: password
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, newPassword: password }),
       })
 
       if (!response.ok) {
@@ -141,20 +141,20 @@ function ResetPasswordConfirmPage() {
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-[#fbfafa] px-5 py-16 text-[#071431] max-sm:px-4 max-sm:py-8">
+    <main className="flex min-h-svh items-center justify-center bg-page px-5 py-16 text-ink max-sm:px-4 max-sm:py-8">
       <a className="skip-link" href="#reset-confirm-content">
         본문으로 건너뛰기
       </a>
-      <section id="reset-confirm-content" className="w-full max-w-[610px]" aria-labelledby="reset-confirm-title">
+      <section id="reset-confirm-content" className="w-full max-w-152" aria-labelledby="reset-confirm-title">
         <div className="mb-11 grid justify-items-center gap-2 max-sm:mb-7">
-          <AuthLogo className="h-[58px] max-sm:h-12" linkClassName="inline-flex w-fit items-center" to="/" />
-          <p className="m-0 text-[15px] font-extrabold tracking-[0.1em] text-[#4b515d] max-sm:text-xs">
+          <AuthLogo className="h-14 max-sm:h-12" linkClassName="inline-flex w-fit items-center" to="/" />
+          <p className="m-0 text-sm font-extrabold tracking-widest text-muted max-sm:text-xs">
             임직원 전용 플랫폼
           </p>
         </div>
 
         <form
-          className="border border-[#c7ccd6] bg-white px-[55px] pt-[58px] pb-[61px] shadow-[0_1px_2px_rgba(7,20,49,0.08)] max-sm:px-6 max-sm:py-9"
+          className="border border-border bg-surface px-14 pt-14 pb-15 shadow-card max-sm:px-6 max-sm:py-9"
           onSubmit={handleSubmit}
           data-reset-token={token}
           noValidate
@@ -171,14 +171,19 @@ function ResetPasswordConfirmPage() {
             tabIndex={-1}
             aria-hidden="true"
           />
-          <div className="mb-[57px] text-center max-sm:mb-9">
-            <h1 id="reset-confirm-title" className="mb-8 text-[38px] leading-tight font-medium text-[#071431] max-sm:mb-5 max-sm:text-3xl">
+
+          <div className="mb-14 text-center max-sm:mb-9">
+            <h1 id="reset-confirm-title" className="mb-8 text-4xl leading-tight font-medium text-ink max-sm:mb-5 max-sm:text-3xl">
               비밀번호 재설정
             </h1>
-            <p id="reset-confirm-description" className="mx-auto max-w-[420px] text-[20px] leading-[1.55] text-[#6b7c96] max-sm:text-base">
+            <p id="reset-confirm-description" className="mx-auto max-w-105 text-xl leading-relaxed text-muted max-sm:text-base">
               계정 보안을 위해 새로운 비밀번호를 설정해 주세요.
             </p>
           </div>
+
+          <p id="reset-password-hint" className="sr-only">
+            영문 대문자와 소문자, 숫자, 특수문자를 포함해 8자 이상 16자 이하로 입력해 주세요.
+          </p>
 
           <div className="grid gap-6">
             <PasswordInput
@@ -204,17 +209,23 @@ function ResetPasswordConfirmPage() {
               onToggleVisibility={() => setIsPasswordConfirmVisible((current) => !current)}
             />
           </div>
+
           <p id="reset-password-match-error" className="sr-only">
             새 비밀번호 확인 입력값은 새 비밀번호와 일치해야 합니다.
           </p>
 
           <div
             id="reset-password-requirements"
-            className="mt-6 rounded border border-[#dde3ec] bg-[#fffafa] px-5 py-5 text-[18px] leading-relaxed text-[#6f819a] max-sm:text-sm"
-            aria-live="polite"
+            className="mt-6 rounded border border-border-soft bg-[#fffafa] px-5 py-5 text-body-lg leading-relaxed text-muted max-sm:text-sm"
           >
-            <p className="mb-2 font-extrabold text-[#071431]">비밀번호 요구사항:</p>
-            <ul className="grid gap-1.5">
+            <p className="mb-2 font-extrabold text-ink" aria-hidden="true">비밀번호 요구사항:</p>
+            <ul
+              className="grid gap-1.5"
+              aria-label="비밀번호 요구사항"
+              aria-live="polite"
+              aria-atomic="false"
+              aria-relevant="text"
+            >
               {passwordRules.map((rule) => (
                 <PasswordRequirementItem
                   key={rule.label}
@@ -231,20 +242,24 @@ function ResetPasswordConfirmPage() {
             </ul>
           </div>
 
-          <button
-            className="mt-[55px] inline-flex h-[78px] w-full items-center justify-center bg-[#ff4b11] text-[27px] font-medium text-white transition hover:bg-[#e83f09] disabled:cursor-not-allowed disabled:bg-[#ffb199] max-sm:mt-9 max-sm:h-[60px] max-sm:text-xl"
+          <Button
+            className="mt-10 max-sm:mt-9"
             type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
             disabled={!canSubmit}
             aria-disabled={!canSubmit}
           >
             비밀번호 변경하기
-          </button>
+          </Button>
+
           <p className="sr-only" role="status" aria-live="polite">
             {statusMessage}
           </p>
 
           <Link
-            className="mx-auto mt-[48px] flex w-fit items-center gap-2 text-[17px] font-semibold text-[#071431] max-sm:mt-8 max-sm:text-sm"
+            className="mx-auto mt-12 flex w-fit items-center gap-2 text-base font-semibold text-ink max-sm:mt-8 max-sm:text-sm"
             to="/"
           >
             <ArrowLeft size={19} aria-hidden="true" />
