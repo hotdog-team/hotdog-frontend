@@ -147,7 +147,7 @@ function ResetPasswordConfirmPage() {
       </a>
       <section id="reset-confirm-content" className="w-full max-w-152" aria-labelledby="reset-confirm-title">
         <div className="mb-11 grid justify-items-center gap-2 max-sm:mb-7">
-          <AuthLogo className="h-14 max-sm:h-12" linkClassName="inline-flex w-fit items-center" to="/" />
+          <AuthLogo className="h-14 max-sm:h-12" />
           <p className="m-0 text-sm font-extrabold tracking-widest text-muted max-sm:text-xs">
             임직원 전용 플랫폼
           </p>

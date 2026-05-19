@@ -1,18 +1,7 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
+import { apiFetch } from './apiClient.js'
 
 export async function fetchPopularSearchKeywords() {
-  const response = await fetch(`${BASE_URL}/api/search/popular`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(`API ${response.status} ${response.statusText}`)
-  }
-
-  const responseBody = await response.json()
+  const responseBody = await apiFetch('/api/search/popular')
 
   return Array.isArray(responseBody)
     ? responseBody

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { GlobalFooter, GlobalHeader, ProductCard } from '../../../common/components'
+import { ProductCard } from '../../../common/components'
 import { productCatalog } from '../../shop/data/catalog'
 
 const HERO_CAROUSEL_INTERVAL = 5000
@@ -183,10 +183,7 @@ function HomePage() {
   const homeProducts = productCatalog.slice(0, 6)
 
   return (
-    <div className="min-h-svh bg-[#fbfaf9] text-[#071431]">
-      <GlobalHeader />
-
-      <main>
+    <>
         <HeroBanner slides={heroSlides} />
 
         <section className="mx-auto mt-16 w-full max-w-[1110px] px-6 max-sm:px-4">
@@ -218,10 +215,7 @@ function HomePage() {
             ))}
           </div>
         </section>
-      </main>
-
-      <GlobalFooter />
-    </div>
+    </>
   )
 }
 
