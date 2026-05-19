@@ -36,9 +36,7 @@ export async function apiFetch(path, options = {}) {
     try {
       const err = await response.json();
       message = err.detail ?? err.message ?? message;
-    } catch {
-      // ignore non-JSON error body
-    }
+    } catch {}
     throw new Error(message);
   }
 
