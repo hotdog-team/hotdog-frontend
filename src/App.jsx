@@ -65,6 +65,8 @@ function App() {
         closeOnClick
         pauseOnHover
         theme="light"
+        role="status"
+        aria-live="polite"
       />
     </>
   )
