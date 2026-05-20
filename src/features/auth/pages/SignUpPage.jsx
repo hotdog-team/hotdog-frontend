@@ -7,9 +7,9 @@ import { signup } from '../../../api/authApi.js'
 import { Button } from '../../../common/components'
 
 const fieldClass =
-  'h-15 w-full border border-border bg-surface px-8 text-xl text-ink outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/15 max-sm:h-14 max-sm:px-4 max-sm:text-body'
+  'h-input-lg w-full border border-border bg-surface px-8 text-xl text-ink outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/15 max-sm:h-14 max-sm:px-4 max-sm:text-body'
 
-const labelClass = 'grid gap-2.5 text-sm font-extrabold tracking-[0.08em] text-ink uppercase'
+const labelClass = 'grid gap-2.5 text-sm font-extrabold tracking-label text-ink uppercase'
 
 const passwordPattern =
   '(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};\':"\\\\|,.<>/?])[A-Za-z\\d!@#$%^&*()_+\\-=\\[\\]{};\':"\\\\|,.<>/?]{8,16}'
@@ -171,7 +171,7 @@ function SignUpPage() {
   return (
     <main className="flex min-h-svh flex-col bg-page text-body">
       <section
-        className="mx-auto w-full max-w-155 flex-1 px-5 pt-24 pb-16 max-sm:px-4 max-sm:pt-14 max-sm:pb-10"
+        className="layout-container-auth layout-container-auth--lg flex flex-1 flex-col pt-24 pb-16 max-sm:pt-14 max-sm:pb-10"
         aria-labelledby="signup-title"
       >
         <AuthLogo className="mx-auto mb-16 h-12 max-sm:mb-12 max-sm:h-10" />

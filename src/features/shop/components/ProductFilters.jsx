@@ -91,12 +91,12 @@ function ProductFilters({
     <aside className="grid content-start gap-10">
       {categoryOptions.length > 0 && (
         <section>
-          <h2 className="mb-5 text-[16px] font-bold">카테고리</h2>
+          <h2 className="mb-5 text-body font-bold">카테고리</h2>
           <div className="grid gap-4">
             {categoryOptions.map((item) => (
-              <label className="flex items-center gap-3 text-[15px]" key={item.code}>
+              <label className="flex items-center gap-3 text-body" key={item.code}>
                 <input
-                  className="size-5 accent-[#071431]"
+                  className="size-5 accent-ink"
                   type="checkbox"
                   checked={category ? item.code === category.code : (filters.categoryCodes ?? []).includes(item.code)}
                   readOnly={Boolean(onCategorySelect)}
@@ -117,15 +117,15 @@ function ProductFilters({
       )}
 
       <section>
-        <h2 className="mb-5 text-[16px] font-bold">가격 범위</h2>
-        <div className="h-1 rounded-full bg-[#d8dde6]">
-          <div className="h-1 w-2/3 rounded-full bg-[#071431]" />
+        <h2 className="mb-5 text-body font-bold">가격 범위</h2>
+        <div className="h-1 rounded-full bg-border-soft">
+          <div className="h-1 w-2/3 rounded-full bg-ink" />
         </div>
         <div className="mt-5 flex gap-3">
           <label className="min-w-0 flex-1">
             <span className="sr-only">최소 가격</span>
             <input
-              className="w-full border border-[#c7ccd6] bg-white px-4 py-3 text-[13px] font-bold text-[#071431] outline-none focus:border-[#071431]"
+              className="w-full border border-border bg-surface px-4 py-3 text-caption font-bold text-ink outline-none focus:border-ink"
               type="number"
               min={priceBounds.min}
               max={priceBounds.max}
@@ -136,7 +136,7 @@ function ProductFilters({
           <label className="min-w-0 flex-1">
             <span className="sr-only">최대 가격</span>
             <input
-              className="w-full border border-[#c7ccd6] bg-white px-4 py-3 text-[13px] font-bold text-[#071431] outline-none focus:border-[#071431]"
+              className="w-full border border-border bg-surface px-4 py-3 text-caption font-bold text-ink outline-none focus:border-ink"
               type="number"
               min={priceBounds.min}
               max={priceBounds.max}
@@ -148,12 +148,12 @@ function ProductFilters({
       </section>
 
       <section>
-        <h2 className="mb-5 text-[16px] font-bold">브랜드</h2>
+        <h2 className="mb-5 text-body font-bold">브랜드</h2>
         <div className="grid gap-4">
           {availableBrands.map((brand) => (
-            <label className="flex items-center gap-3 text-[15px]" key={brand}>
+            <label className="flex items-center gap-3 text-body" key={brand}>
               <input
-                className="size-5 accent-[#071431]"
+                className="size-5 accent-ink"
                 type="checkbox"
                 checked={filters.brands.includes(brand)}
                 onChange={() => toggleBrand(brand)}
@@ -165,14 +165,14 @@ function ProductFilters({
       </section>
 
       <section>
-        <h2 className="mb-5 text-[16px] font-bold">특징</h2>
+        <h2 className="mb-5 text-body font-bold">특징</h2>
         <div className="flex flex-wrap gap-2">
           {availableFeatures.map((feature) => {
             const isSelected = filters.features.includes(feature)
 
             return (
               <button
-                className={`rounded-full border px-4 py-2 text-[13px] ${isSelected ? 'border-[#071431] bg-[#edf4ff]' : 'border-[#c7ccd6] bg-white'}`}
+                className={`rounded-full border px-4 py-2 text-caption ${isSelected ? 'border-ink bg-surface-muted' : 'border-border bg-surface'}`}
                 type="button"
                 key={feature}
                 aria-pressed={isSelected}

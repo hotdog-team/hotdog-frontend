@@ -59,7 +59,7 @@ export const socialLoginIcons = {
 }
 
 export const socialLoginStyles = {
-  naver: 'rounded-lg bg-[#03A94D] text-white hover:bg-[#029744]',
-  kakao: 'rounded-lg bg-[#FFCD00] text-[#191600] hover:bg-[#FFC100]',
-  google: 'rounded-xl bg-white text-[#121212] hover:bg-[#fafafa] shadow-social',
+  naver: 'rounded-lg bg-naver text-white hover:bg-naver-hover',
+  kakao: 'rounded-lg bg-kakao text-kakao-ink hover:bg-kakao-hover',
+  google: 'rounded-xl bg-surface text-google-ink hover:bg-surface-muted shadow-social',
 }

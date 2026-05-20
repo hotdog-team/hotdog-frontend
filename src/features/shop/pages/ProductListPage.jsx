@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { fetchCategories } from '../../../api/categoryApi'
-import { GlobalFooter, GlobalHeader, ProductCard } from '../../../common/components'
+import { Button, ProductCard } from '../../../common/components'
 import { useCategoryProductsQuery, useProductsQuery } from '../../../hooks/queries/useProductQuery'
 import ProductFilters from '../components/ProductFilters'
 import {
@@ -110,17 +110,17 @@ function ProductGrid({
   const title = query ? `'${query}' 검색 결과` : category.label
 
   return (
-    <main className="mx-auto w-full max-w-[1110px] px-6 pt-10 pb-24 max-sm:px-4">
+    <main className="layout-container pt-10 pb-24">
       <div className="mb-10 flex items-end justify-between gap-6 max-md:flex-col max-md:items-start">
         <div>
-          <p className="text-[13px] text-[#657186]">홈 〉 {category.navLabel}</p>
-          <h1 className="mt-5 text-[34px] font-medium">{title}</h1>
-          {category.description && <p className="mt-4 text-[17px] text-[#4b515d]">{category.description}</p>}
+          <p className="text-caption text-muted">홈 〉 {category.navLabel}</p>
+          <h1 className="mt-5 text-3xl font-medium">{title}</h1>
+          {category.description && <p className="mt-4 text-body-lg text-body">{category.description}</p>}
         </div>
-        <label className="flex items-center gap-3 text-[14px]">
-          <span className="text-[#7b8798]">정렬 기준:</span>
+        <label className="flex items-center gap-3 text-body-sm">
+          <span className="text-muted">정렬 기준:</span>
           <select
-            className="h-11 rounded border border-[#c7ccd6] bg-white px-4 text-[#071431]"
+            className="h-11 rounded border border-border bg-surface px-4 text-ink"
             value={sort}
             onChange={(event) => onSortChange(event.target.value)}
           >
@@ -133,20 +133,20 @@ function ProductGrid({
 
       {category.image && (
         <section
-          className="mb-14 h-[296px] overflow-hidden rounded-md bg-[#071431] px-10 pt-[104px] text-white"
+          className="mb-14 h-banner overflow-hidden rounded-md bg-ink px-10 pt-hero-inset text-white"
           style={{
-            backgroundImage: `linear-gradient(90deg, rgba(3,17,43,0.92), rgba(3,17,43,0.44)), url(${category.image})`,
+            backgroundImage: `linear-gradient(90deg, color-mix(in srgb, var(--color-navy) 92%, transparent), color-mix(in srgb, var(--color-navy) 44%, transparent)), url(${category.image})`,
             backgroundPosition: 'center',
             backgroundSize: 'cover',
           }}
         >
-          <span className="rounded-sm bg-[#d84a0a] px-3 py-2 text-[11px] font-bold">시즌 이벤트</span>
-          <h2 className="mt-5 text-[28px] font-light">{category.heroTitle}</h2>
-          <p className="mt-4 max-w-[520px] text-[15px] leading-6 text-[#ecf1f8]">{category.heroDescription}</p>
+          <span className="rounded-sm bg-brand px-3 py-2 text-caption font-bold">시즌 이벤트</span>
+          <h2 className="mt-5 text-2xl font-light">{category.heroTitle}</h2>
+          <p className="mt-4 max-w-prose text-body leading-6 text-on-navy-muted">{category.heroDescription}</p>
         </section>
       )}
 
-      <div className="grid grid-cols-[240px_1fr] gap-10 max-lg:grid-cols-1">
+      <div className="a11y-grid-sidebar grid grid-cols-sidebar gap-10 max-lg:grid-cols-1">
         <ProductFilters
           availableBrands={availableBrands}
           availableFeatures={availableFeatures}
@@ -161,38 +161,38 @@ function ProductGrid({
 
         <section>
           {isLoading && (
-            <div className="rounded border border-[#dfe6ef] bg-white px-6 py-10 text-center text-[15px] text-[#657186]">
+            <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-body text-muted">
               상품을 불러오는 중입니다.
             </div>
           )}
 
           {error && (
-            <div className="rounded border border-[#f0b8aa] bg-white px-6 py-10 text-center text-[15px] text-[#8a2f1d]">
+            <div className="rounded border border-error-border bg-surface px-6 py-10 text-center text-body text-error">
               <p>상품 목록을 불러오지 못했습니다.</p>
-              <button className="mt-4 rounded-sm bg-[#071431] px-5 py-2 text-[13px] font-bold text-white" type="button" onClick={onRetry}>
+              <Button className="mt-4" type="button" variant="secondary" size="sm" onClick={onRetry}>
                 다시 시도
-              </button>
+              </Button>
             </div>
           )}
 
           {!isLoading && !error && (
             <>
-              <p className="mb-6 text-[14px] font-semibold text-[#4b515d]">
+              <p className="mb-6 text-body-sm font-semibold text-body">
                 총 {totalElements}개 상품 중 {visibleStart}-{visibleEnd}개 표시
               </p>
-              <div className="grid grid-cols-3 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
+              <div className="a11y-grid-products grid grid-cols-3 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />
                 ))}
               </div>
               {filteredProducts.length === 0 && (
-                <div className="rounded border border-[#dfe6ef] bg-white px-6 py-10 text-center text-[15px] text-[#657186]">
+                <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-body text-muted">
                   선택한 조건과 일치하는 상품이 없습니다.
                 </div>
               )}
               <nav className="mt-16 flex justify-center gap-3" aria-label="상품 페이지">
                 <button
-                  className="inline-flex size-10 items-center justify-center rounded border border-[#c7ccd6] bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex size-10 items-center justify-center rounded border border-border bg-surface disabled:cursor-not-allowed disabled:opacity-40"
                   type="button"
                   aria-label="이전 페이지"
                   disabled={page === 0}
@@ -202,7 +202,7 @@ function ProductGrid({
                 </button>
                 {Array.from({ length: totalPages }, (_, index) => index).map((pageIndex) => (
                   <button
-                    className={`inline-flex size-10 items-center justify-center rounded border ${pageIndex === page ? 'border-[#071431] bg-[#071431] text-white' : 'border-[#c7ccd6] bg-white'}`}
+                    className={`inline-flex size-10 items-center justify-center rounded border ${pageIndex === page ? 'border-ink bg-ink text-surface' : 'border-border bg-surface'}`}
                     type="button"
                     key={pageIndex}
                     aria-current={pageIndex === page ? 'page' : undefined}
@@ -212,7 +212,7 @@ function ProductGrid({
                   </button>
                 ))}
                 <button
-                  className="inline-flex size-10 items-center justify-center rounded border border-[#c7ccd6] bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex size-10 items-center justify-center rounded border border-border bg-surface disabled:cursor-not-allowed disabled:opacity-40"
                   type="button"
                   aria-label="다음 페이지"
                   disabled={page >= totalPages - 1}
@@ -341,15 +341,7 @@ function ProductListPage() {
     )
   }
 
-  return (
-    <div className="flex min-h-svh flex-col bg-[#fbfaf9] text-[#071431]">
-      <GlobalHeader activeCategory={categoryId ? category?.navLabel : '검색 결과'} />
-      <div className="flex-1">
-        {content}
-      </div>
-      <GlobalFooter />
-    </div>
-  )
+  return content
 }
 
 export default ProductListPage

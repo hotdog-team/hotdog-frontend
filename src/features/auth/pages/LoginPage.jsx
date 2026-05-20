@@ -46,9 +46,9 @@ function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-svh flex-col bg-[linear-gradient(90deg,rgba(255,255,255,0.98)_0%,rgba(255,250,247,0.94)_100%)] text-body">
+    <main className="flex min-h-svh flex-col bg-page text-body">
       <section
-        className="mx-auto w-full max-w-140 flex-1 px-5 pt-12 pb-16 text-center max-sm:px-4 max-sm:pt-10 max-sm:pb-10"
+        className="layout-container-auth flex flex-1 flex-col pt-12 pb-16 text-center max-sm:pt-10 max-sm:pb-10"
         aria-labelledby="login-title"
       >
         <AuthLogo className="mx-auto mb-12 h-9 max-sm:mb-8 max-sm:h-8" />
@@ -59,12 +59,12 @@ function LoginPage() {
         >
           다시 오신 것을 환영합니다
         </h1>
-        <p className="mb-14 text-2xl leading-snug text-[#252938] max-sm:mb-8 max-sm:text-lg">
+        <p className="mb-14 text-2xl leading-snug text-body max-sm:mb-8 max-sm:text-lg">
           임직원 전용 혜택을 확인하세요.
         </p>
 
         <form
-          className="min-h-205 w-full border border-border bg-white px-12 py-12 text-left shadow-card max-sm:min-h-0 max-sm:px-5.5 max-sm:pt-8 max-sm:pb-4"
+          className="min-h-205 w-full border border-border bg-surface px-12 py-12 text-left shadow-card max-sm:min-h-0 max-sm:px-5.5 max-sm:pt-8 max-sm:pb-4"
           aria-describedby="login-form-description"
           onSubmit={handleSubmit}
         >
@@ -141,7 +141,7 @@ function LoginPage() {
 
           <SocialLoginGroup />
 
-          <p className="mt-10 text-center text-lg text-[#2d3038] max-sm:mt-8 max-sm:text-sm">
+          <p className="mt-10 text-center text-lg text-body max-sm:mt-8 max-sm:text-sm">
             계정이 없으신가요?{' '}
             <Link className="font-extrabold text-ink" to="/signup">
               회원가입
@@ -149,7 +149,7 @@ function LoginPage() {
           </p>
         </form>
 
-        <p className="mt-12.5 text-center text-sm font-bold text-[#8b9099]">
+        <p className="mt-12.5 text-center text-sm font-bold text-muted">
           인증된 임직원 전용 비공개 스토어
         </p>
       </section>

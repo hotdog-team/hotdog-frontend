@@ -14,7 +14,7 @@ const DEFAULT_CATEGORIES = [
 ]
 
 const focusRingClass =
-  'focus-ring rounded-sm focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-surface'
+  'focus-ring rounded-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-surface'
 
 const categoryNavLinkBase =
   'focus-ring focus-ring-inset inline-flex items-center px-1 pt-2 pb-1 text-base font-medium transition-[color,box-shadow] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink'
@@ -136,7 +136,7 @@ function GlobalHeader({
 
   return (
     <header className="relative z-40 border-b border-border-soft bg-surface">
-      <div className="mx-auto flex min-h-20 w-full max-w-7xl min-w-0 items-center gap-7 px-6 max-lg:max-w-none max-lg:flex-wrap max-lg:gap-x-6 max-lg:gap-y-3 max-lg:py-4 max-sm:px-4">
+      <div className="layout-container-header flex min-h-20 min-w-0 items-center gap-7 max-lg:flex-wrap max-lg:gap-x-6 max-lg:gap-y-3 max-lg:py-4">
         <Link
           className={`inline-flex shrink-0 items-center rounded-md ${focusRingClass}`}
           to="/home"
@@ -166,7 +166,7 @@ function GlobalHeader({
         </nav>
 
         <form
-          className="ml-auto w-full min-w-64 max-w-96 max-lg:order-last max-lg:max-w-none max-sm:min-w-0"
+          className="ml-auto w-full min-w-64 max-w-copy max-lg:order-last max-lg:max-w-none max-sm:min-w-0"
           role="search"
           onSubmit={handleSubmit}
         >

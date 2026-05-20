@@ -11,7 +11,7 @@ const inputVariants = {
         sm: 'h-9 px-4 text-sm font-medium',
         md: 'h-11 px-5 text-body',
         lg: 'h-14 px-5 text-body-lg max-sm:text-base',
-        xl: 'h-15 px-5 text-xl max-sm:h-14 max-sm:text-base',
+        xl: 'h-input-lg px-5 text-xl max-sm:h-14 max-sm:text-base',
     },
 }
 
