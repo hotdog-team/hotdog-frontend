@@ -155,12 +155,24 @@
 /* Accessibility (AccessibilityContext → html data-* )                        */
 /* -------------------------------------------------------------------------- */
 @layer base {
+  html[data-font-step="1"] {
+    font-size: 100%;
+  }
+
   html[data-font-step="2"] {
-    font-size: 106.25%;
+    font-size: 112.5%;
   }
 
   html[data-font-step="3"] {
-    font-size: 112.5%;
+    font-size: 125%;
+  }
+
+  html[data-font-step="4"] {
+    font-size: 150%;
+  }
+
+  html[data-font-step="5"] {
+    font-size: 200%;
   }
 
   html[data-high-contrast="true"] {
@@ -196,16 +208,61 @@
   html[data-screen-reader="true"] {
     --shadow-card: none;
     --shadow-card-hover: none;
+    --shadow-social: none;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    html[data-screen-reader="true"] *,
-    html[data-screen-reader="true"] *::before,
-    html[data-screen-reader="true"] *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
+  /* 스크린리더 최적화: OS 설정 없이도 모션·전환 최소화 */
+  html[data-screen-reader="true"] *,
+  html[data-screen-reader="true"] *::before,
+  html[data-screen-reader="true"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html[data-high-contrast="true"] img {
+    filter: contrast(1.05);
+  }
+
+  /* 큰 글씨(4~5단계)에서 다열 그리드 붕괴 방지 */
+  html[data-font-step="4"] .a11y-grid-products,
+  html[data-font-step="5"] .a11y-grid-products {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html[data-font-step="4"] .a11y-grid-sidebar,
+  html[data-font-step="5"] .a11y-grid-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html[data-font-step="4"] .a11y-grid-2col,
+  html[data-font-step="5"] .a11y-grid-2col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html[data-font-step="5"] .a11y-grid-4col,
+  html[data-font-step="5"] .a11y-grid-5col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@layer utilities {
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  .motion-safe-transition {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html[data-screen-reader="true"] .motion-safe-transition {
+    transition: none;
   }
 }

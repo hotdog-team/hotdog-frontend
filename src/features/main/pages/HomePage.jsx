@@ -56,10 +56,10 @@ function SectionHeader({ eyebrow, title }) {
   return (
     <div className="flex gap-5 justify-between items-end mb-8">
       <div>
-        <p className="mb-1 text-[12px] font-bold tracking-[0.08em] text-[#ff4b11]">{eyebrow}</p>
-        <h2 className="text-[22px] leading-tight font-medium text-[#071431]">{title}</h2>
+        <p className="mb-1 text-[12px] font-bold tracking-[0.08em] text-brand">{eyebrow}</p>
+        <h2 className="text-[22px] leading-tight font-medium text-ink">{title}</h2>
       </div>
-      <Link className="shrink-0 text-[13px] font-medium text-[#071431] hover:text-[#ff4b11]" to="/shop">
+      <Link className="shrink-0 text-[13px] font-medium text-ink hover:text-brand" to="/shop">
         전체 보기
       </Link>
     </div>
@@ -68,23 +68,23 @@ function SectionHeader({ eyebrow, title }) {
 
 function ReviewCard({ product, copy }) {
   return (
-    <article className="overflow-hidden rounded-md border border-[#dfe6ef] bg-white">
-      <div className="relative aspect-square overflow-hidden bg-[#f2f5f8]">
-        <img className="object-cover w-full h-full" src={product.image} alt={product.name} />
-        <span className="absolute right-2 bottom-2 rounded-sm bg-[#071431]/75 px-1.5 py-0.5 text-[10px] font-bold text-white">
+    <article className="overflow-hidden rounded-md border border-border-soft bg-surface">
+      <div className="relative aspect-square overflow-hidden bg-surface-muted">
+        <img className="h-full w-full object-cover" src={product.image} alt="" />
+        <span className="absolute bottom-2 right-2 rounded-sm bg-navy/75 px-1.5 py-0.5 text-caption font-bold text-surface">
           +1
         </span>
       </div>
       <div className="px-4 py-4">
-        <p className="line-clamp-3 min-h-[54px] text-[12px] leading-[1.5] text-[#2f3a4b]">{copy}</p>
-        <div className="mt-4 flex items-center gap-3 border-t border-[#edf1f5] pt-3">
+        <p className="line-clamp-3 min-h-[4.5rem] text-body-sm leading-snug text-body">{copy}</p>
+        <div className="mt-4 flex items-center gap-3 border-t border-border-soft pt-3">
           <img className="object-cover rounded-sm size-8" src={product.image} alt="" aria-hidden="true" />
           <div className="min-w-0">
-            <h3 className="truncate text-[11px] font-extrabold text-[#071431]">{product.name}</h3>
-            <p className="mt-0.5 text-[10px] font-semibold text-[#7b8798]">
-              <span className="text-[#ff4b11]">★ {product.rating}</span>
-              <span className="mx-1">|</span>
-              리뷰 {product.reviews}
+            <h3 className="truncate text-body-sm font-extrabold text-ink">{product.name}</h3>
+            <p className="mt-0.5 text-caption font-semibold text-muted">
+              <span className="text-brand">★ {product.rating}</span>
+              <span className="mx-1" aria-hidden="true">|</span>
+              <span>리뷰 {product.reviews}</span>
             </p>
           </div>
         </div>
@@ -114,8 +114,8 @@ function HeroBanner({ slides }) {
   }
 
   return (
-    <section className="relative left-1/2 w-screen -translate-x-1/2">
-      <div className="relative h-[383px] w-full overflow-hidden bg-[#071431] text-white max-sm:h-[470px]">
+    <section className="w-full">
+      <div className="relative h-[383px] w-full overflow-hidden bg-navy text-white max-sm:h-[470px]">
         {slides.map((slide, index) => (
           <div
             key={slide.id}
@@ -138,7 +138,7 @@ function HeroBanner({ slides }) {
                   index === activeSlideIndex ? 'relative opacity-100' : 'pointer-events-none absolute inset-0 opacity-0'
                 }`}
               >
-                <p className="mb-5 inline-flex h-5 min-w-[460px] items-center bg-[#ff4b11] px-3 text-[11px] font-bold tracking-[0.08em] max-sm:min-w-0 max-sm:w-full">
+                <p className="mb-5 inline-flex h-5 max-w-full items-center bg-brand px-3 text-[11px] font-bold tracking-[0.08em] max-md:min-w-0 max-md:w-full">
                   {slide.label}
                 </p>
                 <h1 className="text-[48px] leading-[1.12] font-light tracking-[0.04em] max-md:text-[40px] max-sm:text-[34px]">
@@ -148,7 +148,7 @@ function HeroBanner({ slides }) {
                   {slide.description}
                 </p>
                 <div className="flex flex-wrap gap-3 mt-8">
-                  <Link className="inline-flex h-12 items-center justify-center rounded-sm bg-[#ff4b11] px-8 text-[14px] font-bold text-white hover:bg-[#e8430d]" to={slide.primaryCta.to}>
+                  <Link className="inline-flex h-12 items-center justify-center rounded-sm bg-brand px-8 text-[14px] font-bold text-white hover:bg-brand-hover" to={slide.primaryCta.to}>
                     {slide.primaryCta.label}
                   </Link>
                   <Link className="inline-flex h-12 items-center justify-center rounded-sm border border-white/35 px-8 text-[14px] font-bold text-white hover:bg-white/10" to={slide.secondaryCta.to}>
@@ -164,7 +164,7 @@ function HeroBanner({ slides }) {
           {slides.map((slide, index) => (
             <button
               key={slide.id}
-              className={`size-2 rounded-full transition-colors ${index === activeSlideIndex ? 'bg-[#ff4b11]' : 'bg-white/45 hover:bg-white/75'}`}
+              className={`size-2 rounded-full transition-colors ${index === activeSlideIndex ? 'bg-brand' : 'bg-white/45 hover:bg-white/75'}`}
               type="button"
               aria-label={`${index + 1}번째 배너 보기`}
               aria-current={index === activeSlideIndex ? 'true' : undefined}
@@ -188,7 +188,7 @@ function HomePage() {
 
         <section className="mx-auto mt-16 w-full max-w-[1110px] px-6 max-sm:px-4">
           <SectionHeader eyebrow="최신 상품" title="신규 입고" />
-          <div className="grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
+          <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
             {homeProducts.slice(0, 4).map((product) => (
               <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />
             ))}
@@ -197,19 +197,19 @@ function HomePage() {
 
         <section className="mx-auto mt-16 w-full max-w-[1110px] px-6 max-sm:px-4">
           <SectionHeader eyebrow="임직원 추천" title="베스트 셀러" />
-          <div className="grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
+          <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
             {homeProducts.slice(4).map((product) => (
               <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />
             ))}
           </div>
         </section>
 
-        <section className="mx-auto mt-24 w-full max-w-[1110px] border-t border-[#dfe6ef] px-6 pt-12 pb-44 max-sm:px-4 max-sm:pb-24">
+        <section className="mx-auto mt-24 w-full max-w-[1110px] border-t border-border-soft px-6 pt-12 pb-44 max-sm:px-4 max-sm:pb-24">
           <div className="mb-10 text-center">
-            <h2 className="text-[24px] font-medium text-[#071431]">생생한 구매 후기</h2>
-            <span className="mx-auto mt-3 block h-0.5 w-16 bg-[#ff4b11]" aria-hidden="true" />
+            <h2 className="text-subheading font-medium text-ink">생생한 구매 후기</h2>
+            <span className="mx-auto mt-3 block h-0.5 w-16 bg-brand" aria-hidden="true" />
           </div>
-          <div className="grid grid-cols-5 gap-6 max-lg:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
+          <div className="a11y-grid-5col grid grid-cols-5 gap-6 max-lg:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
             {homeProducts.slice(2).concat(homeProducts.slice(1, 2)).map((product, index) => (
               <ReviewCard key={`${product.id}-${index}`} product={product} copy={reviewCopy[index]} />
             ))}

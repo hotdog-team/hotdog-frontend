@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { getAccessibilitySettings, updateAccessibilitySettings } from '../api/accessibilityApi';
 
-//default a11y Settings
+//기본 접근성 설정
 const defaultA11ySettings = {
     fontSizeStep: 1,
     highContrastEnabled: false,

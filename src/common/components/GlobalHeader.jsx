@@ -135,14 +135,14 @@ function GlobalHeader({
   }
 
   return (
-    <header className="border-b border-border-soft bg-surface">
-      <div className="mx-auto flex min-h-20 w-full max-w-7xl items-center gap-7 px-6 max-lg:max-w-none max-lg:flex-wrap max-lg:gap-x-6 max-lg:gap-y-3 max-lg:py-4 max-sm:px-4">
+    <header className="relative z-40 border-b border-border-soft bg-surface">
+      <div className="mx-auto flex min-h-20 w-full max-w-7xl min-w-0 items-center gap-7 px-6 max-lg:max-w-none max-lg:flex-wrap max-lg:gap-x-6 max-lg:gap-y-3 max-lg:py-4 max-sm:px-4">
         <Link
           className={`inline-flex shrink-0 items-center rounded-md ${focusRingClass}`}
           to="/home"
           aria-label="메인으로 가기"
         >
-          <img className="h-8 w-auto object-contain" src={dtoLogo} aria-hidden="true" />
+          <img className="h-8 w-auto object-contain" src={dtoLogo} aria-hidden="true" alt=""/>
         </Link>
 
         <nav className="min-w-0 shrink-0 overflow-x-auto py-1" aria-label="상품 카테고리">
