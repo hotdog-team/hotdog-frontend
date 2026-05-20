@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ProductCard } from '../../../common/components'
+import { ProductCard } from '../../../components/index.js'
 import { productCatalog } from '../../shop/data/catalog'
 
 const HERO_CAROUSEL_INTERVAL = 5000

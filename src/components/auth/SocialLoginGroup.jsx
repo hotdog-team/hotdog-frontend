@@ -1,4 +1,4 @@
-import { startSocialLogin } from '../../../api/authApi.js'
+import { startSocialLogin } from '../../api/authApi.js'
 import SocialLoginButton from './SocialLoginButton.jsx'
 
 const providers = ['naver', 'kakao', 'google']

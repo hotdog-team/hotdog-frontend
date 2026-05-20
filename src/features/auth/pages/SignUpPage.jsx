@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import AuthLogo from '../components/AuthLogo.jsx'
 import { signup } from '../../../api/authApi.js'
-import { Button } from '../../../common/components'
+import { Button } from '../../../components/index.js'
 
 const fieldClass =
   'h-input-lg w-full border border-border bg-surface px-8 text-xl text-ink outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/15 max-sm:h-14 max-sm:px-4 max-sm:text-body'

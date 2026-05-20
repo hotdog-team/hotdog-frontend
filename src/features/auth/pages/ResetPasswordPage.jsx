@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ArrowLeft, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo.jsx'
-import { Button } from '../../../common/components'
+import { Button } from '../../../components/index.js'
 
 function ResetPasswordPage() {
   const [email, setEmail] = useState('')
