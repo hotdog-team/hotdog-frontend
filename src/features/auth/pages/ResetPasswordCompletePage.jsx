@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Check, ShieldCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo.jsx'
-import { Button } from '../../../common/components'
+import { Button } from '../../../components/index.js'
 
 function ResetPasswordCompletePage() {
   const navigate = useNavigate()

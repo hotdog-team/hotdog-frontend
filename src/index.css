@@ -193,6 +193,28 @@
       padding-inline: clamp(1.5rem, 4vw, 2.5rem);
     }
   }
+
+  .pagination-page--active {
+    border-color: var(--color-brand);
+    background-color: var(--color-brand);
+    color: #ffffff;
+  }
+
+  .pagination-page--active:hover,
+  .pagination-page--active:focus-visible {
+    color: #ffffff;
+  }
+
+  html[data-high-contrast="true"] .pagination-page--active {
+    border-color: var(--color-ink);
+    background-color: var(--color-ink);
+    color: #ffffff;
+  }
+
+  html[data-high-contrast="true"] .pagination-page--active:hover,
+  html[data-high-contrast="true"] .pagination-page--active:focus-visible {
+    color: #ffffff;
+  }
 }
 
 /* -------------------------------------------------------------------------- */

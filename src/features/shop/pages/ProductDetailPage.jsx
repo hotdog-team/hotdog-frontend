@@ -1,7 +1,7 @@
 import { Heart, Info, Minus, Plus, ShoppingCart, Star } from 'lucide-react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useState } from 'react'
-import { Button } from '../../../common/components'
+import { Button } from '../../../components/index.js'
 import { getCategoryByCode, getProductById, productCatalog } from '../data/catalog'
 
 const specs = [

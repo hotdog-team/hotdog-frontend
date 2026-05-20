@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router';
-import GlobalHeader from "./components/GlobalHeader.jsx";
-import GlobalFooter from "./components/GlobalFooter.jsx";
+import GlobalHeader from "../components/global/GlobalHeader.jsx";
+import GlobalFooter from "../components/global/GlobalFooter.jsx";
 
 export default function GlobalLayout() {
     return(

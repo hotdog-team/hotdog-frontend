@@ -13,8 +13,11 @@ import ProductListPage from './features/shop/pages/ProductListPage.jsx'
 import SignUpPage from './features/auth/pages/SignUpPage.jsx'
 import { useAuthStore } from './store/useAuthStore';
 import SocialSuccessPage from './features/auth/pages/SocialSuccessPage.jsx';
-import RequireAuth from "./features/auth/RequireAuth.jsx";
-import GlobalLayout from "./common/GlobalLayout.jsx";
+import RequireAuth from './features/auth/RequireAuth.jsx';
+import GlobalLayout from './layout/GlobalLayout.jsx';
+import MyPageLayout from './layout/MyPageLayout.jsx';
+import AdminLayout from './layout/AdminLayout.jsx'
+import AdminPlaceholderPage from './features/admin/pages/AdminPlaceholderPage.jsx'
 
 function LoginEntry() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -52,7 +55,21 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/shop" element={<ProductListPage />} />
           <Route path="/shop/:productId" element={<ProductDetailPage />} />
-          <Route path="/orders" element={<MyOrders />} />
+            <Route path="/mypage" element={<MyPageLayout />}>
+              <Route index element={<Navigate to="orders" replace />} />
+              <Route path="orders" element={<MyOrders />} />
+            </Route>
+          </Route>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminPlaceholderPage />} />
+            <Route path="categories" element={<AdminPlaceholderPage />} />
+            <Route path="meta-tags" element={<AdminPlaceholderPage />} />
+            <Route path="products" element={<AdminPlaceholderPage />} />
+            <Route path="orders" element={<AdminPlaceholderPage />} />
+            <Route path="inquiries" element={<AdminPlaceholderPage />} />
+            <Route path="reviews" element={<AdminPlaceholderPage />} />
+            <Route path="members" element={<AdminPlaceholderPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

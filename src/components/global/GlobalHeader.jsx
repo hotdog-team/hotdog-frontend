@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Heart, Search, ShoppingCart, User } from 'lucide-react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { fetchCategories } from '../../api/categoryApi'
+import { fetchCategories } from '../../api/categoryApi.js'
 import dtoLogo from '../../assets/d-to-logo.png'
-import { useAuthStore } from '../../store/useAuthStore'
+import { useAuthStore } from '../../store/useAuthStore.js'
 
 const DEFAULT_CATEGORIES = [
   { label: '건강', to: '/shop?categoryId=health' },

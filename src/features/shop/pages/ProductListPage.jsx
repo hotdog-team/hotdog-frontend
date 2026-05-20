@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { fetchCategories } from '../../../api/categoryApi'
-import { Button, ProductCard } from '../../../common/components'
+import { Button, Pagination, ProductCard } from '../../../components/index.js'
 import { useCategoryProductsQuery, useProductsQuery } from '../../../hooks/queries/useProductQuery'
 import ProductFilters from '../components/ProductFilters'
 import {
@@ -76,7 +75,6 @@ function ProductGrid({
   categories,
   error,
   isLoading,
-  onPageChange,
   onRetry,
   onSortChange,
   page,
@@ -86,6 +84,12 @@ function ProductGrid({
   sort,
 }) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const getPageHref = (pageOneBased) => {
+    const nextSearchParams = new URLSearchParams(searchParams)
+    nextSearchParams.set('page', String(pageOneBased - 1))
+    return `/shop?${nextSearchParams.toString()}`
+  }
   const handleWishlistClick = () => {}
   const handleAddToCartClick = () => {}
   const priceBounds = useMemo(() => getPriceBounds(products), [products])
@@ -190,37 +194,13 @@ function ProductGrid({
                   선택한 조건과 일치하는 상품이 없습니다.
                 </div>
               )}
-              <nav className="mt-16 flex justify-center gap-3" aria-label="상품 페이지">
-                <button
-                  className="inline-flex size-10 items-center justify-center rounded border border-border bg-surface disabled:cursor-not-allowed disabled:opacity-40"
-                  type="button"
-                  aria-label="이전 페이지"
-                  disabled={page === 0}
-                  onClick={() => onPageChange(page - 1)}
-                >
-                  <ChevronLeft className="size-5" />
-                </button>
-                {Array.from({ length: totalPages }, (_, index) => index).map((pageIndex) => (
-                  <button
-                    className={`inline-flex size-10 items-center justify-center rounded border ${pageIndex === page ? 'border-ink bg-ink text-surface' : 'border-border bg-surface'}`}
-                    type="button"
-                    key={pageIndex}
-                    aria-current={pageIndex === page ? 'page' : undefined}
-                    onClick={() => onPageChange(pageIndex)}
-                  >
-                    {pageIndex + 1}
-                  </button>
-                ))}
-                <button
-                  className="inline-flex size-10 items-center justify-center rounded border border-border bg-surface disabled:cursor-not-allowed disabled:opacity-40"
-                  type="button"
-                  aria-label="다음 페이지"
-                  disabled={page >= totalPages - 1}
-                  onClick={() => onPageChange(page + 1)}
-                >
-                  <ChevronRight className="size-5" />
-                </button>
-              </nav>
+              <Pagination
+                className="mt-16"
+                page={page + 1}
+                totalPages={totalPages}
+                getPageHref={getPageHref}
+                ariaLabel="상품 페이지"
+              />
             </>
           )}
         </section>
@@ -299,10 +279,6 @@ function ProductListPage() {
     updateListParams({ sort: nextSort, page: 0 })
   }
 
-  const handlePageChange = (nextPage) => {
-    updateListParams({ page: Math.max(0, nextPage) })
-  }
-
   const getCategoryPath = (categoryCode) => {
     const fallbackCategory = getCategoryByCode(categoryCode)
     const nextCategory = categories.find((item) => (
@@ -329,7 +305,6 @@ function ProductListPage() {
         categories={categories}
         error={activeProductsQuery.error}
         isLoading={activeProductsQuery.isLoading}
-        onPageChange={handlePageChange}
         onRetry={activeProductsQuery.refetch}
         onSortChange={handleSortChange}
         page={page}

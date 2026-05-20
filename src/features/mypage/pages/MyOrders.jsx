@@ -1,6 +1,7 @@
-import { Camera, ChevronLeft, ChevronRight, Star, Truck } from 'lucide-react'
+import { Camera, Star, Truck } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '../../../common/components'
+import { useSearchParams } from 'react-router-dom'
+import { Button, Pagination } from '../../../components/index.js'
 
 const blockedWords = ['씨발', '시발', '병신', '개새끼', 'fuck', 'shit']
 const xssPattern = /<script|javascript:|onerror=|onload=|iframe|object|embed/i
@@ -290,7 +291,7 @@ function OrderCard({ order, onReviewClick }) {
             </span>
             <p className="mt-5 text-caption font-bold text-brand">{order.category}</p>
             <h3 className="mt-2 text-2xl font-medium">{order.product}</h3>
-            <p className="mt-2 text-body text-body">{order.description}</p>
+            <p className="mt-2 text-body">{order.description}</p>
           </div>
         </div>
         <div className="grid content-center gap-2">
@@ -304,9 +305,16 @@ function OrderCard({ order, onReviewClick }) {
   )
 }
 
+function parseOrderPage(value) {
+  const page = Number(value)
+  return Number.isInteger(page) && page >= 1 ? page : 1
+}
+
 function MyOrders() {
+  const [searchParams] = useSearchParams()
   const [orders, setOrders] = useState(initialOrders)
   const [selectedReviewOrder, setSelectedReviewOrder] = useState(null)
+  const orderPage = parseOrderPage(searchParams.get('page'))
 
   const handleReviewSubmit = (orderId) => {
     setOrders((currentOrders) => currentOrders.map((order) => (order.id === orderId ? { ...order, hasReview: true } : order)))
@@ -315,33 +323,20 @@ function MyOrders() {
 
   return (
     <>
-      <div className="layout-container bg-page pt-24 pb-28 text-ink">
-        <h1 className="text-3xl font-medium">주문 내역</h1>
-        <p className="mt-4 text-body-lg text-body">임직원 전용 구매 내역을 확인하고 배송 상태를 추적하세요.</p>
-        <div className="a11y-grid-sidebar mt-12 grid grid-cols-sidebar gap-10 max-lg:grid-cols-1">
-          <aside className="h-fit rounded-md border border-border bg-surface p-7">
-            <h2 className="mb-8 text-body-lg font-medium">빠른 필터</h2>
-            {['전체 주문', '배송 중', '배송 완료', '취소/반품'].map((filter, index) => (
-              <button className={`mb-3 flex w-full justify-between rounded px-4 py-3 text-left ${index === 0 ? 'bg-surface-muted font-semibold' : ''}`} key={filter} type="button">
-                {filter}
-                {index === 0 && <span className="rounded-full bg-ink px-2 text-caption text-white">12</span>}
-              </button>
-            ))}
-          </aside>
-          <section className="grid gap-6">
-            {orders.map((order) => (
-              <OrderCard key={order.id} order={order} onReviewClick={setSelectedReviewOrder} />
-            ))}
-            <nav className="mt-4 flex justify-center gap-3" aria-label="주문 페이지">
-              <button className="inline-flex size-10 items-center justify-center border border-border" type="button" aria-label="이전 페이지"><ChevronLeft className="size-5" /></button>
-              {[1, 2, 3].map((page) => (
-                <button className={`inline-flex size-10 items-center justify-center rounded border ${page === 1 ? 'border-ink bg-ink text-white' : 'border-border'}`} type="button" key={page}>{page}</button>
-              ))}
-              <button className="inline-flex size-10 items-center justify-center border border-border" type="button" aria-label="다음 페이지"><ChevronRight className="size-5" /></button>
-            </nav>
-          </section>
-        </div>
-      </div>
+      <h1 className="text-3xl font-medium">주문/배송 내역</h1>
+      <p className="mt-4 text-body-lg text-body">내 구매 내역/배송 상태를 확인합니다.</p>
+      <section className="mt-12 grid gap-6">
+        {orders.map((order) => (
+          <OrderCard key={order.id} order={order} onReviewClick={setSelectedReviewOrder} />
+        ))}
+        <Pagination
+          className="mt-4"
+          page={orderPage}
+          totalPages={3}
+          getPageHref={(nextPage) => `/mypage/orders?page=${nextPage}`}
+          ariaLabel="주문 페이지"
+        />
+      </section>
       {selectedReviewOrder && <ReviewModal order={selectedReviewOrder} onClose={() => setSelectedReviewOrder(null)} onSubmit={handleReviewSubmit} />}
     </>
   )

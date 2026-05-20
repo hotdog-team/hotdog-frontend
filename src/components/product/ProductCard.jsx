@@ -1,7 +1,7 @@
 import { Heart, ShoppingCart, Star } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import Button from './ui/Button.jsx'
+import Button from '../ui/Button.jsx'
 
 function ProductCard({ product, to, onWishlistClick, onAddToCartClick }) {
   const navigate = useNavigate()

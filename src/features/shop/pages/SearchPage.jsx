@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronRight, CornerDownRight, Search, Tags } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '../../../common/components'
+import { Button } from '../../../components/index.js'
 import { usePopularSearchKeywordsQuery } from '../../../hooks/queries/useSearchQuery'
 import {
   findExactProductByName,

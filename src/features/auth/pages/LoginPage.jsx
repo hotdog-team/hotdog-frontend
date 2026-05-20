@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo.jsx'
 import { useAuthStore } from '../../../store/useAuthStore'
 import { toast } from 'react-toastify'
-import { Button, Input, SocialLoginGroup } from '../../../common/components'
+import { Button, Input, SocialLoginGroup } from '../../../components/index.js'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 

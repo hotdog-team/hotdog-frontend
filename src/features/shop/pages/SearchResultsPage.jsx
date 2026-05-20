@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { ProductCard } from '../../../common/components'
+import { ProductCard, Pagination } from '../../../components/index.js'
 import ProductFilters from '../components/ProductFilters'
 import {
   categoryCatalog,
@@ -60,25 +59,24 @@ function SearchResultsPage({ query, products }) {
             ))}
           </div>
           {filteredProducts.length === 0 && (
-            <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-body text-muted">
+            <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-muted">
               선택한 필터와 일치하는 상품이 없습니다.
             </div>
           )}
-          <nav className="mt-16 flex justify-center gap-3" aria-label="상품 페이지">
-            <button className="inline-flex size-10 items-center justify-center rounded border border-border" type="button" aria-label="이전 페이지">
-              <ChevronLeft className="size-5" />
-            </button>
-            {[1, 2, 3].map((page) => (
-              <button className={`inline-flex size-10 items-center justify-center rounded border ${page === 1 ? 'border-ink bg-navy text-white' : 'border-border bg-surface'}`} type="button" key={page}>
-                {page}
-              </button>
-            ))}
-            <span className="px-4 py-2">...</span>
-            <button className="inline-flex size-10 items-center justify-center rounded border border-border bg-surface" type="button">8</button>
-            <button className="inline-flex size-10 items-center justify-center rounded border border-border bg-surface" type="button" aria-label="다음 페이지">
-              <ChevronRight className="size-5" />
-            </button>
-          </nav>
+          <Pagination
+            className="mt-16"
+            page={1}
+            totalPages={3}
+            getPageHref={(nextPage) => {
+              const params = new URLSearchParams()
+              if (query) {
+                params.set('query', query)
+              }
+              params.set('page', String(nextPage - 1))
+              return `/shop?${params.toString()}`
+            }}
+            ariaLabel="상품 페이지"
+          />
         </section>
       </div>
     </main>
