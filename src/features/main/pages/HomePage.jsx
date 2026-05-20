@@ -56,10 +56,10 @@ function SectionHeader({ eyebrow, title }) {
   return (
     <div className="flex gap-5 justify-between items-end mb-8">
       <div>
-        <p className="mb-1 text-[12px] font-bold tracking-[0.08em] text-brand">{eyebrow}</p>
-        <h2 className="text-[22px] leading-tight font-medium text-ink">{title}</h2>
+        <p className="mb-1 text-caption font-bold tracking-label text-brand">{eyebrow}</p>
+        <h2 className="text-2xl leading-tight font-medium text-ink">{title}</h2>
       </div>
-      <Link className="shrink-0 text-[13px] font-medium text-ink hover:text-brand" to="/shop">
+      <Link className="shrink-0 text-caption font-medium text-ink hover:text-brand" to="/shop">
         전체 보기
       </Link>
     </div>
@@ -76,7 +76,7 @@ function ReviewCard({ product, copy }) {
         </span>
       </div>
       <div className="px-4 py-4">
-        <p className="line-clamp-3 min-h-[4.5rem] text-body-sm leading-snug text-body">{copy}</p>
+        <p className="line-clamp-3 min-h-copy text-body-sm leading-snug text-body">{copy}</p>
         <div className="mt-4 flex items-center gap-3 border-t border-border-soft pt-3">
           <img className="object-cover rounded-sm size-8" src={product.image} alt="" aria-hidden="true" />
           <div className="min-w-0">
@@ -115,7 +115,7 @@ function HeroBanner({ slides }) {
 
   return (
     <section className="w-full">
-      <div className="relative h-[383px] w-full overflow-hidden bg-navy text-white max-sm:h-[470px]">
+      <div className="relative h-hero w-full overflow-hidden bg-navy text-white max-sm:h-hero-lg">
         {slides.map((slide, index) => (
           <div
             key={slide.id}
@@ -123,14 +123,14 @@ function HeroBanner({ slides }) {
               index === activeSlideIndex ? 'opacity-100' : 'opacity-0'
             }`}
             style={{
-              backgroundImage: `linear-gradient(90deg, rgba(3, 17, 43, 0.96) 0%, rgba(3, 17, 43, 0.86) 46%, rgba(3, 17, 43, 0.58) 100%), url(${slide.image})`,
+              backgroundImage: `linear-gradient(90deg, color-mix(in srgb, var(--color-navy) 96%, transparent) 0%, color-mix(in srgb, var(--color-navy) 86%, transparent) 46%, color-mix(in srgb, var(--color-navy) 58%, transparent) 100%), url(${slide.image})`,
             }}
             aria-hidden="true"
           />
         ))}
 
-        <div className="relative z-10 mx-auto h-full max-w-[1110px] px-[72px] pt-[72px] pb-14 max-md:px-8 max-md:pt-12 max-sm:px-6">
-          <div className="max-w-[520px]">
+        <div className="layout-container relative z-10 h-full pt-12 pb-14 max-md:pt-10 max-sm:pt-8">
+          <div className="max-w-prose">
             {slides.map((slide, index) => (
               <div
                 key={slide.id}
@@ -138,20 +138,20 @@ function HeroBanner({ slides }) {
                   index === activeSlideIndex ? 'relative opacity-100' : 'pointer-events-none absolute inset-0 opacity-0'
                 }`}
               >
-                <p className="mb-5 inline-flex h-5 max-w-full items-center bg-brand px-3 text-[11px] font-bold tracking-[0.08em] max-md:min-w-0 max-md:w-full">
+                <p className="mb-5 inline-flex h-5 max-w-full items-center bg-brand px-3 text-caption font-bold tracking-label max-md:min-w-0 max-md:w-full">
                   {slide.label}
                 </p>
-                <h1 className="text-[48px] leading-[1.12] font-light tracking-[0.04em] max-md:text-[40px] max-sm:text-[34px]">
+                <h1 className="text-5xl leading-tight font-light tracking-label max-md:text-4xl max-sm:text-3xl">
                   {slide.title}
                 </h1>
-                <p className="mt-8 max-w-[490px] text-[15px] leading-[1.7] font-medium text-[#d7e1ef]">
+                <p className="mt-8 max-w-prose text-body leading-relaxed font-medium text-on-navy">
                   {slide.description}
                 </p>
                 <div className="flex flex-wrap gap-3 mt-8">
-                  <Link className="inline-flex h-12 items-center justify-center rounded-sm bg-brand px-8 text-[14px] font-bold text-white hover:bg-brand-hover" to={slide.primaryCta.to}>
+                  <Link className="inline-flex h-12 items-center justify-center rounded-sm bg-brand px-8 text-body-sm font-bold text-white hover:bg-brand-hover" to={slide.primaryCta.to}>
                     {slide.primaryCta.label}
                   </Link>
-                  <Link className="inline-flex h-12 items-center justify-center rounded-sm border border-white/35 px-8 text-[14px] font-bold text-white hover:bg-white/10" to={slide.secondaryCta.to}>
+                  <Link className="inline-flex h-12 items-center justify-center rounded-sm border border-white/35 px-8 text-body-sm font-bold text-white hover:bg-surface/10" to={slide.secondaryCta.to}>
                     {slide.secondaryCta.label}
                   </Link>
                 </div>
@@ -164,7 +164,7 @@ function HeroBanner({ slides }) {
           {slides.map((slide, index) => (
             <button
               key={slide.id}
-              className={`size-2 rounded-full transition-colors ${index === activeSlideIndex ? 'bg-brand' : 'bg-white/45 hover:bg-white/75'}`}
+              className={`size-2 rounded-full transition-colors ${index === activeSlideIndex ? 'bg-brand' : 'bg-surface/45 hover:bg-surface/75'}`}
               type="button"
               aria-label={`${index + 1}번째 배너 보기`}
               aria-current={index === activeSlideIndex ? 'true' : undefined}
@@ -186,7 +186,7 @@ function HomePage() {
     <>
         <HeroBanner slides={heroSlides} />
 
-        <section className="mx-auto mt-16 w-full max-w-[1110px] px-6 max-sm:px-4">
+        <section className="layout-container mt-16">
           <SectionHeader eyebrow="최신 상품" title="신규 입고" />
           <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
             {homeProducts.slice(0, 4).map((product) => (
@@ -195,7 +195,7 @@ function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto mt-16 w-full max-w-[1110px] px-6 max-sm:px-4">
+        <section className="layout-container mt-16">
           <SectionHeader eyebrow="임직원 추천" title="베스트 셀러" />
           <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
             {homeProducts.slice(4).map((product) => (
@@ -204,9 +204,9 @@ function HomePage() {
           </div>
         </section>
 
-        <section className="mx-auto mt-24 w-full max-w-[1110px] border-t border-border-soft px-6 pt-12 pb-44 max-sm:px-4 max-sm:pb-24">
+        <section className="layout-container mt-24 border-t border-border-soft pt-12 pb-44 max-sm:pb-24">
           <div className="mb-10 text-center">
-            <h2 className="text-subheading font-medium text-ink">생생한 구매 후기</h2>
+            <h2 className="text-xl font-medium text-ink">생생한 구매 후기</h2>
             <span className="mx-auto mt-3 block h-0.5 w-16 bg-brand" aria-hidden="true" />
           </div>
           <div className="a11y-grid-5col grid grid-cols-5 gap-6 max-lg:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">

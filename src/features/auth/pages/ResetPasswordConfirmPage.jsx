@@ -141,11 +141,15 @@ function ResetPasswordConfirmPage() {
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-page px-5 py-16 text-ink max-sm:px-4 max-sm:py-8">
+    <main className="flex min-h-svh items-center justify-center bg-page py-16 text-ink max-sm:py-8">
       <a className="skip-link" href="#reset-confirm-content">
         본문으로 건너뛰기
       </a>
-      <section id="reset-confirm-content" className="w-full max-w-152" aria-labelledby="reset-confirm-title">
+      <section
+        id="reset-confirm-content"
+        className="layout-container-auth layout-container-auth--md w-full"
+        aria-labelledby="reset-confirm-title"
+      >
         <div className="mb-11 grid justify-items-center gap-2 max-sm:mb-7">
           <AuthLogo className="h-14 max-sm:h-12" />
           <p className="m-0 text-sm font-extrabold tracking-widest text-muted max-sm:text-xs">
@@ -176,7 +180,7 @@ function ResetPasswordConfirmPage() {
             <h1 id="reset-confirm-title" className="mb-8 text-4xl leading-tight font-medium text-ink max-sm:mb-5 max-sm:text-3xl">
               비밀번호 재설정
             </h1>
-            <p id="reset-confirm-description" className="mx-auto max-w-105 text-xl leading-relaxed text-muted max-sm:text-base">
+            <p id="reset-confirm-description" className="mx-auto max-w-auth-copy text-xl leading-relaxed text-muted max-sm:text-base">
               계정 보안을 위해 새로운 비밀번호를 설정해 주세요.
             </p>
           </div>
@@ -216,7 +220,7 @@ function ResetPasswordConfirmPage() {
 
           <div
             id="reset-password-requirements"
-            className="mt-6 rounded border border-border-soft bg-[#fffafa] px-5 py-5 text-body-lg leading-relaxed text-muted max-sm:text-sm"
+            className="mt-6 rounded border border-border-soft bg-error-soft px-5 py-5 text-body-lg leading-relaxed text-muted max-sm:text-sm"
           >
             <p className="mb-2 font-extrabold text-ink" aria-hidden="true">비밀번호 요구사항:</p>
             <ul

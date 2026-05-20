@@ -38,12 +38,12 @@ function ResetPasswordPage() {
   return (
     <main className="relative flex min-h-svh flex-col overflow-hidden bg-page text-body">
       <div
-        className="absolute top-0 -right-9 -bottom-px z-0 w-[34%] bg-[#f0eeee] [clip-path:polygon(54%_0,100%_0,100%_100%,0_100%)] max-[900px]:opacity-45"
+        className="absolute top-0 -right-9 -bottom-px z-0 w-auth-deco bg-auth-panel clip-auth-deco max-[width:var(--width-form)]:opacity-45"
         aria-hidden="true"
       />
 
       <section
-        className="relative z-10 mx-auto w-full max-w-148 flex-1 px-5 pt-53 pb-14 max-sm:px-4 max-sm:pt-24 max-sm:pb-10"
+        className="layout-container-auth layout-container-auth--md relative z-10 flex flex-1 flex-col pt-auth-top pb-14 max-sm:pt-24 max-sm:pb-10"
         aria-labelledby="reset-title"
       >
         <div className="mb-20 grid justify-items-center gap-2.5 max-sm:mb-12">
@@ -81,7 +81,7 @@ function ResetPasswordPage() {
                 autoComplete="email"
                 required
                 disabled={status === 'loading'}
-                className="h-15 w-full rounded border border-border bg-surface pr-5 pl-14 text-xl text-ink outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/15 max-sm:h-14 max-sm:text-body disabled:bg-surface-muted"
+                className="h-input-lg w-full rounded border border-border bg-surface pr-5 pl-14 text-xl text-ink outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/15 max-sm:h-14 max-sm:text-body disabled:bg-surface-muted"
               />
             </span>
           </label>
