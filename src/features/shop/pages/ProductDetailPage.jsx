@@ -34,7 +34,7 @@ function ProductDetailPage() {
   return (
     <div className="bg-page text-ink">
       <div className="layout-container pt-12 pb-28">
-        <p className="mb-10 text-body-sm text-body">홈 〉 {category?.navLabel ?? product.category} 〉 {product.name}</p>
+        <p className="mb-10 text-body-sm text-foreground">홈 〉 {category?.navLabel ?? product.category} 〉 {product.name}</p>
         <section className="a11y-grid-2col grid grid-cols-detail gap-14 max-lg:grid-cols-1">
           <div>
             <div className="relative overflow-hidden rounded-md border border-border-soft bg-surface">
@@ -53,7 +53,7 @@ function ProductDetailPage() {
               <span className="text-brand">✿</span>
               <div>
                 <p className="font-semibold">인증된 리퍼브 및 검수 완료 상품</p>
-                <p className="mt-1 text-body-sm text-body">각 유닛은 배송 전 B2E 물류 팀의 48단계 정밀 점검을 거칩니다.</p>
+                <p className="mt-1 text-body-sm text-foreground">각 유닛은 배송 전 B2E 물류 팀의 48단계 정밀 점검을 거칩니다.</p>
               </div>
             </div>
           </div>
@@ -67,15 +67,15 @@ function ProductDetailPage() {
               ))}
               <span className="ml-2 text-body-sm text-ink">(128 리뷰)</span>
             </div>
-            <p className="mt-8 max-w-content text-body leading-7 text-body">{product.description}</p>
+            <p className="mt-8 max-w-content text-body leading-7 text-foreground">{product.description}</p>
             <div className="mt-10 rounded-md border border-border-soft bg-surface-muted px-7 py-6">
-              <p className="text-body text-body">소비자 가격: <span className="ml-3 line-through">$4,299.00</span></p>
+              <p className="text-body text-foreground">소비자 가격: <span className="ml-3 line-through">$4,299.00</span></p>
               <p className="mt-5 text-body-sm font-bold text-brand">임직원 전용가</p>
               <div className="mt-1 flex items-center gap-4">
                 <p className="text-3xl font-light">{product.price}</p>
                 <span className="rounded-sm bg-brand px-3 py-1 text-caption font-extrabold text-white">-34% OFF</span>
               </div>
-              <p className="mt-6 border-t border-border pt-5 text-body-sm text-body"><Info className="mr-2 inline size-4" />결제 시 급여 공제 가능</p>
+              <p className="mt-6 border-t border-border pt-5 text-body-sm text-foreground"><Info className="mr-2 inline size-4" />결제 시 급여 공제 가능</p>
             </div>
             <div className="mt-9 grid grid-cols-2 gap-6">
               <div>
@@ -136,7 +136,7 @@ function ProductDetailPage() {
               <article key={relatedProduct.id}>
                 <Link to={`/shop/${relatedProduct.id}`}>
                   <img className="h-card w-full rounded-md border border-border-soft object-cover" src={relatedProduct.image} alt={relatedProduct.name} />
-                  <p className="mt-4 text-caption text-body">{relatedProduct.category}</p>
+                  <p className="mt-4 text-caption text-foreground">{relatedProduct.category}</p>
                   <h3 className="mt-1 text-body-lg">{relatedProduct.name}</h3>
                   <p className="mt-1 text-body-lg">{relatedProduct.price}</p>
                 </Link>

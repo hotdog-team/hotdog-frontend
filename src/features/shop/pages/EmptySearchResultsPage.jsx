@@ -20,7 +20,7 @@ function EmptySearchResultsPage({ getCategoryPath = (categoryCode) => `/shop?cat
           <article className="min-h-card border border-border-soft bg-surface p-8" key={title}>
             <Icon className="size-7 text-ink" aria-hidden="true" />
             <h2 className="mt-8 text-body-lg font-medium text-ink">{title}</h2>
-            <p className="mt-4 text-body leading-6 text-muted">{description}</p>
+            <p className="mt-4 leading-6 text-muted">{description}</p>
           </article>
         ))}
       </div>

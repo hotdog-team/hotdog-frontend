@@ -4,7 +4,7 @@ import GlobalFooter from "../components/global/GlobalFooter.jsx";
 
 export default function GlobalLayout() {
     return(
-        <div className="min-h-screen flex flex-col overflow-x-hidden text-foreground bg-page text-body">
+        <div className="min-h-screen flex flex-col overflow-x-hidden bg-page text-foreground">
             <a className="skip-link" href="#main-content">
                 본문 바로가기
             </a>

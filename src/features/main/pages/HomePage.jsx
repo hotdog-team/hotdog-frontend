@@ -76,7 +76,7 @@ function ReviewCard({ product, copy }) {
         </span>
       </div>
       <div className="px-4 py-4">
-        <p className="line-clamp-3 min-h-copy text-body-sm leading-snug text-body">{copy}</p>
+        <p className="line-clamp-3 min-h-copy text-body-sm leading-snug text-foreground">{copy}</p>
         <div className="mt-4 flex items-center gap-3 border-t border-border-soft pt-3">
           <img className="object-cover rounded-sm size-8" src={product.image} alt="" aria-hidden="true" />
           <div className="min-w-0">

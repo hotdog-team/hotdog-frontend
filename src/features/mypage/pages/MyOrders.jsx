@@ -143,7 +143,7 @@ function ReviewModal({ order, onClose, onSubmit }) {
         <div className="flex items-start justify-between gap-6">
           <div>
             <h2 id="review-modal-title" className="text-2xl font-medium">리뷰 작성</h2>
-            <p className="mt-3 text-body">작성해주신 후기는 다른 임직원들의 구매 결정에 큰 도움이 됩니다.</p>
+            <p className="mt-3 text-foreground">작성해주신 후기는 다른 임직원들의 구매 결정에 큰 도움이 됩니다.</p>
           </div>
           <button className="border border-border px-4 py-2 text-sm" type="button" onClick={onClose}>닫기</button>
         </div>
@@ -153,10 +153,10 @@ function ReviewModal({ order, onClose, onSubmit }) {
             <img className="h-panel w-full object-cover" src={order.image} alt={order.product} />
             <p className="mt-4 inline-flex bg-surface-muted px-2 py-1 text-caption font-bold">{order.category}</p>
             <h3 className="mt-3 text-body-lg font-medium">{order.product}</h3>
-            <p className="mt-3 text-body-sm text-body">구매일: {order.date}</p>
+            <p className="mt-3 text-body-sm text-foreground">구매일: {order.date}</p>
             <div className="mt-8 border-t border-border pt-5">
               <p className="text-caption font-bold text-brand">임직원 인증</p>
-              <p className="mt-2 text-body-sm leading-6 text-body">이 구매는 임직원 전용 리워드 포인트 적립 대상입니다.</p>
+              <p className="mt-2 text-body-sm leading-6 text-foreground">이 구매는 임직원 전용 리워드 포인트 적립 대상입니다.</p>
             </div>
           </aside>
 
@@ -239,7 +239,7 @@ function ReviewModal({ order, onClose, onSubmit }) {
                 <div>
                   <Camera className="mx-auto mb-4 size-10 rounded-md bg-ink p-2 text-white" />
                   <p className="text-body-lg font-medium">이미지를 드래그하여 놓으세요</p>
-                  <p className="mt-2 text-caption text-body">JPG, PNG 파일 (최대 5MB)</p>
+                  <p className="mt-2 text-caption text-foreground">JPG, PNG 파일 (최대 5MB)</p>
                   <span className="mt-5 inline-flex border border-ink px-6 py-2 text-caption">
                     파일 찾기
                   </span>
@@ -277,9 +277,9 @@ function OrderCard({ order, onReviewClick }) {
   return (
     <article className="rounded-md border border-border bg-surface">
       <header className="grid grid-cols-3 gap-5 border-b border-border bg-surface-muted px-8 py-5">
-        <div><p className="text-caption text-body">주문일</p><p className="text-2xl font-bold">{order.date}</p></div>
-        <div><p className="text-caption text-body">주문 번호</p><p className="text-2xl font-bold">#{order.id}</p></div>
-        <div className="text-right"><p className="text-caption text-body">총 결제 금액</p><p className="text-2xl font-bold">{order.total}</p></div>
+        <div><p className="text-caption text-foreground">주문일</p><p className="text-2xl font-bold">{order.date}</p></div>
+        <div><p className="text-caption text-foreground">주문 번호</p><p className="text-2xl font-bold">#{order.id}</p></div>
+        <div className="text-right"><p className="text-caption text-foreground">총 결제 금액</p><p className="text-2xl font-bold">{order.total}</p></div>
       </header>
       <div className="grid grid-cols-split gap-6 px-8 py-7 max-md:grid-cols-1">
         <div className="flex gap-6">
@@ -291,7 +291,7 @@ function OrderCard({ order, onReviewClick }) {
             </span>
             <p className="mt-5 text-caption font-bold text-brand">{order.category}</p>
             <h3 className="mt-2 text-2xl font-medium">{order.product}</h3>
-            <p className="mt-2 text-body">{order.description}</p>
+            <p className="mt-2 text-foreground">{order.description}</p>
           </div>
         </div>
         <div className="grid content-center gap-2">
@@ -324,7 +324,7 @@ function MyOrders() {
   return (
     <>
       <h1 className="text-3xl font-medium">주문/배송 내역</h1>
-      <p className="mt-4 text-body-lg text-body">내 구매 내역/배송 상태를 확인합니다.</p>
+      <p className="mt-4 text-body-lg text-foreground">내 구매 내역/배송 상태를 확인합니다.</p>
       <section className="mt-12 grid gap-6">
         {orders.map((order) => (
           <OrderCard key={order.id} order={order} onReviewClick={setSelectedReviewOrder} />

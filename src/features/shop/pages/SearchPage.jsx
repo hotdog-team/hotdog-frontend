@@ -105,7 +105,7 @@ function SearchHero({ getCategoryPath, initialValue = '', onProductSearch, onSea
                 {suggestions.length > 0 ? (
                   suggestions.map((suggestion) => (
                     <button
-                      className="flex items-center gap-4 text-left text-body-lg font-medium text-body hover:text-brand max-sm:text-body"
+                      className="flex items-center gap-4 text-left text-body-lg font-medium text-foreground hover:text-brand max-sm:text-body"
                       type="button"
                       key={`${suggestion.type}-${suggestion.label}`}
                       onClick={() => handleSuggestionClick(suggestion)}
@@ -115,7 +115,7 @@ function SearchHero({ getCategoryPath, initialValue = '', onProductSearch, onSea
                     </button>
                   ))
                 ) : (
-                  <button className="flex items-center gap-4 text-left text-body-lg font-medium text-body hover:text-brand max-sm:text-body" type="button" onClick={() => submitSearch(trimmedValue)}>
+                  <button className="flex items-center gap-4 text-left text-body-lg font-medium text-foreground hover:text-brand max-sm:text-body" type="button" onClick={() => submitSearch(trimmedValue)}>
                     <Search className="size-5 shrink-0 text-muted" aria-hidden="true" />
                     <span>{trimmedValue}</span>
                   </button>
@@ -127,7 +127,7 @@ function SearchHero({ getCategoryPath, initialValue = '', onProductSearch, onSea
               <h2 className="text-caption font-bold text-muted">추천 카테고리</h2>
               <div className="mt-5 grid gap-5">
                 {recommendedCategories.map((category) => (
-                  <button className="flex items-center justify-between text-left text-body-lg font-medium text-body hover:text-brand max-sm:text-body" type="button" key={`${category.categoryCode}-${category.detail}`} onClick={() => navigate(getCategoryPath(category.categoryCode))}>
+                  <button className="flex items-center justify-between text-left text-body-lg font-medium text-foreground hover:text-brand max-sm:text-body" type="button" key={`${category.categoryCode}-${category.detail}`} onClick={() => navigate(getCategoryPath(category.categoryCode))}>
                     <span className="inline-flex min-w-0 items-center gap-4">
                       <Tags className="size-5 shrink-0 text-muted" aria-hidden="true" />
                       <span className="truncate">{category.label} 〉 {category.detail}</span>
@@ -213,13 +213,13 @@ function SearchPage({ getCategoryPath = (categoryCode) => `/shop?categoryId=${en
           {recentSearches.length > 0 ? (
             <div className="flex flex-wrap gap-3">
               {recentSearches.map((keyword) => (
-                <button className="rounded-lg border border-border px-5 py-3 text-body font-medium text-body hover:border-ink" type="button" key={keyword} onClick={() => handleSearch(keyword)}>
+                <button className="rounded-lg border border-border px-5 py-3 text-body font-medium text-foreground hover:border-ink" type="button" key={keyword} onClick={() => handleSearch(keyword)}>
                   {keyword} ×
                 </button>
               ))}
             </div>
           ) : (
-            <p className="text-body text-muted">최근 검색 내역이 없습니다.</p>
+            <p className="text-muted">최근 검색 내역이 없습니다.</p>
           )}
         </div>
 
@@ -233,7 +233,7 @@ function SearchPage({ getCategoryPath = (categoryCode) => `/shop?categoryId=${en
               </button>
             ))}
             {displayedPopularKeywords.length === 0 && (
-              <p className="text-body text-muted">인기 검색어를 불러오는 중입니다.</p>
+              <p className="text-muted">인기 검색어를 불러오는 중입니다.</p>
             )}
           </div>
         </div>
@@ -244,7 +244,7 @@ function SearchPage({ getCategoryPath = (categoryCode) => `/shop?categoryId=${en
             {quickCategories.map((category) => (
               <button className="text-center" type="button" key={category.categoryCode} onClick={() => navigate(getCategoryPath(category.categoryCode))}>
                 <img className="aspect-square w-full rounded-lg object-cover shadow-card-hover" src={category.image} alt="" />
-                <span className="mt-3 block text-body font-medium text-body">{category.label}</span>
+                <span className="mt-3 block text-body font-medium text-foreground">{category.label}</span>
               </button>
             ))}
           </div>

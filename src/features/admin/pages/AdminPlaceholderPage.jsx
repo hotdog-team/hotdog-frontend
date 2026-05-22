@@ -8,7 +8,7 @@ export default function AdminPlaceholderPage() {
   return (
     <>
       <h1 className="text-3xl font-medium">{title}</h1>
-      <p className="mt-4 text-body-lg text-body">페이지 준비 중입니다.</p>
+      <p className="mt-4 text-body-lg text-foreground">페이지 준비 중입니다.</p>
     </>
   )
 }

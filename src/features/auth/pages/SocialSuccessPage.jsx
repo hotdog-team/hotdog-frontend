@@ -28,7 +28,7 @@ export default function SocialSuccessPage() {
     <div className="flex min-h-svh items-center justify-center bg-page">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-ink">로그인 처리 중</h2>
-        <p className="mt-2 text-body">잠시만 기다려 주세요...</p>
+        <p className="mt-2 text-foreground">잠시만 기다려 주세요...</p>
       </div>
     </div>
   );

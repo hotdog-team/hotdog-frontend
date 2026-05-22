@@ -36,7 +36,7 @@ function ResetPasswordPage() {
   }
 
   return (
-    <main className="relative flex min-h-svh flex-col overflow-hidden bg-page text-body">
+    <main className="relative flex min-h-svh flex-col overflow-hidden bg-page text-foreground">
       <div
         className="absolute top-0 -right-9 -bottom-px z-0 w-auth-deco bg-auth-panel clip-auth-deco max-[width:var(--width-form)]:opacity-45"
         aria-hidden="true"
@@ -60,7 +60,7 @@ function ResetPasswordPage() {
           <h1 id="reset-title" className="mb-3 text-4xl leading-tight font-extrabold text-ink max-sm:text-3xl">
             비밀번호를 잊으셨나요?
           </h1>
-          <p className="mb-8 text-xl leading-relaxed text-body max-sm:text-lg">
+          <p className="mb-8 text-xl leading-relaxed text-foreground max-sm:text-lg">
             임직원 계정에 등록된 이메일 주소를 입력하시면 비밀번호 재설정을 위한 보안 링크를 보내드립니다.
           </p>
 
@@ -108,7 +108,7 @@ function ResetPasswordPage() {
             {status === 'loading' ? '발송 중...' : '재설정 링크 보내기'}
           </Button>
 
-          <div className="mt-13 border-t border-border pt-8 text-center text-body max-sm:text-sm max-sm:leading-normal">
+          <div className="mt-13 border-t border-border pt-8 text-center text-foreground max-sm:text-sm max-sm:leading-normal">
             문제가 있으신가요?{' '}
             <a className="font-extrabold text-ink" href="#help-desk">
               임직원 헬프데스크
