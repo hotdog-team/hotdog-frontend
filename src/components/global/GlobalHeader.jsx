@@ -59,7 +59,9 @@ function GlobalHeader({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [apiCategories, setApiCategories] = useState(DEFAULT_CATEGORIES)
   const headerCategories = useMemo(() => categories ?? apiCategories, [apiCategories, categories])
+
   const logout = useAuthStore((s) => s.logout)
+  const user = useAuthStore((s) => s.user)
 
   useEffect(() => {
     if (categories) {
@@ -154,7 +156,6 @@ function GlobalHeader({
                 <li key={category.label}>
                   <NavLink
                     className={getCategoryNavLinkClass(isTabActive)}
-                    isActive={() => isTabActive}
                     to={category.to}
                   >
                     {category.label}
@@ -229,17 +230,18 @@ function GlobalHeader({
                 <div className="border-b border-border-soft px-4 py-3">
                   <p className="m-0 text-caption font-bold tracking-wide text-muted uppercase">이메일</p>
                   <p className="m-0 mt-1 truncate text-body-sm font-semibold text-ink">
-                    employee@d-to.example
+                    {user?.email || '이메일 정보 없음'}
                   </p>
                 </div>
                 <div className="py-1">
-                  <button
+                  <Link
+                    to="/mypage/profile"
                     className="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-muted"
-                    type="button"
                     role="menuitem"
+                    onClick={() => setIsUserMenuOpen(false)}
                   >
                     프로필
-                  </button>
+                  </Link>
                   <button
                     className="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-muted"
                     type="button"
