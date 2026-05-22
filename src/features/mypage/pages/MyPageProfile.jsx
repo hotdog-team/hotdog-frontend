@@ -136,12 +136,12 @@ const setUser = useAuthStore((s) => s.setUser);
           {/* 우측 입력 필드 그룹 */}
           <form className="flex-1 space-y-6" onSubmit={handleUpdateProfile}>
             <div className={labelClass}>
-              <label>성함 (변경 불가)</label>
+                <label htmlFor="profile-name">성함 (변경 불가)</label>
               <input type="text" value={name} className={`${fieldClass} ${disabledStyle}`} readOnly aria-disabled="true" />
             </div>
 
             <div className={labelClass}>
-              <label>회사 이메일 주소 (변경 불가)</label>
+                <label htmlFor="profile-email">회사 이메일 주소 (변경 불가)</label>
               <input type="email" value={email} className={`${fieldClass} ${disabledStyle}`} readOnly aria-disabled="true" />
             </div>
 
