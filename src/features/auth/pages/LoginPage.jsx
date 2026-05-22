@@ -1,28 +1,20 @@
 import { useState } from 'react'
-import { Eye, X } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo.jsx'
 import { useAuthStore } from '../../../store/useAuthStore'
 import { toast } from 'react-toastify'
-import { Button, Input, SocialLoginGroup } from '../../../components/index.js'
+import {
+  Button,
+  Input,
+  InputClearButton,
+  PasswordToggleButton,
+  SocialLoginGroup,
+} from '../../../components/index.js'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function isValidEmail(value) {
   return emailPattern.test(value)
-}
-
-function ClearButton({ label, onClick }) {
-  return (
-    <button
-      className="absolute top-1/2 right-4 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-muted hover:bg-surface-muted"
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-    >
-      <X size={18} strokeWidth={2.5} aria-hidden="true" />
-    </button>
-  )
 }
 
 function LoginPage() {
@@ -46,7 +38,7 @@ function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-svh flex-col bg-page text-body">
+    <main className="flex min-h-svh flex-col bg-page text-foreground">
       <section
         className="layout-container-auth flex flex-1 flex-col pt-12 pb-16 text-center max-sm:pt-10 max-sm:pb-10"
         aria-labelledby="login-title"
@@ -59,7 +51,7 @@ function LoginPage() {
         >
           다시 오신 것을 환영합니다
         </h1>
-        <p className="mb-14 text-2xl leading-snug text-body max-sm:mb-8 max-sm:text-lg">
+        <p className="mb-14 text-2xl leading-snug text-foreground max-sm:mb-8 max-sm:text-lg">
           임직원 전용 혜택을 확인하세요.
         </p>
 
@@ -91,7 +83,11 @@ function LoginPage() {
                 invalid={isEmailInvalid}
                 aria-describedby={isEmailInvalid ? 'login-form-description login-email-error' : 'login-form-description'}
               />
-              {email && <ClearButton label="회사 이메일 지우기" onClick={() => setEmail('')} />}
+              {email && (
+                <span className="absolute top-1/2 right-4 flex -translate-y-1/2">
+                  <InputClearButton label="회사 이메일 지우기" onClick={() => setEmail('')} />
+                </span>
+              )}
             </span>
             {isEmailInvalid && (
               <p id="login-email-error" className="text-sm font-semibold text-error" role="alert">
@@ -123,15 +119,12 @@ function LoginPage() {
                 aria-required="true"
                 aria-describedby="login-form-description"
               />
-              <button
-                className="absolute top-1/2 right-4 inline-flex -translate-y-1/2 items-center justify-center bg-transparent text-muted"
-                type="button"
-                aria-label={isPasswordVisible ? '비밀번호 숨기기' : '비밀번호 보기'}
-                aria-pressed={isPasswordVisible}
-                onClick={() => setIsPasswordVisible((current) => !current)}
-              >
-                <Eye size={20} strokeWidth={2.5} aria-hidden="true" />
-              </button>
+              <span className="absolute top-1/2 right-4 flex -translate-y-1/2">
+                <PasswordToggleButton
+                  visible={isPasswordVisible}
+                  onToggle={() => setIsPasswordVisible((current) => !current)}
+                />
+              </span>
             </span>
           </div>
 
@@ -141,7 +134,7 @@ function LoginPage() {
 
           <SocialLoginGroup />
 
-          <p className="mt-10 text-center text-lg text-body max-sm:mt-8 max-sm:text-sm">
+          <p className="mt-10 text-center text-lg text-foreground max-sm:mt-8 max-sm:text-sm">
             계정이 없으신가요?{' '}
             <Link className="font-extrabold text-ink" to="/signup">
               회원가입

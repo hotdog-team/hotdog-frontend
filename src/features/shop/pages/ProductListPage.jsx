@@ -119,7 +119,7 @@ function ProductGrid({
         <div>
           <p className="text-caption text-muted">홈 〉 {category.navLabel}</p>
           <h1 className="mt-5 text-3xl font-medium">{title}</h1>
-          {category.description && <p className="mt-4 text-body-lg text-body">{category.description}</p>}
+          {category.description && <p className="mt-4 text-body-lg text-foreground">{category.description}</p>}
         </div>
         <label className="flex items-center gap-3 text-body-sm">
           <span className="text-muted">정렬 기준:</span>
@@ -165,13 +165,13 @@ function ProductGrid({
 
         <section>
           {isLoading && (
-            <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-body text-muted">
+            <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-muted">
               상품을 불러오는 중입니다.
             </div>
           )}
 
           {error && (
-            <div className="rounded border border-error-border bg-surface px-6 py-10 text-center text-body text-error">
+            <div className="rounded border border-error-border bg-surface px-6 py-10 text-center text-error">
               <p>상품 목록을 불러오지 못했습니다.</p>
               <Button className="mt-4" type="button" variant="secondary" size="sm" onClick={onRetry}>
                 다시 시도
@@ -181,7 +181,7 @@ function ProductGrid({
 
           {!isLoading && !error && (
             <>
-              <p className="mb-6 text-body-sm font-semibold text-body">
+              <p className="mb-6 text-body-sm font-semibold text-foreground">
                 총 {totalElements}개 상품 중 {visibleStart}-{visibleEnd}개 표시
               </p>
               <div className="a11y-grid-products grid grid-cols-3 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
@@ -190,7 +190,7 @@ function ProductGrid({
                 ))}
               </div>
               {filteredProducts.length === 0 && (
-                <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-body text-muted">
+                <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-muted">
                   선택한 조건과 일치하는 상품이 없습니다.
                 </div>
               )}
