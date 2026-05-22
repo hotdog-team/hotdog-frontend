@@ -4,6 +4,7 @@ import { login as loginApi } from '../api/authApi';
 export const useAuthStore = create((set) => ({
     accessToken: null,
     refreshToken: null,
+    user: null,
     isAuthenticated: false,
 
     login: async ({ email, password }) => {
@@ -14,11 +15,14 @@ export const useAuthStore = create((set) => ({
         //전역 set
         set({ accessToken, refreshToken, isAuthenticated: true });
     },
+
+    setUser: (userData) => set({ user: userData }),
+
     logout: () => {
         //localStorage에서 accessToken과 refreshToken을 제거한다
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        set({ accessToken: null, refreshToken: null, isAuthenticated: false });
+        set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false });
     },
     hydrate: () => {
         const accessToken = localStorage.getItem('accessToken');
@@ -30,4 +34,3 @@ export const useAuthStore = create((set) => ({
         });
     },
 }));
-

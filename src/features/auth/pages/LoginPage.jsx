@@ -27,15 +27,20 @@ function LoginPage() {
   const isEmailInvalid = email.length > 0 && !isValidEmail(email)
 
   const handleSubmit = async (event) => {
-    event.preventDefault()
-    if (isEmailInvalid) return
-    try {
-      await login({ email, password })
-      navigate('/home', { replace: true })
-    } catch (err) {
-      toast.error(err.message ?? '로그인에 실패했습니다.')
+      event.preventDefault()
+      if (isEmailInvalid) return
+      try {
+        const response = await login({ email, password })
+
+        if (response && response.accessToken) {
+           localStorage.setItem('accessToken', response.accessToken)
+        }
+
+        navigate('/home', { replace: true })
+      } catch (err) {
+        toast.error(err.message ?? '로그인에 실패했습니다.')
+      }
     }
-  }
 
   return (
     <main className="flex min-h-svh flex-col bg-page text-foreground">
