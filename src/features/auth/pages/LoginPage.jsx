@@ -24,18 +24,27 @@ function LoginPage() {
 
   const navigate = useNavigate()
   const login = useAuthStore((s) => s.login)
+  const setUser = useAuthStore((s) => s.setUser)
   const isEmailInvalid = email.length > 0 && !isValidEmail(email)
 
   const handleSubmit = async (event) => {
       event.preventDefault()
       if (isEmailInvalid) return
+
       try {
         const response = await login({ email, password })
 
         if (response && response.accessToken) {
            localStorage.setItem('accessToken', response.accessToken)
-        }
 
+
+           if (useAuthStore.getState().setUserInfo) {
+             useAuthStore.getState().setUserInfo({
+               email: response.data.email,
+               name: response.data.name
+             })
+           }
+        }
         navigate('/home', { replace: true })
       } catch (err) {
         toast.error(err.message ?? '로그인에 실패했습니다.')

@@ -8,12 +8,14 @@ export const useAuthStore = create((set) => ({
     isAuthenticated: false,
 
     login: async ({ email, password }) => {
-        const { accessToken, refreshToken } = await loginApi({email, password});
+        const { accessToken, refreshToken, email: userEmail, name } = await loginApi({email, password});
         //localStorage에 세팅
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
+
         //전역 set
-        set({ accessToken, refreshToken, isAuthenticated: true });
+        set({ accessToken, refreshToken, user: { email: userEmail, name }, isAuthenticated: true });
+
     },
 
     setUser: (userData) => set({ user: userData }),
