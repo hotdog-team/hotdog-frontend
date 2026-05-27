@@ -1,18 +1,39 @@
 import { useState, useEffect } from 'react'
-import { User, Lock, Edit2 } from 'lucide-react'
+import { Circle, CircleAlert, CircleCheck } from 'lucide-react'
 import { toast } from 'react-toastify'
-import { Button, Pagination } from '../../../components/index.js'
-import axiosInstance from '../../../api/axiosInstance.js';
-import { useAuthStore } from '../../../store/useAuthStore.js';
+import { Button, InputField, Input, Checkbox, PasswordToggleButton } from '../../../components/index.js'
+import axiosInstance from '../../../api/axiosInstance.js'
+import { useAuthStore } from '../../../store/useAuthStore.js'
+import { useNavigate } from 'react-router-dom'
 
-const fieldClass =
-  'h-input-lg w-full border border-border bg-surface px-8 text-xl text-ink outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/15 max-sm:h-14 max-sm:px-4 max-sm:text-body'
-const labelClass = 'grid gap-2.5 text-sm font-extrabold tracking-label text-ink uppercase'
-const disabledStyle = 'bg-surface-muted text-muted cursor-not-allowed border-border-soft'
+
+// 비밀번호 유효성 검사 규칙
+const passwordRules = [
+  { label: '8자 이상 16자 이하', validate: (value) => value.length >= 8 && value.length <= 16 },
+  { label: '영문 소문자 포함', validate: (value) => /[a-z]/.test(value) },
+  { label: '영문 대문자 포함', validate: (value) => /[A-Z]/.test(value) },
+  { label: '숫자 포함', validate: (value) => /\d/.test(value) },
+  { label: '특수문자 포함', validate: (value) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value) },
+]
+
+// 유효성 UI 컴포넌트
+function PasswordRequirementItem({ isActive, isValid, label }) {
+  const Icon = !isActive ? Circle : isValid ? CircleCheck : CircleAlert
+  const statusClass = !isActive ? 'text-muted' : isValid ? 'text-success' : 'text-error'
+
+  return (
+    <li className={`flex items-center gap-2.5 ${statusClass}`}>
+      <Icon className="size-4 shrink-0" strokeWidth={2.4} aria-hidden="true" />
+      <span>{label}</span>
+    </li>
+  )
+}
 
 function MyPageProfile() {
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
 
+  // 프로필 상태
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -21,35 +42,45 @@ function MyPageProfile() {
   const [detailAddress, setDetailAddress] = useState('')
   const [isJobRecommendEnabled, setIsJobRecommendEnabled] = useState(true)
 
-const setUser = useAuthStore((s) => s.setUser);
+  // 비밀번호 변경 상태
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
+  // 비밀번호 노출 토글 상태
+  const [isCurrentVisible, setIsCurrentVisible] = useState(false)
+  const [isNewVisible, setIsNewVisible] = useState(false)
+  const [isConfirmVisible, setIsConfirmVisible] = useState(false)
+
+  const setUser = useAuthStore((s) => s.setUser)
+
+  // 비밀번호 입력 여부 및 유효성 상태 계산
+  const hasNewPassword = newPassword.length > 0
+  const isConfirmValid = confirmPassword.length > 0 && newPassword === confirmPassword
 
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-          const response = await axiosInstance.get('/api/members/me');
-          console.log("=== 서버 응답 전체 확인 ===", response);
-          console.log("=== response.data 내용 ===", response.data);
-        const data = response.data;
+        const response = await axiosInstance.get('/api/members/me')
+        const data = response.data
 
-        setName(data.name);
-        setEmail(data.email);
-        setPhone(data.phone || '');
-        setZipcode(data.zipCode || '');
-        setBaseAddress(data.baseAddress || '');
-        setDetailAddress(data.detailAddress || '');
-        setIsJobRecommendEnabled(data.isJobRecommendEnabled);
+        setName(data.name)
+        setEmail(data.email)
+        setPhone(data.phone || '')
+        setZipcode(data.zipCode || '')
+        setBaseAddress(data.baseAddress || '')
+        setDetailAddress(data.detailAddress || '')
+        setIsJobRecommendEnabled(data.isJobRecommendEnabled)
 
-        setUser({ email: data.email, name: data.name });
-
-        setIsLoading(false);
+        setUser({ email: data.email, name: data.name })
+        setIsLoading(false)
       } catch (err) {
-          console.error("API 호출 에러:", err);
         toast.error('회원 정보를 불러오는 데 실패했습니다.')
         setIsLoading(false)
       }
-    };
+    }
     fetchProfileData()
-  }, [])
+  }, [setUser])
 
   useEffect(() => {
     const script = document.createElement('script')
@@ -73,21 +104,50 @@ const setUser = useAuthStore((s) => s.setUser);
     }
   }
 
-  const handleUpdateProfile = async (e) => {
+  // 통합 저장 핸들러 (프로필 + 비밀번호)
+  const handleUpdateAll = async (e) => {
     e.preventDefault()
 
+    const isPasswordChangeIntent = currentPassword || newPassword || confirmPassword
+
+    if (isPasswordChangeIntent) {
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        return toast.warn('비밀번호를 변경하시려면 현재, 새 비밀번호, 확인란을 모두 입력해 주세요.')
+      }
+      if (newPassword !== confirmPassword) {
+        return toast.error('새 비밀번호가 일치하지 않습니다.')
+      }
+      const passedRules = passwordRules.filter((rule) => rule.validate(newPassword)).length
+      if (passedRules !== passwordRules.length) {
+        return toast.error('새 비밀번호가 보안 요구사항을 충족하지 않습니다.')
+      }
+    }
+
     const updateData = {
-      name: name,
-      phone: phone,
+      name,
+      phone,
       zipCode: zipcode,
-      baseAddress: baseAddress,
-      detailAddress: detailAddress,
-      isJobRecommendEnabled: isJobRecommendEnabled ? 1 : 0
+      baseAddress,
+      detailAddress,
+      isJobRecommendEnabled: isJobRecommendEnabled
     }
 
     try {
+      // 1. 프로필 업데이트 요청
       await axiosInstance.patch('/api/members/me', updateData)
-      toast.success('변경사항이 성공적으로 저장되었습니다.')
+
+      // 2. 비밀번호 업데이트 요청 (입력된 경우만)
+      if (isPasswordChangeIntent) {
+        await axiosInstance.patch('/api/members/me/password', {
+          currentPassword,
+          newPassword,
+        })
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+      }
+
+      toast.success(isPasswordChangeIntent ? '프로필과 비밀번호가 성공적으로 변경되었습니다.' : '프로필 정보가 성공적으로 저장되었습니다.')
     } catch (err) {
       toast.error('정보 수정 중 오류가 발생했습니다.')
     }
@@ -106,132 +166,99 @@ const setUser = useAuthStore((s) => s.setUser);
     }
   }
 
-  if (isLoading) {
+if (isLoading) {
     return <div className="flex h-full items-center justify-center font-bold text-ink">로딩 중...</div>
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="mb-10">
-        <h2 className="text-3xl font-extrabold text-ink tracking-tight">내 정보 관리</h2>
-        <p className="mt-2 text-md text-muted">인증된 회원 프로필 정보와 보안 설정을 제어하세요.</p>
-      </div>
-
-      <div className="rounded-xl border border-border bg-surface p-10 shadow-sm">
-        <h3 className="mb-8 text-xl font-bold text-ink border-b border-border-soft pb-4">프로필 정보</h3>
-
-        <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
-          {/* 좌측 아바타 폼 */}
-          <div className="flex-shrink-0 mx-auto lg:mx-0">
-            <div className="relative h-28 w-28 overflow-hidden rounded-xl bg-surface-muted border border-border">
-              <div className="flex h-full w-full items-center justify-center text-muted">
-                <User size={48} />
-              </div>
-              <button type="button" className="absolute bottom-1.5 right-1.5 rounded-full bg-brand p-2 text-white shadow hover:bg-brand-dark transition-colors">
-                <Edit2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
+      <div className="mx-auto w-full max-w-4xl px-4 py-8">
+        <div className="mb-10 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-extrabold text-ink tracking-tight">내 정보 관리</h2>
+            <p className="mt-2 text-md text-muted">인증된 회원 프로필 정보와 보안 설정을 제어하세요.</p>
           </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="md"
+            onClick={() => navigate('/mypage/orders')}
+            className="font-bold shrink-0"
+          >
+            주문 내역 보기
+          </Button>
+        </div>
 
-          {/* 우측 입력 필드 그룹 */}
-          <form className="flex-1 space-y-6" onSubmit={handleUpdateProfile}>
-            <div className={labelClass}>
-                <label htmlFor="profile-name">성함 (변경 불가)</label>
-              <input type="text" value={name} className={`${fieldClass} ${disabledStyle}`} readOnly aria-disabled="true" />
-            </div>
+        <div className="rounded-xl border border-border bg-surface p-10 shadow-sm">
+          <h3 className="mb-8 text-xl font-bold text-ink border-b border-border-soft pb-4">프로필 및 보안 정보</h3>
 
-            <div className={labelClass}>
-                <label htmlFor="profile-email">회사 이메일 주소 (변경 불가)</label>
-              <input type="email" value={email} className={`${fieldClass} ${disabledStyle}`} readOnly aria-disabled="true" />
-            </div>
-
-            <div className={labelClass}>
-              <label htmlFor="profile-phone">연락처</label>
-              <input
-                id="profile-phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className={fieldClass}
-                required
-              />
-            </div>
-
-            <div className={labelClass}>
-              <label htmlFor="profile-zipcode">우편번호</label>
-              <div className="flex gap-3">
-                <input
-                  id="profile-zipcode"
-                  type="text"
-                  placeholder="우편번호"
-                  value={zipcode}
-                  className={`${fieldClass} bg-surface-muted`}
-                  readOnly
-                />
-                <Button type="button" variant="secondary" size="md" onClick={handleOpenPostcode} className="shrink-0 font-bold">
-                  주소 찾기
-                </Button>
-              </div>
-            </div>
-
-            <div className={labelClass}>
-              <label htmlFor="profile-base-address">기본 주소</label>
-              <input
-                id="profile-base-address"
-                type="text"
-                placeholder="우편번호 검색 시 자동으로 입력됩니다"
-                value={baseAddress}
-                className={`${fieldClass} ${disabledStyle}`}
+          <form className="space-y-6" onSubmit={handleUpdateAll}>
+            <div className="grid gap-6">
+              <InputField
+                id="profile-name"
+                label="성함 (변경 불가)"
+                size="xl"
+                value={name}
                 readOnly
+                disabled
+                inputVariant="muted"
+              />
+              <InputField
+                id="profile-email"
+                label="회사 이메일 주소 (변경 불가)"
+                size="xl"
+                type="email"
+                value={email}
+                readOnly
+                disabled
+                inputVariant="muted"
               />
             </div>
 
-            <div className={labelClass}>
-              <label htmlFor="profile-detail-address">상세 주소</label>
-              <input
-                id="profile-detail-address"
-                type="text"
-                placeholder="상세 주소(아파트, 동, 호수 등)를 명확히 입력해 주세요."
-                value={detailAddress}
-                onChange={(e) => setDetailAddress(e.target.value)}
-                className={fieldClass}
-              />
+            <div className="rounded-lg bg-surface-muted p-6 border border-border-soft space-y-6">
+              <h4 className="text-sm font-bold text-ink">비밀번호 변경 (선택사항)</h4>
+              <div className="grid gap-6">
+                <InputField id="current-password" label="현재 비밀번호" size="xl" type={isCurrentVisible ? 'text' : 'password'} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="현재 비밀번호" trailing={<PasswordToggleButton visible={isCurrentVisible} onToggle={() => setIsCurrentVisible(!isCurrentVisible)} />} />
+                <InputField id="new-password" label="새 비밀번호" size="xl" type={isNewVisible ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="새 비밀번호" trailing={<PasswordToggleButton visible={isNewVisible} onToggle={() => setIsNewVisible(!isNewVisible)} labelPrefix="새 비밀번호" />} />
+                <InputField id="confirm-password" label="새 비밀번호 확인" size="xl" type={isConfirmVisible ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="새 비밀번호 다시 입력" trailing={<PasswordToggleButton visible={isConfirmVisible} onToggle={() => setIsConfirmVisible(!isConfirmVisible)} labelPrefix="비밀번호 확인" />} />
+              </div>
+              <ul className="grid gap-2 text-sm pt-2" aria-hidden="true">
+                {passwordRules.map((rule) => <PasswordRequirementItem key={rule.label} isActive={hasNewPassword} isValid={rule.validate(newPassword)} label={rule.label} />)}
+                <PasswordRequirementItem isActive={confirmPassword.length > 0} isValid={isConfirmValid} label="비밀번호 확인 일치" />
+              </ul>
             </div>
 
-            <div className="flex items-start gap-4 border-t border-border-soft pt-6">
-              <input
-                id="profile-recommend"
-                className="mt-1 size-6 shrink-0 accent-brand cursor-pointer"
-                type="checkbox"
-                checked={isJobRecommendEnabled}
-                onChange={(e) => setIsJobRecommendEnabled(e.target.checked)}
-              />
-              <label htmlFor="profile-recommend" className="text-sm font-medium text-ink cursor-pointer select-none">
-                나의 <span className="font-bold text-brand">직종 맞춤형</span> 상품 최적화 추천 메커니즘을 상시 유지하겠습니다.
-              </label>
+            <div className="grid gap-6">
+              <InputField id="profile-phone" label="연락처" size="xl" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+              <div className="grid gap-2.5">
+                <label className="text-sm font-extrabold tracking-label text-ink uppercase">우편번호</label>
+                <div className="flex gap-3">
+                  <Input id="profile-zipcode" type="text" placeholder="우편번호" value={zipcode} size="xl" variant="muted" readOnly />
+                  <Button type="button" variant="secondary" size="md" onClick={handleOpenPostcode} className="shrink-0 font-bold">주소 찾기</Button>
+                </div>
+              </div>
+              <InputField id="profile-base-address" label="기본 주소" size="xl" value={baseAddress} readOnly inputVariant="muted" />
+              <InputField id="profile-detail-address" label="상세 주소" size="xl" placeholder="상세 주소를 입력해 주세요." value={detailAddress} onChange={(e) => setDetailAddress(e.target.value)} />
             </div>
 
-            <div className="mt-8 flex flex-col items-end gap-4 border-t border-border-soft pt-8">
-              <Button type="button" variant="secondary" size="lg" className="w-48 gap-2 font-bold">
-                <Lock className="h-4 w-4" />
-                비밀번호 변경
-              </Button>
-              <Button type="submit" variant="primary" size="lg" className="w-48 font-bold">
-                변경사항 저장
-              </Button>
-              <button
+            <div className="border-t border-border-soft pt-6">
+              <Checkbox id="profile-recommend" variant="brand" size="md" checked={isJobRecommendEnabled} onChange={(e) => setIsJobRecommendEnabled(e.target.checked)} label={<>나의 <span className="font-bold text-brand">직종 맞춤형</span> 상품 최적화 추천 메커니즘을 상시 유지하겠습니다.</>} />
+            </div>
+
+            <div className="mt-8 flex flex-row items-center justify-between border-t border-border-soft pt-8">
+              <Button
                 type="button"
+                variant="danger"
+                size="sm"
                 onClick={handleWithdraw}
-                className="w-48 py-3 text-center text-sm font-extrabold text-error hover:bg-error/5 rounded border border-error/20 transition-all"
+                className="underline hover:bg-transparent"
               >
-                D-TO 서비스 탈퇴
-              </button>
+              D-TO 서비스 탈퇴
+              </Button>
+              <Button type="submit" variant="primary" size="lg" className="w-48 font-bold">프로필 저장</Button>
             </div>
           </form>
         </div>
       </div>
-    </div>
-  )
+    )
 }
-
-export default MyPageProfile
+export default MyPageProfile;
