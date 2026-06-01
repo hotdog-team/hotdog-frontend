@@ -101,7 +101,6 @@ export default function CheckboxChipGroup({
             label={unknownLabel}
             checked={unknownChecked}
             disabled={disabled}
-            showSelectedIcon={false}
             onChange={(event) => handleUnknownChange(event.target.checked)}
           />
         )}

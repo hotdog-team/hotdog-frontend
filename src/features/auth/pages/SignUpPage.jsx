@@ -13,6 +13,12 @@ import {
   PasswordToggleButton,
   RadioChipGroup,
 } from '../../../components/index.js'
+import {
+  AGE_OPTIONS,
+  JOB_OPTIONS,
+  META_TAGS,
+  PURPOSE_RADIO_OPTIONS,
+} from '../../../constants/profileMetaTags.js'
 
 const authInputClass = 'px-8 max-sm:px-4'
 
@@ -60,38 +66,6 @@ function buildPasswordStatusSummary(password, passwordConfirm, hasPassword, hasP
 
   return parts.join(' ')
 }
-
-const AGE_OPTIONS = ['20대', '30대', '40대', '50대', '60대 이상']
-const JOB_OPTIONS = ['사무', '영업', '현장', '의료', '교육', '기타']
-
-const META_TAGS = {
-  CATEGORIES: [
-    { id: 1, name: '건강' },
-    { id: 2, name: '교육' },
-    { id: 3, name: '여행' },
-    { id: 4, name: '선물' },
-    { id: 5, name: '가전' },
-  ],
-  PURPOSES: [
-    { id: 6, name: '나를 위한 구매' },
-    { id: 7, name: '선물용' },
-    { id: 8, name: '가족/아이' },
-    { id: 9, name: '업무/직장' },
-    { id: 10, name: '취미/여가' },
-  ],
-  MERCHANDISING: [
-    { id: 11, name: '가성비' },
-    { id: 12, name: '고품질' },
-    { id: 13, name: '실용적' },
-    { id: 14, name: '트렌디' },
-    { id: 15, name: '친환경' },
-  ],
-}
-
-const PURPOSE_RADIO_OPTIONS = [
-  ...META_TAGS.PURPOSES.map((tag) => ({ value: tag.id, label: tag.name })),
-  { value: -1, label: '모르겠어요' },
-]
 
 function SignUpPage() {
   const navigate = useNavigate()
@@ -141,6 +115,7 @@ function SignUpPage() {
 
     const validCategoryIds = selectedCategoryIds.filter((id) => id !== null && id !== -1)
     const validMerchandisingIds = selectedMerchandisingIds.filter((id) => id !== null && id !== -1)
+    const purposeId = selectedPurposeId !== -1 ? selectedPurposeId : null
 
     const signupData = {
       email,
@@ -148,9 +123,11 @@ function SignUpPage() {
       name,
       ageRange,
       jobType,
-      purposeId: selectedPurposeId !== -1 ? selectedPurposeId : null,
-      categoryTagIds: validCategoryIds,
-      merchandisingTagIds: validMerchandisingIds,
+      profileTagIds: [
+        ...validCategoryIds,
+        ...(purposeId != null ? [purposeId] : []),
+        ...validMerchandisingIds,
+      ],
       isJobRecommendEnabled,
     }
 

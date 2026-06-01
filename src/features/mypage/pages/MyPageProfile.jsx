@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react'
 import { Circle, CircleAlert, CircleCheck } from 'lucide-react'
 import { toast } from 'react-toastify'
-import { Button, InputField, Input, Checkbox, PasswordToggleButton } from '../../../components/index.js'
+import { Button, InputField, Input, Checkbox, PasswordToggleButton, RadioChipGroup, CheckboxChipGroup } from '../../../components/index.js'
 import axiosInstance from '../../../api/axiosInstance.js'
 import { useAuthStore } from '../../../store/useAuthStore.js'
 import { useNavigate } from 'react-router-dom'
+import {
+  AGE_OPTIONS,
+  JOB_OPTIONS,
+  META_TAGS,
+  PURPOSE_RADIO_OPTIONS,
+  buildProfileTagIds,
+  splitProfileTagIds,
+} from '../../../constants/profileMetaTags.js'
 
 
 // 비밀번호 유효성 검사 규칙
@@ -41,6 +49,11 @@ function MyPageProfile() {
   const [baseAddress, setBaseAddress] = useState('')
   const [detailAddress, setDetailAddress] = useState('')
   const [isJobRecommendEnabled, setIsJobRecommendEnabled] = useState(true)
+  const [ageRange, setAgeRange] = useState('')
+  const [jobType, setJobType] = useState('')
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
+  const [selectedPurposeId, setSelectedPurposeId] = useState(-1)
+  const [selectedMerchandisingIds, setSelectedMerchandisingIds] = useState([])
 
   // 비밀번호 변경 상태
   const [currentPassword, setCurrentPassword] = useState('')
@@ -71,6 +84,13 @@ function MyPageProfile() {
         setBaseAddress(data.baseAddress || '')
         setDetailAddress(data.detailAddress || '')
         setIsJobRecommendEnabled(data.isJobRecommendEnabled)
+        setAgeRange(data.ageRange || '')
+        setJobType(data.jobType || '')
+
+        const { categoryIds, purposeId, merchandisingIds } = splitProfileTagIds(data.profileTagIds || [])
+        setSelectedCategoryIds(categoryIds)
+        setSelectedPurposeId(purposeId ?? -1)
+        setSelectedMerchandisingIds(merchandisingIds)
 
         setUser({ email: data.email, name: data.name })
         setIsLoading(false)
@@ -129,7 +149,14 @@ function MyPageProfile() {
       zipCode: zipcode,
       baseAddress,
       detailAddress,
-      isJobRecommendEnabled: isJobRecommendEnabled
+      ageRange,
+      jobType,
+      profileTagIds: buildProfileTagIds(
+        selectedCategoryIds.filter((id) => id !== null && id !== -1),
+        selectedPurposeId !== -1 ? selectedPurposeId : null,
+        selectedMerchandisingIds.filter((id) => id !== null && id !== -1),
+      ),
+      isJobRecommendEnabled: isJobRecommendEnabled,
     }
 
     try {
@@ -238,6 +265,58 @@ if (isLoading) {
               </div>
               <InputField id="profile-base-address" label="기본 주소" size="xl" value={baseAddress} readOnly inputVariant="muted" />
               <InputField id="profile-detail-address" label="상세 주소" size="xl" placeholder="상세 주소를 입력해 주세요." value={detailAddress} onChange={(e) => setDetailAddress(e.target.value)} />
+            </div>
+
+            <div className="rounded-lg bg-surface-muted p-6 border border-border-soft space-y-6">
+              <h4 className="text-sm font-bold text-ink">취향 및 직종 설정</h4>
+              <RadioChipGroup
+                id="profile-age"
+                name="ageRange"
+                label="연령대"
+                options={AGE_OPTIONS}
+                value={ageRange}
+                onValueChange={setAgeRange}
+                optional
+              />
+              <RadioChipGroup
+                id="profile-job"
+                name="jobType"
+                label="직종"
+                options={JOB_OPTIONS}
+                value={jobType}
+                onValueChange={setJobType}
+              />
+              <CheckboxChipGroup
+                id="profile-categories"
+                label="관심 카테고리 (중복 선택 가능)"
+                optional
+                options={META_TAGS.CATEGORIES.map((tag) => ({
+                  value: tag.id,
+                  label: tag.name,
+                }))}
+                values={selectedCategoryIds}
+                onChange={setSelectedCategoryIds}
+              />
+              <RadioChipGroup
+                id="profile-purpose"
+                name="purposeId"
+                label="주 이용 목적"
+                optional
+                options={PURPOSE_RADIO_OPTIONS}
+                value={selectedPurposeId ?? ''}
+                onValueChange={setSelectedPurposeId}
+              />
+              <CheckboxChipGroup
+                id="profile-merchandising"
+                label="선호 상품 성향 (중복 선택 가능)"
+                optional
+                options={META_TAGS.MERCHANDISING.map((tag) => ({
+                  value: tag.id,
+                  label: tag.name,
+                }))}
+                values={selectedMerchandisingIds}
+                onChange={setSelectedMerchandisingIds}
+              />
             </div>
 
             <div className="border-t border-border-soft pt-6">
