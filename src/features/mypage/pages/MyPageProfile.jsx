@@ -320,7 +320,7 @@ if (isLoading) {
             </div>
 
             <div className="border-t border-border-soft pt-6">
-              <Checkbox id="profile-recommend" variant="brand" size="md" checked={isJobRecommendEnabled} onChange={(e) => setIsJobRecommendEnabled(e.target.checked)} label={<>나의 <span className="font-bold text-brand">직종 맞춤형</span> 상품 최적화 추천 메커니즘을 상시 유지하겠습니다.</>} />
+              <Checkbox id="profile-recommend" variant="brand" size="md" checked={isJobRecommendEnabled} onChange={(e) => setIsJobRecommendEnabled(e.target.checked)} label={<><span className="font-bold text-brand">직종 맞춤 상품 추천</span>을 받습니다.</>} />
             </div>
 
             <div className="mt-8 flex flex-row items-center justify-between border-t border-border-soft pt-8">
