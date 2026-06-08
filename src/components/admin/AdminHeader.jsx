@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import dtoLogo from '../../assets/d-to-logo.png'
 import { useAuthStore } from '../../store/useAuthStore.js'
 import { adminMenuSections, isAdminSectionActive } from './adminNav.js'
@@ -22,6 +22,7 @@ const utilityLinkClass =
 
 export default function AdminHeader() {
   const navigate = useNavigate()
+  const location = useLocation()
   const logout = useAuthStore((state) => state.logout)
 
   const handleLogout = () => {
@@ -43,17 +44,20 @@ export default function AdminHeader() {
 
         <nav className="min-w-0 flex-1 overflow-x-auto py-1" aria-label="관리자 상위 메뉴">
           <ul className="flex items-center gap-6 whitespace-nowrap px-0.5 max-sm:gap-4">
-            {adminMenuSections.map((section) => (
-              <li key={section.id}>
-                <NavLink
-                  className={({ isActive }) => getTopNavLinkClass(isActive)}
-                  to={section.to}
-                  isActive={(_, location) => isAdminSectionActive(section, location.pathname)}
-                >
-                  {section.label}
-                </NavLink>
-              </li>
-            ))}
+            {adminMenuSections.map((section) => {
+              const isActive = isAdminSectionActive(section, location.pathname)
+
+              return (
+                <li key={section.id}>
+                  <Link
+                    className={getTopNavLinkClass(isActive)}
+                    to={section.to}
+                  >
+                    {section.label}
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         </nav>
 

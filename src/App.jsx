@@ -5,6 +5,9 @@ import 'react-toastify/dist/ReactToastify.css'
 import LoginPage from './features/auth/pages/LoginPage.jsx'
 import HomePage from './features/main/pages/HomePage.jsx'
 import MyOrders from './features/mypage/pages/MyOrders.jsx'
+import MyBookmarks from './features/mypage/pages/MyBookmarks.jsx'
+import MyInquiries from './features/mypage/pages/MyInquiries.jsx'
+import MyReviews from './features/mypage/pages/MyReviews.jsx'
 import ResetPasswordCompletePage from './features/auth/pages/ResetPasswordCompletePage.jsx'
 import ResetPasswordPage from './features/auth/pages/ResetPasswordPage.jsx'
 import ResetPasswordConfirmPage from './features/auth/pages/ResetPasswordConfirmPage.jsx'
@@ -19,6 +22,7 @@ import MyPageLayout from './layout/MyPageLayout.jsx';
 import MyPageProfile from './features/mypage/pages/MyPageProfile.jsx';
 import AdminLayout from './layout/AdminLayout.jsx'
 import AdminPlaceholderPage from './features/admin/pages/AdminPlaceholderPage.jsx'
+import AdminDashboard from './features/admin/pages/AdminDashboard.jsx'
 
 
 function LoginEntry() {
@@ -61,11 +65,14 @@ function App() {
               <Route index element={<Navigate to="orders" replace />} />
               <Route path="profile" element={<MyPageProfile />} />
               <Route path="orders" element={<MyOrders />} />
+              <Route path="bookmarks" element={<MyBookmarks />} />
+              <Route path="inquiries" element={<MyInquiries />} />
+              <Route path="reviews" element={<MyReviews />} />
             </Route>
           </Route>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<AdminPlaceholderPage />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="categories" element={<AdminPlaceholderPage />} />
             <Route path="meta-tags" element={<AdminPlaceholderPage />} />
             <Route path="products" element={<AdminPlaceholderPage />} />

@@ -41,7 +41,8 @@ function LoginPage() {
            if (useAuthStore.getState().setUserInfo) {
              useAuthStore.getState().setUserInfo({
                email: response.data.email,
-               name: response.data.name
+               name: response.data.name,
+               role: response.data.role
              })
            }
         }

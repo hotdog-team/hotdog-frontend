@@ -7,7 +7,7 @@ const navItems = [
     { to: '/mypage/orders', label: '주문/배송 내역' },
     { to: '/mypage/bookmarks', label: '찜한 상품' },
     { to: '/mypage/reviews', label: '내 리뷰' },
-    { to: '/mypage/asks', label: '문의 내역' },
+    { to: '/mypage/inquiries', label: '문의 내역' },
 ]
 
 export default function MyPageSidebar() {
