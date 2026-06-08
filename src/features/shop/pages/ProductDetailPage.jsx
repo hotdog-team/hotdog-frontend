@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import { Button } from '../../../components/index.js'
 import { getCategoryByCode, getProductById, productCatalog } from '../data/catalog'
+import {useProductViewLog} from "../../../hooks/useProductViewLog.js";
 
 const specs = [
   ['총 용량', '28.5 cu. ft.'],
@@ -22,11 +23,13 @@ const relatedProducts = [
 function ProductDetailPage() {
   const { productId } = useParams()
   const [quantity, setQuantity] = useState(1)
+  useProductViewLog(productId);
   const product = getProductById(productId)
 
   if (!product) {
     return <Navigate to="/shop" replace />
   }
+
 
   const category = getCategoryByCode(product.categoryCode)
   const thumbnails = product.thumbnails ?? productCatalog.filter((item) => item.id !== product.id).slice(0, 4).map((item) => item.image)
