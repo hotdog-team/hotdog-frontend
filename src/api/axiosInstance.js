@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { BASE_URL } from './apiClient';
+import { toast } from 'react-toastify';
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -17,5 +18,24 @@ axiosInstance.interceptors.request.use((config) => {
   }
   return config;
 });
+
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && error.response.status === 401) {
+
+      toast.error('로그인이 만료되었습니다. 다시 로그인해 주세요.');
+
+      localStorage.clear();
+      sessionStorage.clear();
+
+      window.location.href = '/';
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export default axiosInstance;

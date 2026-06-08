@@ -8,26 +8,27 @@ export const useAuthStore = create((set) => ({
     isAuthenticated: false,
 
     login: async ({ email, password }) => {
-        const { accessToken, refreshToken, email: userEmail, name } = await loginApi({email, password});
-        //localStorage에 세팅
+        const { accessToken, refreshToken, email: userEmail, name, role } = await loginApi({email, password});
+
+        // localStorage에 세팅
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('user', JSON.stringify({ email: userEmail, name }));
+        localStorage.setItem('user', JSON.stringify({ email: userEmail, name, role }));
 
-        //전역 set
-        set({ accessToken, refreshToken, user: { email: userEmail, name }, isAuthenticated: true });
-
+        // 전역 set
+        set({ accessToken, refreshToken, user: { email: userEmail, name, role }, isAuthenticated: true });
     },
 
+    //localStorage에서 accessToken과 refreshToken을 제거한다
     setUser: (userData) => set({ user: userData }),
 
     logout: () => {
-        //localStorage에서 accessToken과 refreshToken을 제거한다
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false });
     },
+
     hydrate: () => {
         const accessToken = localStorage.getItem('accessToken');
         const refreshToken = localStorage.getItem('refreshToken');

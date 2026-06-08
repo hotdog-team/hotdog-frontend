@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ProductCard } from '../../../components/index.js'
-import { productCatalog } from '../../shop/data/catalog'
+import { ShieldCheck, ArrowRight } from 'lucide-react'
+
+import { ProductCard, Button } from '../../../components/index.js'
+import { useAuthStore } from '../../../store/useAuthStore.js'
+import { productCatalog } from '../../shop/data/catalog.js'
 
 const HERO_CAROUSEL_INTERVAL = 5000
 
@@ -178,19 +181,60 @@ function HeroBanner({ slides }) {
 }
 
 function HomePage() {
-  const handleWishlistClick = () => {}
-  const handleAddToCartClick = () => {}
+  const user = useAuthStore((state) => state.user)
+  const isAdmin = user?.role === 'ROLE_ADMIN'
+
+  console.log("현재 스토어의 유저 정보:", user);
+  const handleWishlistClick = (product) => {
+  }
+  const handleAddToCartClick = (product) => {
+  }
+
   const homeProducts = productCatalog.slice(0, 6)
 
   return (
     <>
         <HeroBanner slides={heroSlides} />
 
+        {isAdmin && (
+          <section className="layout-container mt-12">
+            <div className="flex flex-col sm:flex-row items-center justify-between rounded-xl border border-brand/20 bg-brand/5 px-8 py-6 shadow-sm gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand text-white">
+                  <ShieldCheck size={24} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-brand">관리자 모드 활성화</h2>
+                  <p className="mt-0.5 text-sm font-medium text-ink">
+                    메타태그 등록, 이벤트 관리, 회원 조회는 관리자 센터에서 진행해 주세요.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="primary"
+                size="md"
+                onClick={() => window.open('/admin', '_blank')}
+                className="shrink-0 flex items-center gap-2"
+              >
+                관리자 센터로 이동 <ArrowRight size={18} strokeWidth={2.5} />
+              </Button>
+            </div>
+          </section>
+        )}
+
         <section className="layout-container mt-16">
           <SectionHeader eyebrow="최신 상품" title="신규 입고" />
           <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
             {homeProducts.slice(0, 4).map((product) => (
-              <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                to={`/shop/${product.id}`}
+                onWishlistClick={handleWishlistClick}
+                onAddToCartClick={handleAddToCartClick}
+              />
             ))}
           </div>
         </section>
@@ -199,7 +243,13 @@ function HomePage() {
           <SectionHeader eyebrow="임직원 추천" title="베스트 셀러" />
           <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
             {homeProducts.slice(4).map((product) => (
-              <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                to={`/shop/${product.id}`}
+                onWishlistClick={handleWishlistClick}
+                onAddToCartClick={handleAddToCartClick}
+              />
             ))}
           </div>
         </section>
