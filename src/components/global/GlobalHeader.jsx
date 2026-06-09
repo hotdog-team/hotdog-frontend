@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { fetchCategories } from '../../api/categoryApi.js'
 import dtoLogo from '../../assets/d-to-logo.png'
 import { useAuthStore } from '../../store/useAuthStore.js'
+import { useAccessibility } from '../../context/AccessibilityContext.jsx';
 
 const DEFAULT_CATEGORIES = [
   { label: '건강', to: '/shop?categoryId=health' },
@@ -59,6 +60,7 @@ function GlobalHeader({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [apiCategories, setApiCategories] = useState(DEFAULT_CATEGORIES)
   const headerCategories = useMemo(() => categories ?? apiCategories, [apiCategories, categories])
+  const { settings, setSettings, save } = useAccessibility();
 
   const logout = useAuthStore((s) => s.logout)
   const user = useAuthStore((s) => s.user)
@@ -135,6 +137,23 @@ function GlobalHeader({
     logout()
     navigate('/', { replace: true })
   }
+
+  // 감소 함수 (최솟값 1 제한)
+  const handleDecrease = () => {
+    if (settings.fontSizeStep <= 1) return;
+    const next = { ...settings, fontSizeStep: settings.fontSizeStep - 1 };
+    setSettings(next);
+    save(next).catch(() => {});
+  };
+
+  // 증가 함수 (최댓값 5 제한)
+  const handleIncrease = () => {
+    if (settings.fontSizeStep >= 5) return;
+    const next = { ...settings, fontSizeStep: settings.fontSizeStep + 1 };
+    setSettings(next);
+    save(next).catch(() => {});
+  };
+
 
   return (
     <header className="relative z-40 border-b border-border-soft bg-surface">
@@ -228,10 +247,36 @@ function GlobalHeader({
                 aria-label="유저 메뉴"
               >
                 <div className="border-b border-border-soft px-4 py-3">
-                  <p className="m-0 text-caption font-bold tracking-wide text-muted uppercase">이메일</p>
+                  <p className="m-0 text-caption font-bold text-muted">이메일</p>
                   <p className="m-0 mt-1 truncate text-body-sm font-semibold text-ink">
                     {user?.email || '이메일 정보 없음'}
                   </p>
+                </div>
+                <div className="border-b border-border-soft px-4 py-3">
+                  <p className="m-0 text-caption font-bold text-muted">글자 크기 조절</p>
+                  <div className="a11y-font-stepper mt-2" role="group" aria-label="글자 크기 조절">
+                    <button
+                      type="button"
+                      onClick={handleDecrease}
+                      disabled={settings.fontSizeStep <= 1}
+                      aria-label="글자 크기 줄이기"
+                      className={`a11y-font-stepper__btn ${focusRingClass}`}
+                    >
+                      −
+                    </button>
+                    <span className="a11y-font-stepper__value" aria-live="polite" aria-atomic="true" aria-label={`글자 크기 ${settings.fontSizeStep}단계`}>
+                      {settings.fontSizeStep > 0 ? settings.fontSizeStep : 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleIncrease}
+                      disabled={settings.fontSizeStep >= 5}
+                      aria-label="글자 크기 키우기"
+                      className={`a11y-font-stepper__btn ${focusRingClass}`}
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
                 <div className="py-1">
                   <Link
@@ -242,13 +287,14 @@ function GlobalHeader({
                   >
                     프로필
                   </Link>
-                  <button
-                    className="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-muted"
-                    type="button"
-                    role="menuitem"
+                  <Link
+                      to="/mypage/settings"
+                      className="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-muted"
+                      role="menuitem"
+                      onClick={() => setIsUserMenuOpen(false)}
                   >
-                    설정
-                  </button>
+                    개인 화면 설정
+                  </Link>
                   <button
                     className="block w-full px-4 py-2 text-left text-sm font-bold text-danger hover:bg-danger-soft"
                     onClick={handleLogout}
