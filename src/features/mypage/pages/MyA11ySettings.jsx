@@ -16,7 +16,7 @@ export default function MyA11ySettings() {
         <div className="mx-auto w-full max-w-4xl px-4 py-8">
             <div className="mb-10 flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-ink tracking-tight">내 접근성 설정 관리</h1>
+                    <h1 className="text-3xl font-extrabold text-ink tracking-tight">내 화면 설정</h1>
                     <p className="mt-2 text-md text-muted">설정을 통하여 홈페이지를 환경에 맞게 조정할 수 있습니다.</p>
                 </div>
             </div>

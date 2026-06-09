@@ -293,7 +293,7 @@ function GlobalHeader({
                       role="menuitem"
                       onClick={() => setIsUserMenuOpen(false)}
                   >
-                    설정
+                    개인 화면 설정
                   </Link>
                   <button
                     className="block w-full px-4 py-2 text-left text-sm font-bold text-danger hover:bg-danger-soft"
