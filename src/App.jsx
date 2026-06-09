@@ -8,6 +8,7 @@ import MyOrders from './features/mypage/pages/MyOrders.jsx'
 import MyBookmarks from './features/mypage/pages/MyBookmarks.jsx'
 import MyInquiries from './features/mypage/pages/MyInquiries.jsx'
 import MyReviews from './features/mypage/pages/MyReviews.jsx'
+import MyA11ySettings from './features/mypage/pages/MyA11ySettings.jsx'
 import ResetPasswordCompletePage from './features/auth/pages/ResetPasswordCompletePage.jsx'
 import ResetPasswordPage from './features/auth/pages/ResetPasswordPage.jsx'
 import ResetPasswordConfirmPage from './features/auth/pages/ResetPasswordConfirmPage.jsx'
@@ -62,8 +63,9 @@ function App() {
           <Route path="/shop" element={<ProductListPage />} />
           <Route path="/shop/:productId" element={<ProductDetailPage />} />
             <Route path="/mypage" element={<MyPageLayout />}>
-              <Route index element={<Navigate to="orders" replace />} />
+              <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<MyPageProfile />} />
+              <Route path="settings" element={<MyA11ySettings/>}/>
               <Route path="orders" element={<MyOrders />} />
               <Route path="bookmarks" element={<MyBookmarks />} />
               <Route path="inquiries" element={<MyInquiries />} />

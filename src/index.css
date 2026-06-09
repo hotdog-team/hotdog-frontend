@@ -338,8 +338,8 @@
     --color-page: #ffffff;
     --color-surface: #ffffff;
     --color-surface-muted: #f0f0f0;
-    --color-brand: #f45b33;
-    --color-brand-hover: #a82b00;
+    --color-brand: var(--color-ink);
+    --color-brand-hover: var(--color-ink);
   }
 
   html[data-high-contrast="true"] :focus-visible {
@@ -445,6 +445,94 @@
 
   html[data-high-contrast="true"] .a11y-select-chevron {
     color: var(--color-ink);
+  }
+
+  /* Header font-size stepper (GlobalHeader user menu) */
+  .a11y-font-stepper {
+    display: inline-flex;
+    align-items: stretch;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: 0.375rem;
+    background-color: var(--color-surface);
+  }
+
+  .a11y-font-stepper__btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    background-color: var(--color-surface-muted);
+    color: var(--color-ink);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    cursor: pointer;
+  }
+
+  .a11y-font-stepper__btn:first-of-type {
+    border-right: 1px solid var(--color-border);
+  }
+
+  .a11y-font-stepper__btn:last-of-type {
+    border-left: 1px solid var(--color-border);
+  }
+
+  .a11y-font-stepper__btn:hover:not(:disabled) {
+    background-color: var(--color-brand);
+    color: #ffffff;
+  }
+
+  .a11y-font-stepper__btn:disabled {
+    cursor: not-allowed;
+    background-color: var(--color-disabled-surface);
+    color: var(--color-disabled-text);
+  }
+
+  .a11y-font-stepper__value {
+    display: inline-flex;
+    min-width: 2rem;
+    align-items: center;
+    justify-content: center;
+    padding-inline: 0.25rem;
+    font-size: var(--text-body-sm);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+
+  html[data-high-contrast="true"] .a11y-font-stepper {
+    border-width: 2px;
+    border-color: var(--color-ink);
+  }
+
+  html[data-high-contrast="true"] .a11y-font-stepper__btn:not(:disabled) {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  html[data-high-contrast="true"] .a11y-font-stepper__btn:first-of-type,
+  html[data-high-contrast="true"] .a11y-font-stepper__btn:last-of-type {
+    border-color: var(--color-ink);
+  }
+
+  html[data-high-contrast="true"] .a11y-font-stepper__btn:hover:not(:disabled) {
+    background-color: var(--color-ink);
+    color: var(--color-surface);
+  }
+
+  html[data-high-contrast="true"] .a11y-font-stepper__btn:disabled {
+    background-color: var(--color-surface-muted);
+    color: var(--color-muted);
+    opacity: 1;
+  }
+
+  html[data-high-contrast="true"] .a11y-font-stepper__value {
+    font-weight: 800;
   }
 
   /* Choice chips (RadioChipGroup / CheckboxChipGroup) — rem 기반, 글자 크기 단계 대응 */

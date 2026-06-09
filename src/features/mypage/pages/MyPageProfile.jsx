@@ -196,8 +196,7 @@ function MyPageProfile() {
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <div className="mb-10 flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-extrabold text-ink tracking-tight">내 정보 관리</h2>
-          <p className="mt-2 text-md text-muted">인증된 회원 프로필 정보와 보안 설정을 제어하세요.</p>
+          <h2 className="text-3xl font-extrabold text-ink tracking-tight">내 정보 수정</h2>
         </div>
         <Button
           type="button"

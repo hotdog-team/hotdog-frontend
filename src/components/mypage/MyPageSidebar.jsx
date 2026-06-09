@@ -1,8 +1,8 @@
 import { NavLink } from 'react-router-dom';
 
 const navItems = [
-    { to: '/mypage/profile', label: '프로필' },
-    { to: '/mypage/settings', label: '설정' },
+    { to: '/mypage/profile', label: '내 정보 수정' },
+    { to: '/mypage/settings', label: '개인 설정' },
     { to: '/mypage/address', label: '내 배송지 관리' },
     { to: '/mypage/orders', label: '주문/배송 내역' },
     { to: '/mypage/bookmarks', label: '찜한 상품' },
