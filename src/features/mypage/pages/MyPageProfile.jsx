@@ -248,18 +248,35 @@ function MyPageProfile() {
             </ul>
           </div>
 
-          <div className="grid gap-6">
-            <InputField id="profile-phone" label="연락처" size="xl" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-            <div className="grid gap-2.5">
-              <label className="text-sm font-extrabold tracking-label text-ink uppercase">우편번호</label>
-              <div className="flex gap-3">
-                <Input id="profile-zipcode" type="text" placeholder="우편번호" value={zipcode} size="xl" variant="muted" readOnly />
-                <Button type="button" variant="secondary" size="md" onClick={handleOpenPostcode} className="shrink-0 font-bold">주소 찾기</Button>
+            <div className="grid gap-6">
+              <InputField id="profile-phone" label="연락처" size="xl" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+
+              <div className="grid gap-2.5">
+                <label htmlFor="profile-age" className="text-sm font-extrabold tracking-label text-ink uppercase">연령대</label>
+                <select
+                  id="profile-age"
+                  value={ageRange}
+                  onChange={(e) => setAgeRange(e.target.value)}
+                  className="flex h-12 w-full items-center rounded-lg border border-border bg-surface px-4 text-ink focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
+                >
+                  <option value="" disabled>연령대를 선택해 주세요</option>
+                  <option value="20대">20대</option>
+                  <option value="30대">30대</option>
+                  <option value="40대">40대</option>
+                  <option value="50대 이상">50대 이상</option>
+                </select>
               </div>
+
+              <div className="grid gap-2.5">
+                <label className="text-sm font-extrabold tracking-label text-ink uppercase">우편번호</label>
+                <div className="flex gap-3">
+                  <Input id="profile-zipcode" type="text" placeholder="우편번호" value={zipcode} size="xl" variant="muted" readOnly />
+                  <Button type="button" variant="secondary" size="md" onClick={handleOpenPostcode} className="shrink-0 font-bold">주소 찾기</Button>
+                </div>
+              </div>
+              <InputField id="profile-base-address" label="기본 주소" size="xl" value={baseAddress} readOnly inputVariant="muted" />
+              <InputField id="profile-detail-address" label="상세 주소" size="xl" placeholder="상세 주소를 입력해 주세요." value={detailAddress} onChange={(e) => setDetailAddress(e.target.value)} />
             </div>
-            <InputField id="profile-base-address" label="기본 주소" size="xl" value={baseAddress} readOnly inputVariant="muted" />
-            <InputField id="profile-detail-address" label="상세 주소" size="xl" placeholder="상세 주소를 입력해 주세요." value={detailAddress} onChange={(e) => setDetailAddress(e.target.value)} />
-          </div>
 
           <div className="rounded-lg bg-surface-muted p-6 border border-border-soft space-y-6">
             <h4 className="text-sm font-bold text-ink">취향 및 직종 설정</h4>

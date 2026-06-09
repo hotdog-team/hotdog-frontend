@@ -22,10 +22,10 @@ export const adminMenuSections = [
   },
   {
     id: 'members',
-    label: '문의/회원 관리',
-    to: '/admin/inquiries',
+    label: '회원 및 운영 관리',
+    to: '/admin/members',
     sidebar: [
-      { to: '/admin/inquiries', label: '들어온 문의' },
+      { to: '/admin/moderation', label: '콘텐츠 모니터링 (문의)' },
       { to: '/admin/members', label: '회원 관리' },
     ],
   },

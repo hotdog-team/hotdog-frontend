@@ -24,7 +24,12 @@ import MyPageProfile from './features/mypage/pages/MyPageProfile.jsx';
 import AdminLayout from './layout/AdminLayout.jsx'
 import AdminPlaceholderPage from './features/admin/pages/AdminPlaceholderPage.jsx'
 import AdminDashboard from './features/admin/pages/AdminDashboard.jsx'
-
+import CategoryManagement from './features/admin/pages/CategoryManagement.jsx'
+import MetaTagManagement from './features/admin/pages/MetaTagManagement.jsx'
+import MemberManagement from './features/admin/pages/MemberManagement.jsx'
+import ModerationManagement from './features/admin/pages/ModerationManagement.jsx'
+import ProductManagement from './features/admin/pages/ProductManagement.jsx'
+import OrderManagement from './features/admin/pages/OrderManagement.jsx'
 
 function LoginEntry() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -75,13 +80,16 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="categories" element={<AdminPlaceholderPage />} />
-            <Route path="meta-tags" element={<AdminPlaceholderPage />} />
-            <Route path="products" element={<AdminPlaceholderPage />} />
-            <Route path="orders" element={<AdminPlaceholderPage />} />
+            <Route path="categories" element={<CategoryManagement />} />
+            <Route path="meta-tags" element={<MetaTagManagement />} />
+            <Route path="members" element={<MemberManagement />} />
+            <Route path="moderation" element={<ModerationManagement />} />
+
+            <Route path="products" element={<ProductManagement />} />
+            <Route path="orders" element={<OrderManagement />} />
+
             <Route path="inquiries" element={<AdminPlaceholderPage />} />
             <Route path="reviews" element={<AdminPlaceholderPage />} />
-            <Route path="members" element={<AdminPlaceholderPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
