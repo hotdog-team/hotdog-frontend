@@ -23,6 +23,7 @@ import MyPageProfile from './features/mypage/pages/MyPageProfile.jsx';
 import AdminLayout from './layout/AdminLayout.jsx'
 import AdminPlaceholderPage from './features/admin/pages/AdminPlaceholderPage.jsx'
 import AdminDashboard from './features/admin/pages/AdminDashboard.jsx'
+import CartPage from './features/shop/pages/CartPage'
 
 
 function LoginEntry() {
@@ -58,9 +59,10 @@ function App() {
         <Route path="/social-success" element={<SocialSuccessPage />} />
         <Route element={<RequireAuth />}>
           <Route element={<GlobalLayout />}>
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/shop" element={<ProductListPage />} />
-          <Route path="/shop/:productId" element={<ProductDetailPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/shop" element={<ProductListPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/shop/:productId" element={<ProductDetailPage />} />
             <Route path="/mypage" element={<MyPageLayout />}>
               <Route index element={<Navigate to="orders" replace />} />
               <Route path="profile" element={<MyPageProfile />} />
