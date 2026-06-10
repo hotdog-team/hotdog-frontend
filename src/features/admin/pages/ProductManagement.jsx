@@ -93,7 +93,7 @@ export default function ProductManagement() {
   }
 
   //수정 로직
-  const handleOpenEditModal = async (product) => {
+const handleOpenEditModal = async (product) => {
     try {
       const res = await axiosInstance.get(`/api/products/${product.id}`)
       const detail = res.data.data || res.data
@@ -110,8 +110,8 @@ export default function ProductManagement() {
         imageUrl: detail.imageUrl || ''
       })
 
-      const existingTags = detail.metaTagIds || (detail.metaTags ? detail.metaTags.map(t => t.id) : [])
-      setEditSelectedTagIds(existingTags)
+      const existingTags = Array.isArray(detail.metaTagIds) ? detail.metaTagIds : [];
+      setEditSelectedTagIds(existingTags);
 
       setEditingProductId(product.id)
       setIsEditModalOpen(true)
