@@ -1,4 +1,4 @@
-import { Heart, Info, Minus, Plus, ShoppingCart, Star } from 'lucide-react'
+import { ChevronRight, Heart, Info, Minus, Plus, ShoppingCart, Star } from 'lucide-react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import { Button } from '../../../components/index.js'
@@ -48,7 +48,17 @@ function ProductDetailPage() {
   return (
     <div className="bg-page text-ink">
       <div className="layout-container pt-12 pb-28">
-        <p className="mb-10 text-body-sm text-foreground">홈 〉 {category?.navLabel ?? product.category} 〉 {product.name}</p>
+        <nav aria-label="현재 위치" className="mb-10">
+          <ol className="flex items-center gap-1 text-body-sm text-muted">
+            <li>
+              <Link to={`/shop?categoryId=${encodeURIComponent(product.categoryId ?? product.categoryCode)}`} className="hover:text-ink transition-colors">
+                {category?.navLabel ?? product.category}
+              </Link>
+            </li>
+            <li aria-hidden="true"><ChevronRight className="size-3.5 shrink-0" strokeWidth={2} /></li>
+            <li className="truncate text-ink font-medium" aria-current="page">{product.name}</li>
+          </ol>
+        </nav>
         <section className="a11y-grid-2col grid grid-cols-detail gap-14 max-lg:grid-cols-1">
           <div>
             <div className="relative overflow-hidden rounded-md border border-border-soft bg-surface">
@@ -73,9 +83,9 @@ function ProductDetailPage() {
           </div>
 
           <div>
-            <p className="mb-4 text-body font-bold tracking-wide text-brand">{product.category}</p>
+            <p className="mb-1 text-body font-bold text-brand">{product.category}</p>
             <h1 className="text-body-lg font-medium">{product.name}</h1>
-            <div className="mt-6 flex items-center gap-2 text-rating">
+            <div className="mt-4 flex items-center gap-2 text-rating">
               {Array.from({ length: 5 }).map((_, index) => (
                 <Star className="size-5 fill-current" key={index} strokeWidth={0} />
               ))}
@@ -143,7 +153,7 @@ function ProductDetailPage() {
               <p className="text-body-sm font-bold text-brand">함께 구매하면 좋은 상품</p>
               <h2 className="mt-2 text-body-lg">{category?.label ?? product.category} 함께 보기</h2>
             </div>
-            <Link className="text-body" to={`/shop?category=${product.categoryCode}`}>카테고리 보기 →</Link>
+            <Link className="text-body" to={`/shop?categoryId=${encodeURIComponent(product.categoryId ?? product.categoryCode)}`}>카테고리 보기 →</Link>
           </div>
           <div className="a11y-grid-products grid grid-cols-4 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
             {relatedProducts.map((relatedProduct) => (

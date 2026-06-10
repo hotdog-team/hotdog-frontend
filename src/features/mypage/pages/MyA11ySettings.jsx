@@ -24,7 +24,7 @@ export default function MyA11ySettings() {
                 <fieldset className="a11y-choice-chip-field flex flex-col gap-2" aria-describedby="font-size-desc">
                     <legend className="a11y-choice-chip-legend text-base font-bold text-gray-700 block">글자 크기 설정</legend>
                     <p id="font-size-desc" className="text-sm text-gray-400">글자 크기를 1단계에서 5단계까지 조절합니다.</p>
-                    <div className="flex items-center gap-3 mt-4">
+                    <div className="flex items-center gap-3 mt-4 bg-gray-100 rounded-full">
                         {steps.map((level) => {
                             const isSelected = settings.fontSizeStep === level;
                             const inputId = `font-size-step-${level}`;
@@ -53,7 +53,7 @@ export default function MyA11ySettings() {
                                         className={`w-11 h-11 aspect-square rounded-full flex items-center justify-center text-base transition-all ${
                                             isSelected
                                                 ? 'text-white bg-brand shadow-sm font-semibold'
-                                                : 'text-gray-600 hover:text-brand hover:bg-gray-100'
+                                                : 'text-gray-600 bg-white hover:text-white hover:bg-brand'
                                         }`}
                                     >
                                         <span className={`select-none ${previewClass[level]}`}>가</span>
