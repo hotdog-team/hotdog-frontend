@@ -96,13 +96,9 @@ export async function fetchCategoryProducts({ categoryId, page = 0, size = 20, s
   return normalizePageResponse(responseBody, size)
 }
 /**
- * 상품 검색 및 상품 목록 조회
+ * 상품 검색 및 상품 목록 조회 (keyword 없으면 전체 조회)
  */
 export async function fetchProducts({ keyword = '', page = 0, size = 20, sort = 'weight' }) {
-  if (!keyword) {
-    return normalizePageResponse({ content: [], totalElements: 0, totalPages: 0, number: page, size }, size)
-  }
-
   const responseBody = await apiFetch(buildProductsPath({ keyword, page, size, sort }))
 
   return normalizePageResponse(responseBody, size)
@@ -114,6 +110,22 @@ export async function fetchProductDetail(productId) {
   const responseBody = await apiFetch(`/api/products/${productId}`);
 
   return normalizeProduct(responseBody);
+}
+/**
+ * 메타태그 기반 상품 목록 조회
+ */
+export async function fetchProductsByMetaTags({ metaTagIds = [], match = 'any', sort = 'weight', size = 4 } = {}) {
+  const searchParams = new URLSearchParams({
+    sort,
+    size: String(size),
+  })
+
+  if (match === 'all') searchParams.set('match', 'all')
+  metaTagIds.forEach((id) => searchParams.append('metaTagIds', id))
+
+  const responseBody = await apiFetch(`/api/products?${searchParams.toString()}`)
+
+  return normalizePageResponse(responseBody, size)
 }
 /**
  * 관련 상품 조회

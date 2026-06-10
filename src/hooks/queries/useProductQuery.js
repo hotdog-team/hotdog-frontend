@@ -34,6 +34,17 @@ export function useProductDetailQuery(productId) {
   });
 }
 /**
+ * 메인 페이지 상품 목록 조회
+ */
+export function useHomeProductsQuery({ page = 0, size = 12, sort = 'weight' } = {}) {
+  return useQuery({
+    queryKey: ['homeProducts', page, size, sort],
+    queryFn: () => fetchProducts({ page, size, sort }),
+    staleTime: 1000 * 60 * 5,
+    placeholderData: keepPreviousData,
+  })
+}
+/**
  * 관련 상품 조회
  */
 export function useRelatedProductsQuery(productId) {
