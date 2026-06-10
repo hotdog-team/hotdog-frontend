@@ -13,8 +13,9 @@ import ResetPasswordCompletePage from './features/auth/pages/ResetPasswordComple
 import ResetPasswordPage from './features/auth/pages/ResetPasswordPage.jsx'
 import ResetPasswordConfirmPage from './features/auth/pages/ResetPasswordConfirmPage.jsx'
 import ProductDetailPage from './features/shop/pages/ProductDetailPage.jsx'
-import CartPage from './features/shop/pages/CartPage'
 import ProductListPage from './features/shop/pages/ProductListPage.jsx'
+import CartPage from './features/shop/pages/CartPage'
+import CheckoutPage from "./features/shop/pages/CheckoutPage.jsx";
 import SignUpPage from './features/auth/pages/SignUpPage.jsx'
 import { useAuthStore } from './store/useAuthStore';
 import SocialSuccessPage from './features/auth/pages/SocialSuccessPage.jsx';
@@ -69,8 +70,9 @@ function App() {
           <Route element={<GlobalLayout />}>
             <Route path="/home" element={<HomePage />} />
             <Route path="/shop" element={<ProductListPage />} />
-            <Route path="/cart" element={<CartPage />} />
             <Route path="/shop/:productId" element={<ProductDetailPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/orders/checkout" element={<CheckoutPage />} />
             <Route path="/mypage" element={<MyPageLayout />}>
               <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<MyPageProfile />} />
