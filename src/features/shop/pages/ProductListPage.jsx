@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { fetchCategories } from '../../../api/categoryApi'
 import { Button, Pagination, ProductCard } from '../../../components/index.js'
 import { useCategoryProductsQuery, useProductsQuery } from '../../../hooks/queries/useProductQuery'
+import useBookmarkedIds from '../../../hooks/useBookmarkedIds.js'
 
 import {
   categoryCatalog,
@@ -83,13 +84,13 @@ function ProductGrid({
   sort,
 }) {
   const [searchParams] = useSearchParams()
+  const bookmarkedIds = useBookmarkedIds()
   const getPageHref = (pageOneBased) => {
     const nextSearchParams = new URLSearchParams(searchParams)
     nextSearchParams.set('page', String(pageOneBased - 1))
     return `/shop?${nextSearchParams.toString()}`
   }
-  const handleWishlistClick = () => {}
-  const handleAddToCartClick = () => {}
+
   const totalElements = pageData?.totalElements ?? 0
   const totalPages = Math.max(1, pageData?.totalPages ?? 1)
   const pageSize = pageData?.size ?? DEFAULT_PAGE_SIZE
@@ -163,7 +164,7 @@ function ProductGrid({
               </p>
               <div className="a11y-grid-products grid grid-cols-4 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
                 {products.map((product) => (
-                  <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />
+                  <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} initialBookmarked={bookmarkedIds.has(Number(product.id))} />
                 ))}
               </div>
               {products.length === 0 && (

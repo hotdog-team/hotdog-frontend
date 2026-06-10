@@ -5,6 +5,7 @@ import { ProductCard, Button } from '../../../components/index.js'
 import { useAuthStore } from '../../../store/useAuthStore.js'
 import { useHomeProductsQuery } from '../../../hooks/queries/useProductQuery.js'
 import useHomeRecommendations from '../../../hooks/useHomeRecommendations.js'
+import useBookmarkedIds from '../../../hooks/useBookmarkedIds.js'
 import MainSlides from '../components/MainSlides.jsx'
 
 function SectionHeader({ title, showMore = true }) {
@@ -31,9 +32,7 @@ function HomePage() {
   const products = pageData?.content ?? []
 
   const { purposeProducts, personalizedProducts } = useHomeRecommendations()
-
-  const handleWishlistClick = () => {}
-  const handleAddToCartClick = () => {}
+  const bookmarkedIds = useBookmarkedIds()
 
   return (
     <>
@@ -76,8 +75,7 @@ function HomePage() {
                   key={product.id}
                   product={product}
                   to={`/shop/${product.id}`}
-                  onWishlistClick={handleWishlistClick}
-                  onAddToCartClick={handleAddToCartClick}
+                  initialBookmarked={bookmarkedIds.has(Number(product.id))}
                 />
               ))}
             </div>
@@ -91,8 +89,7 @@ function HomePage() {
                   key={product.id}
                   product={product}
                   to={`/shop/${product.id}`}
-                  onWishlistClick={handleWishlistClick}
-                  onAddToCartClick={handleAddToCartClick}
+                  initialBookmarked={bookmarkedIds.has(Number(product.id))}
                 />
               ))}
             </div>
@@ -106,8 +103,7 @@ function HomePage() {
                   key={product.id}
                   product={product}
                   to={`/shop/${product.id}`}
-                  onWishlistClick={handleWishlistClick}
-                  onAddToCartClick={handleAddToCartClick}
+                  initialBookmarked={bookmarkedIds.has(Number(product.id))}
                 />
               ))}
             </div>

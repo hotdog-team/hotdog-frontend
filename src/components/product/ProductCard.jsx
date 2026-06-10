@@ -1,10 +1,14 @@
 import { Heart, ShoppingCart, Star } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { addCartItem } from '../../api/cartApi.js';
 import Button from '../ui/Button.jsx'
+import { addBookmark, removeBookmark } from "../../api/bookmarkApi.js";
+import {useState} from "react";
 
-function ProductCard({ product, to, onWishlistClick, onAddToCartClick }) {
-  const navigate = useNavigate()
+function ProductCard({ product, to, initialBookmarked = false }) {
+  const navigate = useNavigate();
+  const [isBookmarked, setIsBookmarked] = useState(initialBookmarked);
 
   const handleCardClick = () => {
     if (to) {
@@ -19,16 +23,33 @@ function ProductCard({ product, to, onWishlistClick, onAddToCartClick }) {
     }
   }
 
-  const handleWishlistClick = (event) => {
-    event.stopPropagation()
-    onWishlistClick?.(product)
-    toast.success(`${product.name}을(를) 찜 목록에 추가했습니다.`)
+  const handleWishlistClick = async (event) => {
+    event.stopPropagation();
+    try {
+      if (isBookmarked) {
+        await removeBookmark(Number(product.id));
+        setIsBookmarked(false);
+        toast.info(`${product.name}을(를) 찜 목록에서 제거했습니다.`);
+      } else {
+        await addBookmark(Number(product.id));
+        setIsBookmarked(true);
+        toast.success(`${product.name}을(를) 찜 목록에 추가했습니다.`);
+      }
+    } catch (error) {
+      console.error('북마크 처리 실패', error);
+      toast.error(`찜 목록 처리 중 문제가 발생했습니다.`);
+    }
   }
 
-  const handleAddToCartClick = (event) => {
-    event.stopPropagation()
-    onAddToCartClick?.(product)
-    toast.success(`${product.name}을(를) 장바구니에 담았습니다.`)
+  const handleAddToCartClick = async (event) => {
+    event.stopPropagation();
+    try {
+      await addCartItem(Number(product.id), 1);
+      toast.success(`${product.name}을(를) 장바구니에 담았습니다.`);
+    } catch (error) {
+      console.error('장바구니 담기 실패:', error);
+      toast.error(`장바구니에 담는 중 문제가 발생했습니다.`);
+    }
   }
 
   const cardLinkLabel = to ? `${product.name} 상세 보기` : undefined
@@ -53,7 +74,11 @@ function ProductCard({ product, to, onWishlistClick, onAddToCartClick }) {
           aria-label={`${product.name} 찜하기`}
           onClick={handleWishlistClick}
         >
-          <Heart className="size-5" strokeWidth={2.2} aria-hidden="true" />
+          <Heart
+            className={`size-5 transition-colors ${isBookmarked ? 'fill-brand text-brand' : ''}`}
+            strokeWidth={2.2}
+            aria-hidden="true"
+          />
         </button>
       </div>
 
