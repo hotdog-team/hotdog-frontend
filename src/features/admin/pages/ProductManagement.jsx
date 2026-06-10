@@ -14,7 +14,7 @@ export default function ProductManagement() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [newProduct, setNewProduct] = useState({
-    categoryId: 1, name: '', brand: '', price: 0, stockQuantity: 0,
+    categoryId: 1, name: '', brand: '', price: 0, discountRate: 0, stockQuantity: 0,
     deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: ''
   })
   const [selectedTagIds, setSelectedTagIds] = useState([])
@@ -22,7 +22,7 @@ export default function ProductManagement() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editingProductId, setEditingProductId] = useState(null)
   const [editProductData, setEditProductData] = useState({
-    categoryId: 1, name: '', brand: '', price: 0, stockQuantity: 0,
+    categoryId: 1, name: '', brand: '', price: 0, discountRate: 0, stockQuantity: 0,
     deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: ''
   })
   const [editSelectedTagIds, setEditSelectedTagIds] = useState([])
@@ -44,8 +44,6 @@ export default function ProductManagement() {
       const response = await axiosInstance.get('/api/tags')
       const data = response.data
       setAvailableTags(Array.isArray(data) ? data : (data.content || []))
-
-      console.log('태그 데이터 전체:', Array.isArray(data) ? data : (data.content || []))
     } catch (err) {
       console.error('태그 목록 로드 실패', err)
     }
@@ -59,6 +57,7 @@ export default function ProductManagement() {
   const visibleTags = availableTags.filter(tag =>
     tag.type !== 'CATEGORY' && tag.type !== 'POPULARITY' && tag.type !== 'RELEASE_OR_UPDATE'
   )
+
   // 등록 로직
   const handleAddProduct = async (e) => {
     e.preventDefault()
@@ -72,7 +71,7 @@ export default function ProductManagement() {
 
       toast.success('상품 등록이 완료되었습니다.')
       setIsAddModalOpen(false)
-      setNewProduct({ categoryId: 1, name: '', brand: '', price: 0, stockQuantity: 0, deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: '' })
+      setNewProduct({ categoryId: 1, name: '', brand: '', price: 0, discountRate: 0, stockQuantity: 0, deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: '' });
       setSelectedTagIds([])
       fetchProducts()
     } catch (err) {
@@ -93,16 +92,17 @@ export default function ProductManagement() {
   }
 
   //수정 로직
-const handleOpenEditModal = async (product) => {
+  const handleOpenEditModal = async (product) => {
     try {
       const res = await axiosInstance.get(`/api/products/${product.id}`)
-      const detail = res.data.data || res.data
+      const detail = res.data?.data || res.data?.result || res.data || {};
 
       setEditProductData({
-        categoryId: detail.categoryId || 1,
-        name: detail.name || '',
-        brand: detail.brand || '',
-        price: detail.originPrice || detail.price || 0,
+        categoryId: detail.categoryId || product.categoryId || 1,
+        name: detail.name || product.name || '',
+        brand: detail.brand || product.brand || '',
+        price: detail.originPrice || detail.price || product.price || 0,
+        discountRate: detail.discountRate !== undefined ? detail.discountRate : (product.discountRate || 0),
         stockQuantity: detail.stockQuantity || 0,
         deliveryFee: detail.deliveryFee || 0,
         shortDescription: detail.shortDescription || '',
@@ -124,9 +124,17 @@ const handleOpenEditModal = async (product) => {
   const handleUpdateProduct = async (e) => {
     e.preventDefault()
     try {
+      const validTagIds = editSelectedTagIds.filter(tagId => {
+        const tagInfo = availableTags.find(t => t.id === tagId);
+        if (!tagInfo) return false;
+        return tagInfo.type !== 'CATEGORY' &&
+               tagInfo.type !== 'POPULARITY' &&
+               tagInfo.type !== 'RELEASE_OR_UPDATE';
+      });
+
       const payload = {
         ...editProductData,
-        metaTagIds: editSelectedTagIds
+        metaTagIds: validTagIds
       }
 
       await axiosInstance.put(`/api/admin/products/${editingProductId}`, payload)
@@ -210,7 +218,21 @@ const handleOpenEditModal = async (product) => {
                     <div className="truncate max-w-[250px]">{product.name}</div>
                     <div className="text-xs text-muted font-normal mt-0.5">{product.brand || '브랜드 없음'}</div>
                   </td>
-                  <td className="p-4 text-ink">{product.price?.toLocaleString()}원</td>
+                  <td className="p-4 text-ink">
+                    {product.discountRate > 0 ? (
+                      <div className="space-y-1">
+                        <div className="font-bold text-blue-600">
+                          {Math.floor(product.price * (1 - product.discountRate / 100)).toLocaleString()}원
+                        </div>
+                        <div className="text-xs text-muted flex items-center gap-1.5 font-normal">
+                          <span className="line-through">{product.price?.toLocaleString()}원</span>
+                          <span className="text-error bg-error/10 px-1 rounded-sm font-bold">{product.discountRate}% ↓</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="font-bold">{product.price?.toLocaleString()}원</span>
+                    )}
+                  </td>
                   <td className="p-4">{getProductStatusBadge(product.status)}</td>
                   <td className="p-4 text-right flex justify-end gap-2">
                     <button onClick={() => handleOpenEditModal(product)} className="text-muted hover:text-ink p-2 transition-colors" title="수정">
@@ -261,8 +283,18 @@ const handleOpenEditModal = async (product) => {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-bold text-ink mb-1">판매가 (원) *</label>
+                    <label className="block text-sm font-bold text-ink mb-1">원가 (정가) *</label>
                     <input type="number" required value={newProduct.price} onChange={(e) => setNewProduct({...newProduct, price: Number(e.target.value)})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-ink mb-1">할인율 (%)</label>
+                    <input type="number" min="0" max="100" value={newProduct.discountRate} onChange={(e) => setNewProduct({...newProduct, discountRate: Number(e.target.value)})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                  <div className="p-3 bg-surface-muted rounded-md border border-border-soft flex justify-between items-center">
+                    <span className="text-sm font-bold text-muted">최종 판매가</span>
+                    <span className="text-lg font-bold text-brand">
+                      {Math.floor(newProduct.price * (1 - newProduct.discountRate / 100)).toLocaleString()} 원
+                    </span>
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-ink mb-1">초기 재고 (개) *</label>
@@ -355,8 +387,18 @@ const handleOpenEditModal = async (product) => {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-bold text-ink mb-1">판매가 (원) *</label>
+                    <label className="block text-sm font-bold text-ink mb-1">원가 (원) *</label>
                     <input type="number" required value={editProductData.price} onChange={(e) => setEditProductData({...editProductData, price: Number(e.target.value)})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-ink mb-1">할인율 (%)</label>
+                    <input type="number" min="0" max="100" value={editProductData.discountRate} onChange={(e) => setEditProductData({...editProductData, discountRate: Number(e.target.value)})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                  <div className="p-3 bg-surface-muted rounded-md border border-border-soft flex justify-between items-center">
+                    <span className="text-sm font-bold text-muted">최종 판매가</span>
+                    <span className="text-lg font-bold text-brand">
+                      {Math.floor(editProductData.price * (1 - editProductData.discountRate / 100)).toLocaleString()} 원
+                    </span>
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-ink mb-1">초기 재고 (개) *</label>
