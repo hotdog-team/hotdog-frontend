@@ -4,10 +4,10 @@ import { fetchCategoryProducts, fetchProducts, fetchProductDetail, fetchRelatedP
 /**
  * 카테고리별 상품 목록 조회
  */
-export function useCategoryProductsQuery({ categoryId, page = 0, size = 20, sort = 'weight', query = '' }) {
+export function useCategoryProductsQuery({ categoryId, page = 0, size = 20, sort = 'RECOMMEND', keyword = '' }) {
   return useQuery({
-    queryKey: ['categoryProducts', categoryId, page, size, sort, query],
-    queryFn: () => fetchCategoryProducts({ categoryId, page, size, sort, query }),
+    queryKey: ['categoryProducts', categoryId, page, size, sort, keyword],
+    queryFn: () => fetchCategoryProducts({ categoryId, page, size, sort, keyword }),
     enabled: Boolean(categoryId),
     placeholderData: keepPreviousData,
   })
@@ -15,7 +15,7 @@ export function useCategoryProductsQuery({ categoryId, page = 0, size = 20, sort
 /**
  * 상품 검색 및 상품 목록 조회
  */
-export function useProductsQuery({ keyword = '', page = 0, size = 20, sort = 'weight' }) {
+export function useProductsQuery({ keyword = '', page = 0, size = 20, sort = 'RECOMMEND' }) {
   return useQuery({
     queryKey: ['products', keyword, page, size, sort],
     queryFn: () => fetchProducts({ keyword, page, size, sort }),
@@ -36,7 +36,7 @@ export function useProductDetailQuery(productId) {
 /**
  * 메인 페이지 상품 목록 조회
  */
-export function useHomeProductsQuery({ page = 0, size = 12, sort = 'weight' } = {}) {
+export function useHomeProductsQuery({ page = 0, size = 12, sort = 'RECOMMEND' } = {}) {
   return useQuery({
     queryKey: ['homeProducts', page, size, sort],
     queryFn: () => fetchProducts({ page, size, sort }),
