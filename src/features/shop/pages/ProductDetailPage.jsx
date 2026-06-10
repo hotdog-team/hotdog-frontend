@@ -2,8 +2,8 @@ import { ChevronRight, Heart, Info, Minus, Plus, ShoppingCart, Star } from 'luci
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import { Button } from '../../../components/index.js'
-import { getCategoryByCode, getProductById, productCatalog } from '../data/catalog'
-import {useProductViewLog} from "../../../hooks/useProductViewLog.js";
+import { useProductDetailQuery, useRelatedProductsQuery, } from '../../../hooks/queries/useProductQuery'
+import { useProductViewLog } from "../../../hooks/useProductViewLog.js";
 
 const specs = [
   ['총 용량', '28.5 cu. ft.'],
@@ -13,26 +13,37 @@ const specs = [
   ['연결성', 'Wi-Fi, Bluetooth 5.2'],
 ]
 
-const relatedProducts = [
-  productCatalog[1],
-  productCatalog[2],
-  productCatalog[4],
-  productCatalog[7],
-]
-
 function ProductDetailPage() {
   const { productId } = useParams()
   const [quantity, setQuantity] = useState(1)
-  useProductViewLog(productId);
-  const product = getProductById(productId)
+
+  useProductViewLog(productId)
+
+  const {
+    data: product,
+    isLoading,
+    error,
+  } = useProductDetailQuery(productId)
+
+  const {
+    data: relatedProducts = [],
+  } = useRelatedProductsQuery(productId)
+
+  if (isLoading) {
+    return <div className="layout-container py-20">상품 정보를 불러오는 중입니다.</div>
+  }
+
+  if (error) {
+    return <div className="layout-container py-20">상품 정보를 불러오지 못했습니다.</div>
+  }
 
   if (!product) {
-    return <Navigate to="/shop" replace />
+    return <div className="layout-container py-20">상품 정보가 없습니다.</div>
   }
 
 
-  const category = getCategoryByCode(product.categoryCode)
-  const thumbnails = product.thumbnails ?? productCatalog.filter((item) => item.id !== product.id).slice(0, 4).map((item) => item.image)
+  const category = { label: product.category, navLabel: product.category, }
+  const thumbnails = product.thumbnails ?? []
 
   return (
     <div className="bg-page text-ink">
@@ -82,11 +93,11 @@ function ProductDetailPage() {
             </div>
             <p className="mt-8 max-w-content text-body leading-7 text-foreground">{product.description}</p>
             <div className="mt-10 rounded-md border border-border-soft bg-surface-muted px-7 py-6">
-              <p className="text-body text-foreground">소비자 가격: <span className="ml-3 line-through">$4,299.00</span></p>
+              <p className="text-body text-foreground">소비자 가격: <span className="ml-3 line-through">{product.originPrice?.toLocaleString()}원</span></p>
               <p className="mt-5 text-body-sm font-bold text-brand">임직원 전용가</p>
               <div className="mt-1 flex items-center gap-4">
-                <p className="text-3xl font-light">{product.price}</p>
-                <span className="rounded-sm bg-brand px-3 py-1 text-caption font-extrabold text-white">-34% OFF</span>
+                <p className="text-3xl font-light">{product.salePrice?.toLocaleString()}원</p>
+                {product.discountRate > 0 && (<span className="rounded-sm bg-brand px-3 py-1 text-caption font-extrabold text-white">-{product.discountRate}% OFF</span>)}
               </div>
               <p className="mt-6 border-t border-border pt-5 text-body-sm text-foreground"><Info className="mr-2 inline size-4" />결제 시 급여 공제 가능</p>
             </div>
@@ -101,7 +112,7 @@ function ProductDetailPage() {
               </div>
               <div>
                 <p className="mb-3 text-body-sm font-semibold">재고 상태</p>
-                <div className="rounded border border-success-border bg-success-soft px-5 py-3 font-semibold text-success">◎ 재고 있음 (12개 남음)</div>
+                <div className="rounded border border-success-border bg-success-soft px-5 py-3 font-semibold text-success">◎ 재고 있음 ({product.stockQuantity}개 남음)</div>
               </div>
             </div>
             <div className="mt-12 flex flex-wrap gap-4">
@@ -157,6 +168,7 @@ function ProductDetailPage() {
             ))}
           </div>
         </section>
+
       </div>
     </div>
   )

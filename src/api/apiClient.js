@@ -36,7 +36,7 @@ export async function apiFetch(path, options = {}) {
     try {
       const err = await response.json();
       message = err.detail ?? err.message ?? message;
-    } catch {}
+    } catch { }
     throw new Error(message);
   }
 
@@ -51,3 +51,4 @@ export async function apiFetch(path, options = {}) {
 
   return null;
 }
+
