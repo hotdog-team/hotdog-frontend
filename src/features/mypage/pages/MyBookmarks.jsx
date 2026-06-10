@@ -31,19 +31,6 @@ export default function MyBookmarks() {
     fetchBookmarks()
   }, [currentPage])
 
-  const handleRemoveBookmark = async (product) => {
-    try {
-      await axiosInstance.delete(`/api/bookmarks/${product.id}`)
-      setBookmarks((prev) => prev.filter((item) => item.productId !== product.id))
-    } catch (err) {
-      toast.error('삭제 처리에 실패했습니다.')
-    }
-  }
-
-  const handleAddToCart = (product) => {
-    console.log('장바구니 이동:', product.id)
-  }
-
   if (isLoading) {
     return <div className="flex h-full items-center justify-center font-bold text-ink">로딩 중...</div>
   }
@@ -82,8 +69,6 @@ export default function MyBookmarks() {
                   key={item.id}
                   product={productData}
                   to={`/shop/${item.productId}`}
-                  onWishlistClick={handleRemoveBookmark}
-                  onAddToCartClick={handleAddToCart}
                 />
               )
             })}
