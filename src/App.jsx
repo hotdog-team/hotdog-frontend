@@ -34,6 +34,7 @@ import ModerationManagement from './features/admin/pages/ModerationManagement.js
 import ProductManagement from './features/admin/pages/ProductManagement.jsx'
 import OrderManagement from './features/admin/pages/OrderManagement.jsx'
 import NaverProductManagement from './features/admin/pages/NaverProductManagement';
+import AdminReviewManagement from './features/admin/pages/AdminReviewManagement.jsx';
 
 
 function LoginEntry() {
@@ -85,21 +86,22 @@ function App() {
               <Route path="reviews" element={<MyReviews />} />
             </Route>
           </Route>
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="categories" element={<CategoryManagement />} />
-            <Route path="meta-tags" element={<MetaTagManagement />} />
-            <Route path="members" element={<MemberManagement />} />
-            <Route path="moderation" element={<ModerationManagement />} />
+         <Route path="/admin" element={<AdminLayout />}>
+           <Route index element={<Navigate to="dashboard" replace />} />
+           <Route path="dashboard" element={<AdminDashboard />} />
+           <Route path="categories" element={<CategoryManagement />} />
+           <Route path="meta-tags" element={<MetaTagManagement />} />
+           <Route path="members" element={<MemberManagement />} />
 
-            <Route path="products" element={<ProductManagement />} />
-            <Route path="/admin/products/naver" element={<NaverProductManagement />} />
-            <Route path="orders" element={<OrderManagement />} />
+           <Route path="moderation" element={<ModerationManagement />} />
+           <Route path="inquiries" element={<ModerationManagement />} />
 
-            <Route path="inquiries" element={<AdminPlaceholderPage />} />
-            <Route path="reviews" element={<AdminPlaceholderPage />} />
-          </Route>
+           <Route path="products" element={<ProductManagement />} />
+           <Route path="products/naver" element={<NaverProductManagement />} />
+           <Route path="orders" element={<OrderManagement />} />
+
+           <Route path="reviews" element={<AdminReviewManagement />} />
+         </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

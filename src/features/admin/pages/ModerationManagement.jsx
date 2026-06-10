@@ -8,11 +8,28 @@ export default function ModerationManagement() {
   const [qnas, setQnas] = useState([])
   const [replyContent, setReplyContent] = useState({})
 
+
+    const fetchWaitingQnas = async () => {
+      try {
+        const response = await axiosInstance.get('/api/admin/qnas?status=WAITING&page=0&size=20');
+        const allQnas = response.data.content || response.data;
+        const waitingOnly = allQnas.filter(qna => qna.status === 'WAITING');
+        setQnas(waitingOnly);
+      } catch (err) {
+        toast.error('문의 목록 로드 실패');
+      }
+    };
+
   const fetchQnas = async () => {
       try {
         const response = await axiosInstance.get('/api/admin/qnas?status=WAITING&page=0&size=20')
-        const data = response.data
-        setQnas(Array.isArray(data) ? data : (data?.content ? data.content : []))
+        const data = response.data.content || response.data
+
+        const filteredData = Array.isArray(data)
+          ? data.filter(qna => qna.status === 'WAITING')
+          : [];
+
+        setQnas(filteredData)
       } catch (err) {
         toast.error('문의 목록을 불러오는 데 실패했습니다.')
       }
@@ -73,7 +90,9 @@ export default function ModerationManagement() {
                   <h3 className="text-lg font-bold text-ink flex items-center gap-2">
                     <MessageSquare size={18} className="text-brand"/> {qna.title}
                   </h3>
-                  <p className="mt-1 text-sm text-muted">작성자 ID: {qna.memberId || '알수없음'} | 등록일: {qna.createdAt || '최근'}</p>
+                  <p className="mt-1 text-sm text-muted">
+                    작성자: {qna.memberEmail || '알수없음'} | 등록일: {qna.createdAt ? new Date(qna.createdAt).toLocaleString() : '최근'}
+                  </p>
                 </div>
                 <button onClick={() => handleDeleteQna(qna.id)} className="text-error hover:bg-error/10 p-2 rounded-md transition-colors text-sm flex items-center gap-1 font-bold">
                   <Trash2 size={16} /> 강제 삭제
