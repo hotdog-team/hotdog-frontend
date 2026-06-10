@@ -6,6 +6,16 @@ import Button from '../ui/Button.jsx'
 function ProductCard({ product, to, onWishlistClick, onAddToCartClick }) {
   const navigate = useNavigate()
 
+  console.log('ProductCard product:', product)
+
+  const imageUrl =
+    product.image?.trim() ||
+    product.imageUrl?.trim() ||
+    product.thumbnailUrl?.trim() ||
+    product.thumbnail?.trim() ||
+    product.images?.[0]?.imageUrl?.trim() ||
+    product.images?.[0]?.url?.trim()
+
   const handleCardClick = () => {
     if (to) {
       navigate(to)
@@ -43,7 +53,21 @@ function ProductCard({ product, to, onWishlistClick, onAddToCartClick }) {
       onKeyDown={handleCardKeyDown}
     >
       <div className="relative aspect-product overflow-hidden bg-surface-muted">
-        <img className="h-full w-full object-cover" src={product.image} alt="" />
+
+
+        {product.image?.trim() ? (
+          <img
+            className="h-full w-full object-cover"
+            src={product.image}
+            alt={product.name}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-caption text-muted">
+            이미지 없음
+          </div>
+        )}
+
+
         <span className="absolute bottom-3 left-3 rounded-sm bg-ink px-2 py-1 text-caption font-bold text-surface">
           {product.category}
         </span>
