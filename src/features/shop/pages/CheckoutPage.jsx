@@ -9,6 +9,8 @@ export default function CheckoutPage() {
 
     const [checkoutData, setCheckoutData] = useState(null)
     const [loading, setLoading] = useState(true)
+
+    const [addresses, setAddresses] = useState([])
     const [address, setAddress] = useState(null)
 
     const [paymentMethod, setPaymentMethod] = useState('CARD')
@@ -21,12 +23,13 @@ export default function CheckoutPage() {
                 setCheckoutData(data)
 
                 const addressData = await getAddresses()
-                console.log('배송지 조회 결과:', addressData)
+                setAddresses(addressData)
 
                 const defaultAddress =
                     addressData.find((item) => item.isDefault) || addressData[0]
 
                 setAddress(defaultAddress)
+
             } catch (error) {
                 console.error(error)
                 alert('주문서 조회에 실패했습니다.')
@@ -92,9 +95,40 @@ export default function CheckoutPage() {
                     </div>
 
                     <div className="rounded-md border border-border bg-surface p-6 shadow-card">
-                        <h2 className="text-xl font-bold text-ink">배송지 정보</h2>
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-ink">배송지 정보</h2>
 
-                        <div className="mt-5 space-y-3">
+                            <button
+                                type="button"
+                                className="text-body-sm font-bold text-brand"
+                                onClick={() => navigate('/mypage/settings')}
+                            >
+                                배송지 추가
+                            </button>
+                        </div>
+                        {addresses.length === 0 && (
+                            <p className="mt-5 text-body-sm text-muted">
+                                등록된 배송지가 없습니다.
+                            </p>
+                        )}
+                        <select
+                            value={address?.addressId || ''}
+                            onChange={(e) => {
+                                const selectedAddress = addresses.find(
+                                    (item) => item.addressId === Number(e.target.value),
+                                )
+
+                                setAddress(selectedAddress)
+                            }}
+                            className="mt-5 w-full rounded-md border border-border px-4 py-3 text-body-sm"
+                        >
+                            {addresses.map((item) => (
+                                <option key={item.addressId} value={item.addressId}>
+                                    {item.receiverName} / {item.baseAddress}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="mt-3 space-y-3">
                             <input
                                 value={address?.receiverName || ''}
                                 readOnly
