@@ -19,16 +19,16 @@ export default function CartSummary({
         </div>
 
         <div className="flex justify-between text-muted">
-          <span>임직원 할인</span>
-          <strong className="text-danger">
-            -₩{discountPrice.toLocaleString()}
+          <span>배송비</span>
+          <strong className="text-ink">
+            {deliveryFee === 0 ? '무료' : `₩${deliveryFee.toLocaleString()}`}
           </strong>
         </div>
 
         <div className="flex justify-between text-muted">
-          <span>배송비</span>
-          <strong className="text-ink">
-            {deliveryFee === 0 ? '무료' : `₩${deliveryFee.toLocaleString()}`}
+          <span>임직원 할인</span>
+          <strong className="text-danger">
+            -₩{discountPrice.toLocaleString()}
           </strong>
         </div>
       </div>

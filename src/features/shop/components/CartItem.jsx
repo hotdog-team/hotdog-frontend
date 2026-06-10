@@ -45,14 +45,6 @@ export default function CartItem({
                         {item.productName}
                     </h3>
 
-                    <Button
-                        variant="danger"
-                        size="sm"
-                        className="mt-1 h-auto px-0 py-0"
-                        onClick={onDelete}
-                    >
-                        삭제
-                    </Button>
                 </div>
             </div>
 
