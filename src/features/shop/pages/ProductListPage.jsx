@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { fetchCategories } from '../../../api/categoryApi'
 import { Button, Pagination, ProductCard } from '../../../components/index.js'
 import { useCategoryProductsQuery, useProductsQuery } from '../../../hooks/queries/useProductQuery'
-import ProductFilters from '../components/ProductFilters'
+
 import {
   categoryCatalog,
   filterProducts,
-  getAvailableBrands,
-  getAvailableFeatures,
   getCategoryByCode,
   getPriceBounds,
 } from '../data/catalog'
@@ -86,7 +84,6 @@ function ProductGrid({
   query,
   sort,
 }) {
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const getPageHref = (pageOneBased) => {
     const nextSearchParams = new URLSearchParams(searchParams)
@@ -105,9 +102,6 @@ function ProductGrid({
     features: [],
     boundsKey,
   }), [boundsKey, priceBounds.max, priceBounds.min])
-  const availableBrands = useMemo(() => getAvailableBrands(products), [products])
-  const availableFeatures = useMemo(() => getAvailableFeatures(products), [products])
-  const [filters, setFilters] = useState(defaultFilters)
   const effectiveFilters = filters.boundsKey === boundsKey ? filters : defaultFilters
   const filteredProducts = useMemo(() => filterProducts(products, effectiveFilters), [effectiveFilters, products])
   const totalElements = pageData?.totalElements ?? 0
@@ -157,18 +151,7 @@ function ProductGrid({
         </section>
       )}
 
-      <div className="a11y-grid-sidebar grid grid-cols-sidebar gap-10 max-lg:grid-cols-1">
-        <ProductFilters
-          availableBrands={availableBrands}
-          availableFeatures={availableFeatures}
-          category={category}
-          categoryOptions={categories}
-          filters={effectiveFilters}
-          key={`${category.id}-${boundsKey}`}
-          onCategorySelect={(categoryId) => navigate(`/shop?categoryId=${encodeURIComponent(categoryId)}&sort=${DEFAULT_SORT}&page=0`)}
-          onFilterChange={setFilters}
-          priceBounds={priceBounds}
-        />
+      <div className="a11y-grid-sidebar grid gap-10 max-lg:grid-cols-1">
 
         <section>
           {isLoading && (
@@ -191,7 +174,7 @@ function ProductGrid({
               <p className="mb-6 text-body-sm font-semibold text-foreground">
                 총 {totalElements}개 상품 중 {visibleStart}-{visibleEnd}개 표시
               </p>
-              <div className="a11y-grid-products grid grid-cols-3 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
+              <div className="a11y-grid-products grid grid-cols-4 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />
                 ))}

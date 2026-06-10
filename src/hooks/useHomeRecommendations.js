@@ -12,17 +12,17 @@ export default function useHomeRecommendations() {
         })
     const { purposeId, categoryIds, merchandisingIds } = splitProfileTagIds(profile?.profileTagIds ?? [])
 
+    const purposeTagIds = [...categoryIds, ...(purposeId ? [purposeId] : [])]
     const { data: purposeData } = useQuery({
-        queryKey: ['homePurpose', purposeId],
-        queryFn: () => fetchProductsByMetaTags({ metaTagIds: [purposeId], sort: 'POPULAR', size: 4 }),
-        enabled: Boolean(purposeId),
+        queryKey: ['homePurpose', purposeTagIds],
+        queryFn: () => fetchProductsByMetaTags({ metaTagIds: purposeTagIds, sort: 'POPULAR', size: 4 }),
+        enabled: purposeTagIds.length > 0,
     })
 
-    const catMerchIds = [...categoryIds, ...merchandisingIds]
     const { data: personalizedData } = useQuery({
-        queryKey: ['homePersonalized', catMerchIds],
-        queryFn: () => fetchProductsByMetaTags({ metaTagIds: catMerchIds, match: 'all', sort: 'ATTENTION', size: 4 }),
-        enabled: catMerchIds.length > 0,
+        queryKey: ['homePersonalized', merchandisingIds],
+        queryFn: () => fetchProductsByMetaTags({ metaTagIds: merchandisingIds, sort: 'ATTENTION', size: 4 }),
+        enabled: merchandisingIds.length > 0,
     })
 
     return {

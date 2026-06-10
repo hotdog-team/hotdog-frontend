@@ -67,23 +67,22 @@ function HomePage() {
           </section>
         )}
 
-        <section className="layout-container mt-16 pb-24">
-          <SectionHeader title="오늘의 맞춤 추천" showMore={false} />
-          <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
-            {products.slice(0, 12).map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                to={`/shop/${product.id}`}
-                onWishlistClick={handleWishlistClick}
-                onAddToCartClick={handleAddToCartClick}
-              />
-            ))}
-          </div>
-        </section>
+        <div className="pb-24">
+          <section className="layout-container mt-16">
+            <SectionHeader title="오늘의 맞춤 추천" showMore={false} />
+            <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
+              {products.slice(0, 12).map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  to={`/shop/${product.id}`}
+                  onWishlistClick={handleWishlistClick}
+                  onAddToCartClick={handleAddToCartClick}
+                />
+              ))}
+            </div>
+          </section>
 
-        {/* 구매 목적에 따른 베스트셀러 */}
-        {purposeProducts.length > 0 && (
           <section className="layout-container mt-16">
             <SectionHeader title="관심 분야 인기 상품" />
             <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
@@ -98,11 +97,8 @@ function HomePage() {
               ))}
             </div>
           </section>
-        )}
 
-        {/* 카테고리 + 상품 선호에 따른 추천 */}
-        {personalizedProducts.length > 0 && (
-          <section className="layout-container mt-16 pb-24">
+          <section className="layout-container mt-16">
             <SectionHeader title="이런 상품은 어떠세요?" />
             <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
               {personalizedProducts.map((product) => (
@@ -116,7 +112,7 @@ function HomePage() {
               ))}
             </div>
           </section>
-        )}
+        </div>
     </>
   )
 }
