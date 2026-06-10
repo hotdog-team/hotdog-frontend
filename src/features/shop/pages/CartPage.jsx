@@ -31,7 +31,11 @@ export default function CartPage() {
         fetchCartItems()
     }, [])
 
-    const totalPrice = cartItems.reduce(
+    const selectedCartItems = cartItems.filter((item) =>
+        selectedItems.includes(item.cartId),
+    )
+
+    const totalPrice = selectedCartItems.reduce(
         (sum, item) => sum + item.price * item.quantity,
         0,
     )
@@ -41,7 +45,16 @@ export default function CartPage() {
     const finalPrice = totalPrice - discountPrice + deliveryFee
 
     const handleOrder = () => {
-        alert('주문서 조회 페이지로 이동 예정입니다.')
+        if (selectedItems.length === 0) {
+            alert('주문할 상품을 선택해주세요.')
+            return
+        }
+
+        navigate('/orders/checkout', {
+            state: {
+                cartItemIds: selectedItems,
+            },
+        })
     }
 
     const handleIncrease = async (cartId, quantity) => {
@@ -217,7 +230,7 @@ export default function CartPage() {
                     discountPrice={discountPrice}
                     deliveryFee={deliveryFee}
                     finalPrice={finalPrice}
-                    disabled={cartItems.length === 0}
+                    disabled={selectedItems.length === 0}
                     onOrder={handleOrder}
                 />
             </div>
