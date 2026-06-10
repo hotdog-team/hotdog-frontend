@@ -11,6 +11,19 @@ export default function CartItem({
 }) {
     const subtotal = item.price * item.quantity
 
+    const imageUrl =
+        item.image?.trim() ||
+        item.imageUrl?.trim() ||
+        item.thumbnailImage?.trim() ||
+        item.productImageUrl?.trim() ||
+        item.thumbnailUrl?.trim()
+
+    console.log({
+        cartId: item.cartId,
+        productId: item.productId,
+        thumbnailImage: item.thumbnailImage,
+    })
+
     return (
         <div className="grid grid-cols-[1fr_7rem_8rem_7rem] items-center border-b border-border py-6">
             <div className="flex items-center gap-4">
@@ -21,9 +34,9 @@ export default function CartItem({
                     aria-label={`${item.productName} 선택`}
                 />
                 <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md bg-surface-muted">
-                    {item.image ? (
+                    {imageUrl ? (
                         <img
-                            src={item.image}
+                            src={imageUrl}
                             alt={item.productName}
                             className="h-full w-full object-cover"
                         />
