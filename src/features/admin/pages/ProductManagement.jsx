@@ -28,8 +28,8 @@ export default function ProductManagement() {
   const [editSelectedTagIds, setEditSelectedTagIds] = useState([])
 
   const fetchProducts = async () => {
-    try {
-      const response = await axiosInstance.get('/api/products?page=0&size=20')
+    try{
+      const response = await axiosInstance.get('/api/products?page=0&size=20&sort=latest')
       if (typeof response.data === 'string' && response.data.includes('<html')) throw new Error('인증 실패')
       const payload = response.data.data || response.data
       setProducts(Array.isArray(payload) ? payload : (payload?.content || []))
@@ -44,6 +44,8 @@ export default function ProductManagement() {
       const response = await axiosInstance.get('/api/tags')
       const data = response.data
       setAvailableTags(Array.isArray(data) ? data : (data.content || []))
+
+      console.log('태그 데이터 전체:', Array.isArray(data) ? data : (data.content || []))
     } catch (err) {
       console.error('태그 목록 로드 실패', err)
     }
@@ -54,20 +56,21 @@ export default function ProductManagement() {
     fetchTags()
   }, [])
 
+  const visibleTags = availableTags.filter(tag =>
+    tag.type !== 'CATEGORY' && tag.type !== 'POPULARITY' && tag.type !== 'RELEASE_OR_UPDATE'
+  )
   // 등록 로직
   const handleAddProduct = async (e) => {
     e.preventDefault()
     try {
-      const productRes = await axiosInstance.post('/api/admin/products', newProduct)
-      const createdProductId = productRes.data.id || productRes.data.data?.id
-
-      if (createdProductId && selectedTagIds.length > 0) {
-        await axiosInstance.post(`/api/admin/products/${createdProductId}/tags`, {
-          metaTagIds: selectedTagIds
-        })
+      const payload = {
+        ...newProduct,
+        metaTagIds: selectedTagIds
       }
 
-      toast.success('상품 등록 및 태그 매핑이 완료되었습니다.')
+      await axiosInstance.post('/api/admin/products', payload)
+
+      toast.success('상품 등록이 완료되었습니다.')
       setIsAddModalOpen(false)
       setNewProduct({ categoryId: 1, name: '', brand: '', price: 0, stockQuantity: 0, deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: '' })
       setSelectedTagIds([])
@@ -106,7 +109,10 @@ export default function ProductManagement() {
         altText: detail.altText || '',
         imageUrl: detail.imageUrl || ''
       })
-      setEditSelectedTagIds([])
+
+      const existingTags = detail.metaTagIds || (detail.metaTags ? detail.metaTags.map(t => t.id) : [])
+      setEditSelectedTagIds(existingTags)
+
       setEditingProductId(product.id)
       setIsEditModalOpen(true)
     } catch (err) {
@@ -118,14 +124,12 @@ export default function ProductManagement() {
   const handleUpdateProduct = async (e) => {
     e.preventDefault()
     try {
-      await axiosInstance.put(`/api/admin/products/${editingProductId}`, editProductData)
-
-      if (editSelectedTagIds.length > 0) {
-        await axiosInstance.post(`/api/admin/products/${editingProductId}/tags`, {
-          metaTagIds: editSelectedTagIds
-        })
+      const payload = {
+        ...editProductData,
+        metaTagIds: editSelectedTagIds
       }
 
+      await axiosInstance.put(`/api/admin/products/${editingProductId}`, payload)
       toast.success('상품 정보가 수정되었습니다.')
       setIsEditModalOpen(false)
       fetchProducts()
@@ -289,10 +293,10 @@ export default function ProductManagement() {
               <div className="mt-6 pt-4 border-t border-border-soft">
                 <label className="block text-sm font-bold text-ink mb-2">메타태그 연결 (다중 선택 가능)</label>
                 <div className="flex flex-wrap gap-2">
-                  {availableTags.length === 0 ? (
+                  {visibleTags.length === 0 ? (
                     <span className="text-sm text-muted">등록된 메타태그가 없습니다. 먼저 태그를 등록해주세요.</span>
                   ) : (
-                    availableTags.map(tag => (
+                    visibleTags.map(tag => (
                       <button
                         key={tag.id}
                         type="button"
@@ -383,10 +387,10 @@ export default function ProductManagement() {
               <div className="mt-6 pt-4 border-t border-border-soft">
                 <label className="block text-sm font-bold text-ink mb-2">메타태그 다시 연결 (다중 선택 가능)</label>
                 <div className="flex flex-wrap gap-2">
-                  {availableTags.length === 0 ? (
+                  {visibleTags.length === 0 ? (
                     <span className="text-sm text-muted">등록된 메타태그가 없습니다.</span>
                   ) : (
-                    availableTags.map(tag => (
+                    visibleTags.map(tag => (
                       <button
                         key={tag.id}
                         type="button"
