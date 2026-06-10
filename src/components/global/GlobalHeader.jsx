@@ -121,7 +121,7 @@ function GlobalHeader({
       }
 
       nextSearchParams.set('query', searchValue)
-      nextSearchParams.set('sort', 'weight')
+      nextSearchParams.set('sort', 'RECOMMEND')
       nextSearchParams.set('page', '0')
       navigate(`/shop?${nextSearchParams.toString()}`)
     }

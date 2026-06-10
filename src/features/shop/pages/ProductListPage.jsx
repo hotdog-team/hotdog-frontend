@@ -16,13 +16,16 @@ import EmptySearchResultsPage from './EmptySearchResultsPage'
 import SearchPage from './SearchPage'
 
 const DEFAULT_PAGE_SIZE = 20
-const DEFAULT_SORT = 'weight'
+const DEFAULT_SORT = 'RECOMMEND'
 
 const SORT_OPTIONS = [
-  { label: '관련도순', value: 'weight' },
-  { label: '최신순', value: 'latest' },
-  { label: '판매순', value: 'sales' },
-  { label: '낮은 가격순', value: 'priceAsc' },
+  { label: '기본', value: 'RECOMMEND' },
+  { label: '최신순', value: 'LATEST' },
+  { label: '판매순', value: 'SALES' },
+  { label: '낮은 가격순', value: 'LOW_PRICE' },
+  { label: '높은 가격순', value: 'HIGH_PRICE' },
+  { label: '인기순', value: 'POPULAR' }
+
 ]
 
 function parsePage(value) {
@@ -233,7 +236,7 @@ function ProductListPage() {
   }, [categories, legacyCategoryCode])
   const categoryId = categoryIdParam || legacyCategory?.id || legacyCategoryCode
   const category = useMemo(() => categories.find((item) => item.id === categoryId) ?? normalizeCategory({ id: categoryId, name: '상품' }), [categories, categoryId])
-  const categoryProductsQuery = useCategoryProductsQuery({ categoryId, page, size: DEFAULT_PAGE_SIZE, sort, query })
+  const categoryProductsQuery = useCategoryProductsQuery({ categoryId, page, size: DEFAULT_PAGE_SIZE, sort, keyword: query })
   const productsQuery = useProductsQuery({ keyword: query, page, size: DEFAULT_PAGE_SIZE, sort })
   const activeProductsQuery = categoryId ? categoryProductsQuery : productsQuery
 

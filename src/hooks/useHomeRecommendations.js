@@ -14,14 +14,14 @@ export default function useHomeRecommendations() {
 
     const { data: purposeData } = useQuery({
         queryKey: ['homePurpose', purposeId],
-        queryFn: () => fetchProductsByMetaTags({ metaTagIds: [purposeId], sort: 'weight', size: 4 }),
+        queryFn: () => fetchProductsByMetaTags({ metaTagIds: [purposeId], sort: 'POPULAR', size: 4 }),
         enabled: Boolean(purposeId),
     })
 
     const catMerchIds = [...categoryIds, ...merchandisingIds]
     const { data: personalizedData } = useQuery({
         queryKey: ['homePersonalized', catMerchIds],
-        queryFn: () => fetchProductsByMetaTags({ metaTagIds: catMerchIds, match: 'all', sort: 'latestWeight', size: 4 }),
+        queryFn: () => fetchProductsByMetaTags({ metaTagIds: catMerchIds, match: 'all', sort: 'ATTENTION', size: 4 }),
         enabled: catMerchIds.length > 0,
     })
 

@@ -3,15 +3,15 @@ import { apiFetch } from './apiClient.js'
 /**
  * 카테고리 상품 목록 조회 URL 생성
  */
-function buildCategoryProductsPath({ categoryId, page = 0, size = 20, sort = 'weight', query = '' }) {
+function buildCategoryProductsPath({ categoryId, page = 0, size = 20, sort = 'RECOMMEND', keyword = '' }) {
   const searchParams = new URLSearchParams({
     page: String(page),
     size: String(size),
     sort,
   })
 
-  if (query) {
-    searchParams.set('query', query)
+  if (keyword) {
+    searchParams.set('keyword', keyword)
   }
 
   return `/api/categories/${encodeURIComponent(categoryId)}/products?${searchParams.toString()}`
@@ -19,7 +19,7 @@ function buildCategoryProductsPath({ categoryId, page = 0, size = 20, sort = 'we
 /**
  * 상품 목록 조회 URL 생성
  */
-function buildProductsPath({ keyword = '', page = 0, size = 20, sort = 'weight' }) {
+function buildProductsPath({ keyword = '', page = 0, size = 20, sort = 'RECOMMEND' }) {
   const searchParams = new URLSearchParams({
     keyword,
     page: String(page),
@@ -84,13 +84,13 @@ function normalizePageResponse(responseBody, fallbackSize) {
 /**
  * 카테고리별 상품 목록 조회
  */
-export async function fetchCategoryProducts({ categoryId, page = 0, size = 20, sort = 'weight', query = '' }) {
-  if (!categoryId) {
+export async function fetchCategoryProducts({ categoryId, page = 0, size = 20, sort = 'RECOMMEND', keyword = '' }) {
+  if (!categoryId || isNaN(Number(categoryId))) {
     return normalizePageResponse({ content: [], totalElements: 0, totalPages: 0, number: page, size }, size)
   }
 
   const responseBody = await apiFetch(
-    buildCategoryProductsPath({ categoryId, page, size, sort, query }),
+    buildCategoryProductsPath({ categoryId, page, size, sort, keyword }),
   )
 
   return normalizePageResponse(responseBody, size)
@@ -98,7 +98,7 @@ export async function fetchCategoryProducts({ categoryId, page = 0, size = 20, s
 /**
  * 상품 검색 및 상품 목록 조회 (keyword 없으면 전체 조회)
  */
-export async function fetchProducts({ keyword = '', page = 0, size = 20, sort = 'weight' }) {
+export async function fetchProducts({ keyword = '', page = 0, size = 20, sort = 'RECOMMEND' }) {
   const responseBody = await apiFetch(buildProductsPath({ keyword, page, size, sort }))
 
   return normalizePageResponse(responseBody, size)
@@ -114,7 +114,7 @@ export async function fetchProductDetail(productId) {
 /**
  * 메타태그 기반 상품 목록 조회
  */
-export async function fetchProductsByMetaTags({ metaTagIds = [], match = 'any', sort = 'weight', size = 4 } = {}) {
+export async function fetchProductsByMetaTags({ metaTagIds = [], match = 'any', sort = 'RECOMMEND', size = 4 } = {}) {
   const searchParams = new URLSearchParams({
     sort,
     size: String(size),
