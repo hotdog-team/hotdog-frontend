@@ -1,28 +1,32 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ShoppingBag, Search, Plus, Edit2, Trash2, XCircle } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { Button } from '../../../components/index.js'
 import axiosInstance from '../../../api/axiosInstance.js'
 
 export default function ProductManagement() {
+  const navigate = useNavigate()
+
   const [products, setProducts] = useState([])
   const [availableTags, setAvailableTags] = useState([])
   const [totalCount, setTotalCount] = useState(0)
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [newProduct, setNewProduct] = useState({
-    categoryId: 1,
-    name: '',
-    brand: '',
-    price: 0,
-    stockQuantity: 0,
-    deliveryFee: 3000,
-    shortDescription: '',
-    altText: ''
+    categoryId: 1, name: '', brand: '', price: 0, stockQuantity: 0,
+    deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: ''
   })
   const [selectedTagIds, setSelectedTagIds] = useState([])
 
-  // 상품 목록 불러오기
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingProductId, setEditingProductId] = useState(null)
+  const [editProductData, setEditProductData] = useState({
+    categoryId: 1, name: '', brand: '', price: 0, stockQuantity: 0,
+    deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: ''
+  })
+  const [editSelectedTagIds, setEditSelectedTagIds] = useState([])
+
   const fetchProducts = async () => {
     try {
       const response = await axiosInstance.get('/api/products?page=0&size=20')
@@ -50,6 +54,7 @@ export default function ProductManagement() {
     fetchTags()
   }, [])
 
+  // 등록 로직
   const handleAddProduct = async (e) => {
     e.preventDefault()
     try {
@@ -64,7 +69,7 @@ export default function ProductManagement() {
 
       toast.success('상품 등록 및 태그 매핑이 완료되었습니다.')
       setIsAddModalOpen(false)
-      setNewProduct({ categoryId: 1, name: '', brand: '', price: 0, stockQuantity: 0, deliveryFee: 3000, shortDescription: '', altText: '' })
+      setNewProduct({ categoryId: 1, name: '', brand: '', price: 0, stockQuantity: 0, deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: '' })
       setSelectedTagIds([])
       fetchProducts()
     } catch (err) {
@@ -72,6 +77,7 @@ export default function ProductManagement() {
     }
   }
 
+  // 삭제 로직
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('이 상품을 삭제하시겠습니까?')) return
     try {
@@ -83,10 +89,57 @@ export default function ProductManagement() {
     }
   }
 
+  //수정 로직
+  const handleOpenEditModal = async (product) => {
+    try {
+      const res = await axiosInstance.get(`/api/products/${product.id}`)
+      const detail = res.data.data || res.data
+
+      setEditProductData({
+        categoryId: detail.categoryId || 1,
+        name: detail.name || '',
+        brand: detail.brand || '',
+        price: detail.originPrice || detail.price || 0,
+        stockQuantity: detail.stockQuantity || 0,
+        deliveryFee: detail.deliveryFee || 0,
+        shortDescription: detail.shortDescription || '',
+        altText: detail.altText || '',
+        imageUrl: detail.imageUrl || ''
+      })
+      setEditSelectedTagIds([])
+      setEditingProductId(product.id)
+      setIsEditModalOpen(true)
+    } catch (err) {
+      toast.error('상세 정보를 불러오지 못했습니다.')
+    }
+  }
+
+  // 수정 완료 로직
+  const handleUpdateProduct = async (e) => {
+    e.preventDefault()
+    try {
+      await axiosInstance.put(`/api/admin/products/${editingProductId}`, editProductData)
+
+      if (editSelectedTagIds.length > 0) {
+        await axiosInstance.post(`/api/admin/products/${editingProductId}/tags`, {
+          metaTagIds: editSelectedTagIds
+        })
+      }
+
+      toast.success('상품 정보가 수정되었습니다.')
+      setIsEditModalOpen(false)
+      fetchProducts()
+    } catch (err) {
+      toast.error('상품 수정에 실패했습니다.')
+    }
+  }
+
   const toggleTag = (tagId) => {
-    setSelectedTagIds(prev =>
-      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
-    )
+    setSelectedTagIds(prev => prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId])
+  }
+
+  const toggleEditTag = (tagId) => {
+    setEditSelectedTagIds(prev => prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId])
   }
 
   const getProductStatusBadge = (status) => {
@@ -107,9 +160,20 @@ export default function ProductManagement() {
           </h1>
           <p className="mt-2 text-muted">플랫폼에 등록된 전체 상품을 조회하고 상태 및 재고를 관리합니다.</p>
         </div>
-        <Button variant="primary" size="md" className="flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
-          <Plus size={20} /> 새 상품 등록
-        </Button>
+
+        <div className="flex gap-3">
+          <Button
+            variant="secondary"
+            size="md"
+            className="flex items-center gap-2 border-[#03C75A] text-[#03C75A] hover:bg-[#03C75A]/10 transition-colors"
+            onClick={() => navigate('/admin/products/naver')}
+          >
+            <Search size={20} /> 네이버 상품 가져오기
+          </Button>
+          <Button variant="primary" size="md" className="flex items-center gap-2" onClick={() => setIsAddModalOpen(true)}>
+            <Plus size={20} /> 새 상품 등록
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-4">
@@ -145,9 +209,13 @@ export default function ProductManagement() {
                   <td className="p-4 text-ink">{product.price?.toLocaleString()}원</td>
                   <td className="p-4">{getProductStatusBadge(product.status)}</td>
                   <td className="p-4 text-right flex justify-end gap-2">
-                    <button className="text-muted hover:text-ink p-2 transition-colors" title="수정"><Edit2 size={18} /></button>
+                    <button onClick={() => handleOpenEditModal(product)} className="text-muted hover:text-ink p-2 transition-colors" title="수정">
+                      <Edit2 size={18} />
+                    </button>
                     {product.status !== 'DELETED' && (
-                      <button onClick={() => handleDeleteProduct(product.id)} className="text-error hover:bg-error/10 p-2 rounded-md transition-colors" title="삭제"><Trash2 size={18} /></button>
+                      <button onClick={() => handleDeleteProduct(product.id)} className="text-error hover:bg-error/10 p-2 rounded-md transition-colors" title="삭제">
+                        <Trash2 size={18} />
+                      </button>
                     )}
                   </td>
                 </tr>
@@ -157,6 +225,7 @@ export default function ProductManagement() {
         </table>
       </div>
 
+      {/* 등록 모달 */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-surface p-6 rounded-lg shadow-xl w-full max-w-2xl border border-border-soft max-h-[90vh] overflow-y-auto">
@@ -206,6 +275,17 @@ export default function ProductManagement() {
                 </div>
               </div>
 
+              <div className="border-t border-border-soft pt-4">
+                <label className="block text-sm font-bold text-ink mb-1">상품 이미지 URL</label>
+                <input
+                  type="text"
+                  value={newProduct.imageUrl}
+                  onChange={(e) => setNewProduct({...newProduct, imageUrl: e.target.value})}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none"
+                />
+              </div>
+
               <div className="mt-6 pt-4 border-t border-border-soft">
                 <label className="block text-sm font-bold text-ink mb-2">메타태그 연결 (다중 선택 가능)</label>
                 <div className="flex flex-wrap gap-2">
@@ -233,6 +313,100 @@ export default function ProductManagement() {
               <div className="pt-6 flex justify-end gap-2 border-t border-border-soft mt-6">
                 <Button type="button" variant="secondary" onClick={() => setIsAddModalOpen(false)}>취소</Button>
                 <Button type="submit" variant="primary">상품 등록 및 태그 매핑</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 수정 모달 */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-surface p-6 rounded-lg shadow-xl w-full max-w-2xl border border-border-soft max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-ink">상품 정보 수정</h2>
+              <button onClick={() => setIsEditModalOpen(false)} className="text-muted hover:text-error"><XCircle size={24}/></button>
+            </div>
+
+            <form onSubmit={handleUpdateProduct} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-ink mb-1">상품명 *</label>
+                    <input type="text" required value={editProductData.name} onChange={(e) => setEditProductData({...editProductData, name: e.target.value})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-ink mb-1">카테고리 ID *</label>
+                    <input type="number" required value={editProductData.categoryId} onChange={(e) => setEditProductData({...editProductData, categoryId: Number(e.target.value)})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-ink mb-1">브랜드</label>
+                    <input type="text" value={editProductData.brand} onChange={(e) => setEditProductData({...editProductData, brand: e.target.value})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-ink mb-1">짧은 설명</label>
+                    <input type="text" value={editProductData.shortDescription} onChange={(e) => setEditProductData({...editProductData, shortDescription: e.target.value})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-ink mb-1">판매가 (원) *</label>
+                    <input type="number" required value={editProductData.price} onChange={(e) => setEditProductData({...editProductData, price: Number(e.target.value)})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-ink mb-1">초기 재고 (개) *</label>
+                    <input type="number" required value={editProductData.stockQuantity} onChange={(e) => setEditProductData({...editProductData, stockQuantity: Number(e.target.value)})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-ink mb-1">배송비 (원)</label>
+                    <input type="number" value={editProductData.deliveryFee} onChange={(e) => setEditProductData({...editProductData, deliveryFee: Number(e.target.value)})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-ink mb-1">대체 텍스트 (Alt Text)</label>
+                    <input type="text" value={editProductData.altText} onChange={(e) => setEditProductData({...editProductData, altText: e.target.value})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-border-soft pt-4">
+                <label className="block text-sm font-bold text-ink mb-1">상품 이미지 URL</label>
+                <input
+                  type="text"
+                  value={editProductData.imageUrl}
+                  onChange={(e) => setEditProductData({...editProductData, imageUrl: e.target.value})}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none"
+                />
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-border-soft">
+                <label className="block text-sm font-bold text-ink mb-2">메타태그 다시 연결 (다중 선택 가능)</label>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags.length === 0 ? (
+                    <span className="text-sm text-muted">등록된 메타태그가 없습니다.</span>
+                  ) : (
+                    availableTags.map(tag => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => toggleEditTag(tag.id)}
+                        className={`px-3 py-1 text-sm border rounded-full transition-colors ${
+                          editSelectedTagIds.includes(tag.id)
+                            ? 'bg-brand text-white border-brand'
+                            : 'bg-surface border-border-soft text-muted hover:border-brand hover:text-brand'
+                        }`}
+                      >
+                        {tag.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-6 flex justify-end gap-2 border-t border-border-soft mt-6">
+                <Button type="button" variant="secondary" onClick={() => setIsEditModalOpen(false)}>취소</Button>
+                <Button type="submit" variant="primary">변경사항 저장</Button>
               </div>
             </form>
           </div>

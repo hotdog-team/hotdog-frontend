@@ -30,6 +30,7 @@ import MemberManagement from './features/admin/pages/MemberManagement.jsx'
 import ModerationManagement from './features/admin/pages/ModerationManagement.jsx'
 import ProductManagement from './features/admin/pages/ProductManagement.jsx'
 import OrderManagement from './features/admin/pages/OrderManagement.jsx'
+import NaverProductManagement from './features/admin/pages/NaverProductManagement';
 
 function LoginEntry() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -86,6 +87,7 @@ function App() {
             <Route path="moderation" element={<ModerationManagement />} />
 
             <Route path="products" element={<ProductManagement />} />
+            <Route path="/admin/products/naver" element={<NaverProductManagement />} />
             <Route path="orders" element={<OrderManagement />} />
 
             <Route path="inquiries" element={<AdminPlaceholderPage />} />
