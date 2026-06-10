@@ -6,9 +6,7 @@ import { useCategoryProductsQuery, useProductsQuery } from '../../../hooks/queri
 
 import {
   categoryCatalog,
-  filterProducts,
   getCategoryByCode,
-  getPriceBounds,
 } from '../data/catalog'
 import EmptySearchResultsPage from './EmptySearchResultsPage'
 import SearchPage from './SearchPage'
@@ -92,22 +90,11 @@ function ProductGrid({
   }
   const handleWishlistClick = () => {}
   const handleAddToCartClick = () => {}
-  const priceBounds = useMemo(() => getPriceBounds(products), [products])
-  const boundsKey = `${priceBounds.min}-${priceBounds.max}`
-  const defaultFilters = useMemo(() => ({
-    minPrice: priceBounds.min,
-    maxPrice: priceBounds.max,
-    categoryCodes: [],
-    brands: [],
-    features: [],
-    boundsKey,
-  }), [boundsKey, priceBounds.max, priceBounds.min])
-  const effectiveFilters = filters.boundsKey === boundsKey ? filters : defaultFilters
-  const filteredProducts = useMemo(() => filterProducts(products, effectiveFilters), [effectiveFilters, products])
   const totalElements = pageData?.totalElements ?? 0
   const totalPages = Math.max(1, pageData?.totalPages ?? 1)
-  const visibleStart = totalElements === 0 ? 0 : page * (pageData?.size ?? DEFAULT_PAGE_SIZE) + 1
-  const visibleEnd = Math.min(page * (pageData?.size ?? DEFAULT_PAGE_SIZE) + filteredProducts.length, totalElements)
+  const pageSize = pageData?.size ?? DEFAULT_PAGE_SIZE
+  const visibleStart = totalElements === 0 ? 0 : page * pageSize + 1
+  const visibleEnd = Math.min(page * pageSize + products.length, totalElements)
   const title = query ? `'${query}' 검색 결과` : category.label
 
   return (
@@ -175,11 +162,11 @@ function ProductGrid({
                 총 {totalElements}개 상품 중 {visibleStart}-{visibleEnd}개 표시
               </p>
               <div className="a11y-grid-products grid grid-cols-4 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
-                {filteredProducts.map((product) => (
+                {products.map((product) => (
                   <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />
                 ))}
               </div>
-              {filteredProducts.length === 0 && (
+              {products.length === 0 && (
                 <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-muted">
                   선택한 조건과 일치하는 상품이 없습니다.
                 </div>
