@@ -11,6 +11,8 @@ export default function CheckoutPage() {
     const [loading, setLoading] = useState(true)
     const [address, setAddress] = useState(null)
 
+    const [paymentMethod, setPaymentMethod] = useState('CARD')
+
     useEffect(() => {
         const fetchCheckout = async () => {
             try {
@@ -52,6 +54,7 @@ export default function CheckoutPage() {
 
     const orderItems = checkoutData?.items || []
     const totalAmount = checkoutData?.totalAmount || 0
+    const employeeDiscount = checkoutData?.employeeDiscount || 0
 
     return (
 
@@ -71,7 +74,7 @@ export default function CheckoutPage() {
                             {orderItems.map((item) => (
                                 <div
                                     key={item.productId}
-                                    className="grid grid-cols-[1fr_6rem_8rem] items-center gap-4"
+                                    className="grid grid-cols-[1fr_8rem] items-start gap-4 border-b border-border py-4 last:border-b-0"
                                 >
                                     <div>
                                         <p className="font-bold text-ink">{item.productName}</p>
@@ -80,9 +83,6 @@ export default function CheckoutPage() {
                                         </p>
                                     </div>
 
-                                    <p className="text-right text-body-sm text-muted">
-                                        {item.quantity}개
-                                    </p>
                                     <p className="text-right font-bold text-ink">
                                         {(item.totalPrice || item.price * item.quantity).toLocaleString()}원
                                     </p>
@@ -129,6 +129,38 @@ export default function CheckoutPage() {
                             className="mt-5 min-h-28 w-full rounded-md border border-border px-4 py-3 text-body-sm"
                             placeholder="배송 요청사항을 입력해주세요."
                         />
+
+                        <div className="rounded-md border border-border bg-surface p-6 shadow-card">
+                            <h2 className="text-xl font-bold text-ink">결제 방식</h2>
+
+                            <div className="mt-5 space-y-3">
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="CARD"
+                                        checked={paymentMethod === 'CARD'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    />
+                                    카드 결제
+                                </label>
+
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="CASH"
+                                        checked={paymentMethod === 'CASH'}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    />
+                                    무통장 입금
+                                </label>
+                            </div>
+
+                            <p className="mt-4 text-caption text-muted">
+                                실제 결제는 토스페이먼츠 결제창을 통해 진행됩니다.
+                            </p>
+                        </div>
                     </div>
                 </section>
 
@@ -146,6 +178,13 @@ export default function CheckoutPage() {
                         <div className="flex justify-between text-muted">
                             <span>배송비</span>
                             <strong className="text-ink">무료</strong>
+                        </div>
+
+                        <div className="flex justify-between text-muted">
+                            <span>임직원 할인</span>
+                            <strong className="text-danger">
+                                -{employeeDiscount.toLocaleString()}원
+                            </strong>
                         </div>
 
                         <div className="mt-6 border-t border-border pt-5">
