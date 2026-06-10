@@ -13,6 +13,7 @@ import ResetPasswordCompletePage from './features/auth/pages/ResetPasswordComple
 import ResetPasswordPage from './features/auth/pages/ResetPasswordPage.jsx'
 import ResetPasswordConfirmPage from './features/auth/pages/ResetPasswordConfirmPage.jsx'
 import ProductDetailPage from './features/shop/pages/ProductDetailPage.jsx'
+import CartPage from './features/shop/pages/CartPage'
 import ProductListPage from './features/shop/pages/ProductListPage.jsx'
 import SignUpPage from './features/auth/pages/SignUpPage.jsx'
 import { useAuthStore } from './store/useAuthStore';
@@ -31,6 +32,7 @@ import ModerationManagement from './features/admin/pages/ModerationManagement.js
 import ProductManagement from './features/admin/pages/ProductManagement.jsx'
 import OrderManagement from './features/admin/pages/OrderManagement.jsx'
 import NaverProductManagement from './features/admin/pages/NaverProductManagement';
+
 
 function LoginEntry() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -65,13 +67,14 @@ function App() {
         <Route path="/social-success" element={<SocialSuccessPage />} />
         <Route element={<RequireAuth />}>
           <Route element={<GlobalLayout />}>
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/shop" element={<ProductListPage />} />
-          <Route path="/shop/:productId" element={<ProductDetailPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/shop" element={<ProductListPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/shop/:productId" element={<ProductDetailPage />} />
             <Route path="/mypage" element={<MyPageLayout />}>
               <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<MyPageProfile />} />
-              <Route path="settings" element={<MyA11ySettings/>}/>
+              <Route path="settings" element={<MyA11ySettings />} />
               <Route path="orders" element={<MyOrders />} />
               <Route path="bookmarks" element={<MyBookmarks />} />
               <Route path="inquiries" element={<MyInquiries />} />
