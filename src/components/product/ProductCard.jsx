@@ -48,7 +48,7 @@ function ProductCard({ product, to, onWishlistClick, onAddToCartClick }) {
           {product.category}
         </span>
         <button
-          className="absolute top-4 right-4 inline-flex size-8 items-center justify-center rounded-full border border-border-soft bg-surface/95 text-ink motion-safe-transition hover:bg-surface-muted"
+          className="absolute top-2 right-2 inline-flex size-8 items-center justify-center rounded-full border border-border-soft bg-surface/95 text-ink motion-safe-transition hover:bg-surface-muted"
           type="button"
           aria-label={`${product.name} 찜하기`}
           onClick={handleWishlistClick}

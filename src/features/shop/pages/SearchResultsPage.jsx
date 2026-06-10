@@ -28,7 +28,11 @@ function SearchResultsPage({ query, products }) {
     <main className="layout-container pt-10 pb-24">
       <div className="mb-10 flex items-end justify-between gap-6 max-md:flex-col max-md:items-start">
         <div>
-          <p className="text-caption text-muted">홈 〉 검색 결과</p>
+          <nav aria-label="현재 위치">
+            <ol className="flex items-center text-caption text-muted">
+              <li aria-current="page">검색 결과</li>
+            </ol>
+          </nav>
           <h1 className="mt-5 text-3xl font-medium">'{query}'에 대한 {filteredProducts.length}개의 결과</h1>
         </div>
         <label className="flex items-center gap-3 text-body-sm">
@@ -52,7 +56,7 @@ function SearchResultsPage({ query, products }) {
         />
 
         <section>
-          <p className="mb-6 text-body-sm font-semibold text-body">총 {products.length}개 상품 중 {filteredProducts.length}개 표시</p>
+          <p className="mb-6 text-body-sm font-semibold text-foreground">총 {products.length}개 상품 중 {filteredProducts.length}개 표시</p>
           <div className="grid grid-cols-3 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} onWishlistClick={handleWishlistClick} onAddToCartClick={handleAddToCartClick} />

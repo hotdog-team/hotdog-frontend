@@ -117,7 +117,11 @@ function ProductGrid({
     <main className="layout-container pt-10 pb-24">
       <div className="mb-10 flex items-end justify-between gap-6 max-md:flex-col max-md:items-start">
         <div>
-          <p className="text-caption text-muted">홈 〉 {category.navLabel}</p>
+          <nav aria-label="현재 위치">
+            <ol className="flex items-center text-caption text-muted">
+              <li aria-current="page">{category.navLabel}</li>
+            </ol>
+          </nav>
           <h1 className="mt-5 text-3xl font-medium">{title}</h1>
           {category.description && <p className="mt-4 text-body-lg text-foreground">{category.description}</p>}
         </div>

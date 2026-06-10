@@ -80,3 +80,26 @@ export async function fetchProducts({ keyword = '', page = 0, size = 20, sort = 
 
   return normalizePageResponse(responseBody, size)
 }
+
+export async function fetchAllProducts({ page = 0, size = 20, sort = 'weight' } = {}) {
+  const searchParams = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+    sort,
+  })
+
+  const responseBody = await apiFetch(`/api/products?${searchParams.toString()}`)
+
+  return normalizePageResponse(responseBody, size)
+}
+
+export async function fetchProductsByMetaTags({ metaTagIds = [], match = 'any', sort = 'weight', size = '4' } = {}) {
+  const searchParams = new URLSearchParams({
+    sort,
+    size: String(size)
+  })
+  if (match === 'all') searchParams.set('match', 'all');
+  metaTagIds.forEach(id => searchParams.append('metaTagIds', id))
+  const responseBody = await apiFetch(`/api/products?${searchParams.toString()}`)
+  return normalizePageResponse(responseBody, size)
+}
