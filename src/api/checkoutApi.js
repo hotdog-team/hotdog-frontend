@@ -10,3 +10,14 @@ export const getCheckoutFromCart = async (cartItemIds) => {
 
     return response.data
 }
+
+export const getCheckoutDirect = async (productId, quantity) => {
+  const response = await axiosInstance.post(
+      '/api/orders/checkout/direct',
+      {
+          productId:productId,
+          quantity: quantity,
+      }
+  )
+    return response.data
+}
