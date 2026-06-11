@@ -15,7 +15,8 @@ export default function ProductManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [newProduct, setNewProduct] = useState({
     categoryId: 1, name: '', brand: '', price: 0, discountRate: 0, stockQuantity: 0,
-    deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: ''
+    deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: '',
+    description: '', specInfo: ''
   })
   const [selectedTagIds, setSelectedTagIds] = useState([])
 
@@ -23,7 +24,8 @@ export default function ProductManagement() {
   const [editingProductId, setEditingProductId] = useState(null)
   const [editProductData, setEditProductData] = useState({
     categoryId: 1, name: '', brand: '', price: 0, discountRate: 0, stockQuantity: 0,
-    deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: ''
+    deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: '',
+    description: '', specInfo: ''
   })
   const [editSelectedTagIds, setEditSelectedTagIds] = useState([])
 
@@ -71,7 +73,10 @@ export default function ProductManagement() {
 
       toast.success('상품 등록이 완료되었습니다.')
       setIsAddModalOpen(false)
-      setNewProduct({ categoryId: 1, name: '', brand: '', price: 0, discountRate: 0, stockQuantity: 0, deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: '' });
+      setNewProduct({
+        categoryId: 1, name: '', brand: '', price: 0, discountRate: 0, stockQuantity: 0,
+        deliveryFee: 3000, shortDescription: '', altText: '', imageUrl: '', description: '', specInfo: ''
+      });
       setSelectedTagIds([])
       fetchProducts()
     } catch (err) {
@@ -107,7 +112,9 @@ export default function ProductManagement() {
         deliveryFee: detail.deliveryFee || 0,
         shortDescription: detail.shortDescription || '',
         altText: detail.altText || '',
-        imageUrl: detail.imageUrl || ''
+        imageUrl: detail.imageUrl || '',
+        description: detail.description || '',
+        specInfo: detail.specInfo || ''
       })
 
       const existingTags = Array.isArray(detail.metaTagIds) ? detail.metaTagIds : [];
@@ -322,6 +329,29 @@ export default function ProductManagement() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-4 border-t border-border-soft pt-4">
+                <div>
+                  <label className="block text-sm font-bold text-ink mb-1">상세 설명 (본문)</label>
+                  <textarea
+                    rows={4}
+                    value={newProduct.description}
+                    onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                    placeholder="상품 상세 페이지에 들어갈 내용을 자유롭게 작성하세요."
+                    className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none resize-y"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-ink mb-1">제품 스펙 / 성분</label>
+                  <textarea
+                    rows={4}
+                    value={newProduct.specInfo}
+                    onChange={(e) => setNewProduct({...newProduct, specInfo: e.target.value})}
+                    placeholder="재질, 용량, 크기, 성분 등 제품 정보를 작성하세요."
+                    className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none resize-y"
+                  />
+                </div>
+              </div>
+
               <div className="mt-6 pt-4 border-t border-border-soft">
                 <label className="block text-sm font-bold text-ink mb-2">메타태그 연결 (다중 선택 가능)</label>
                 <div className="flex flex-wrap gap-2">
@@ -424,6 +454,29 @@ export default function ProductManagement() {
                   placeholder="https://example.com/image.jpg"
                   className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 border-t border-border-soft pt-4">
+                <div>
+                  <label className="block text-sm font-bold text-ink mb-1">상세 설명 (본문)</label>
+                  <textarea
+                    rows={4}
+                    value={editProductData.description}
+                    onChange={(e) => setEditProductData({...editProductData, description: e.target.value})}
+                    placeholder="상품 상세 페이지에 들어갈 내용을 자유롭게 작성하세요."
+                    className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none resize-y"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-ink mb-1">제품 스펙 / 성분</label>
+                  <textarea
+                    rows={4}
+                    value={editProductData.specInfo}
+                    onChange={(e) => setEditProductData({...editProductData, specInfo: e.target.value})}
+                    placeholder="재질, 용량, 크기, 성분 등 제품 정보를 작성하세요."
+                    className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none resize-y"
+                  />
+                </div>
               </div>
 
               <div className="mt-6 pt-4 border-t border-border-soft">
