@@ -150,33 +150,33 @@ export default function NaverProductManagement() {
         </form>
       </div>
 
-        {searchResults.length > 0 && (
-          <div className="flex justify-between items-center bg-surface p-4 border border-border-soft rounded-lg shadow-sm">
-            <div className="text-sm font-bold text-ink">
-               검색 결과: <span className="text-brand">{totalCount.toLocaleString()}</span>개 상품 발견
-            </div>
-
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer font-bold text-ink hover:text-brand transition-colors">
-                <input
-                  type="checkbox"
-                  className="w-5 h-5 accent-brand cursor-pointer"
-                  checked={searchResults.length > 0 && selectedProducts.length === searchResults.length}
-                  onChange={handleSelectAll}
-                />
-                전체 선택 ({selectedProducts.length}/{searchResults.length})
-              </label>
-              <Button
-                variant="primary"
-                onClick={() => openRegisterModal(selectedProducts)}
-                disabled={selectedProducts.length === 0}
-                className="flex items-center gap-2"
-              >
-                <CheckSquare size={18} /> 선택한 {selectedProducts.length}개 상품 등록
-              </Button>
-            </div>
+      {searchResults.length > 0 && (
+        <div className="flex justify-between items-center bg-surface p-4 border border-border-soft rounded-lg shadow-sm">
+          <div className="text-sm font-bold text-ink">
+            검색 결과: <span className="text-brand">{totalCount.toLocaleString()}</span>개 상품 발견
           </div>
-        )}
+
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 cursor-pointer font-bold text-ink hover:text-brand transition-colors">
+              <input
+                type="checkbox"
+                className="w-5 h-5 accent-brand cursor-pointer"
+                checked={searchResults.length > 0 && selectedProducts.length === searchResults.length}
+                onChange={handleSelectAll}
+              />
+              전체 선택 ({selectedProducts.length}/{searchResults.length})
+            </label>
+            <Button
+              variant="primary"
+              onClick={() => openRegisterModal(selectedProducts)}
+              disabled={selectedProducts.length === 0}
+              className="flex items-center gap-2"
+            >
+              <CheckSquare size={18} /> 선택한 {selectedProducts.length}개 상품 등록
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {searchResults.map((product) => {
@@ -185,9 +185,8 @@ export default function NaverProductManagement() {
           return (
             <div
               key={product.productId}
-              className={`relative bg-surface border rounded-lg shadow-sm overflow-hidden flex flex-col transition-all ${
-                isSelected ? 'border-brand ring-2 ring-brand/20' : 'border-border-soft hover:border-brand/50'
-              }`}
+              className={`relative bg-surface border rounded-lg shadow-sm overflow-hidden flex flex-col transition-all ${isSelected ? 'border-brand ring-2 ring-brand/20' : 'border-border-soft hover:border-brand/50'
+                }`}
             >
               <div className="absolute top-3 left-3 z-10 bg-white/80 rounded-md p-1 backdrop-blur-sm shadow-sm">
                 <input
@@ -263,7 +262,7 @@ export default function NaverProductManagement() {
                 {productsToRegister.length > 1 ? `${productsToRegister.length}개 상품 일괄 등록` : '상품 등록 확인'}
               </h2>
               <button onClick={() => setIsModalOpen(false)} className="text-muted hover:text-error" disabled={isSubmitting}>
-                <XCircle size={24}/>
+                <XCircle size={24} />
               </button>
             </div>
 

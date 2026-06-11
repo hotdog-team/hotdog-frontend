@@ -35,6 +35,9 @@ import ProductManagement from './features/admin/pages/ProductManagement.jsx'
 import OrderManagement from './features/admin/pages/OrderManagement.jsx'
 import NaverProductManagement from './features/admin/pages/NaverProductManagement';
 import AdminReviewManagement from './features/admin/pages/AdminReviewManagement.jsx';
+import OrderDetailPage from './features/order/pages/OrderDetailPage'
+import PaymentSuccessPage from './features/payment/pages/PaymentSuccessPage'
+import PaymentFailPage from './features/payment/pages/PaymentFailPage'
 
 
 function LoginEntry() {
@@ -75,6 +78,12 @@ function App() {
             <Route path="/shop/:productId" element={<ProductDetailPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/orders/checkout" element={<CheckoutPage />} />
+            <Route path="/payment/success" element={<PaymentSuccessPage />} />
+            <Route path="/payment/fail" element={<PaymentFailPage />} />
+            <Route
+              path="/mypage/orders/:orderId"
+              element={<OrderDetailPage />}
+            />
             <Route path="/mypage" element={<MyPageLayout />}>
               <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<MyPageProfile />} />
@@ -86,22 +95,22 @@ function App() {
               <Route path="reviews" element={<MyReviews />} />
             </Route>
           </Route>
-         <Route path="/admin" element={<AdminLayout />}>
-           <Route index element={<Navigate to="dashboard" replace />} />
-           <Route path="dashboard" element={<AdminDashboard />} />
-           <Route path="categories" element={<CategoryManagement />} />
-           <Route path="meta-tags" element={<MetaTagManagement />} />
-           <Route path="members" element={<MemberManagement />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="categories" element={<CategoryManagement />} />
+            <Route path="meta-tags" element={<MetaTagManagement />} />
+            <Route path="members" element={<MemberManagement />} />
 
-           <Route path="moderation" element={<ModerationManagement />} />
-           <Route path="inquiries" element={<ModerationManagement />} />
+            <Route path="moderation" element={<ModerationManagement />} />
+            <Route path="inquiries" element={<ModerationManagement />} />
 
-           <Route path="products" element={<ProductManagement />} />
-           <Route path="products/naver" element={<NaverProductManagement />} />
-           <Route path="orders" element={<OrderManagement />} />
+            <Route path="products" element={<ProductManagement />} />
+            <Route path="products/naver" element={<NaverProductManagement />} />
+            <Route path="orders" element={<OrderManagement />} />
 
-           <Route path="reviews" element={<AdminReviewManagement />} />
-         </Route>
+            <Route path="reviews" element={<AdminReviewManagement />} />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
