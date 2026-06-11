@@ -45,7 +45,12 @@ function ProductCard({ product, to, initialBookmarked = false }) {
         setIsBookmarked(true);
         toast.success(`${product.name}을(를) 찜 목록에 추가했습니다.`);
       }
+      queryClient.invalidateQueries({ queryKey: ['bookmarkedIds'] })
     } catch (error) {
+      if (error.response?.status === 409) {
+        setIsBookmarked(true)
+        return
+      }
       console.error('북마크 처리 실패', error);
       toast.error(`찜 목록 처리 중 문제가 발생했습니다.`);
     }
@@ -89,9 +94,6 @@ function ProductCard({ product, to, initialBookmarked = false }) {
         )}
 
 
-        <span className="absolute bottom-3 left-3 rounded-sm bg-ink px-2 py-1 text-caption font-bold text-surface">
-          {product.category}
-        </span>
         <button
           className="absolute top-2 right-2 inline-flex size-8 items-center justify-center rounded-full border border-border-soft bg-surface/95 text-ink motion-safe-transition hover:bg-surface-muted"
           type="button"
@@ -107,18 +109,18 @@ function ProductCard({ product, to, initialBookmarked = false }) {
       </div>
 
       <div className="px-5 pt-5 pb-4">
-        <h3 className="line-clamp-1 text-body-sm font-medium text-ink">{product.name}</h3>
+        <h3 className="line-clamp-2 text-body font-medium text-ink">{product.name}</h3>
         <div className="mt-1 flex items-center gap-1 text-caption font-semibold text-ink">
-          <span className="flex text-brand" aria-hidden="true">
-            {Array.from({ length: 5 }).map((_, index) => (
+          <span className="flex text-rating" aria-hidden="true">
+            {Array.from({ length: product.rating > 0 || 5 }).map((_, index) => (
               <Star key={index} className="size-3 fill-current" strokeWidth={0} />
             ))}
           </span>
           <span className="sr-only">별점 {product.rating}점, 리뷰 {product.reviews}개</span>
           <span aria-hidden="true">{product.rating}</span>
-          <span className="text-muted" aria-hidden="true">({product.reviews})</span>
+          <span className="text-muted" aria-hidden="true">({product.reviews}개)</span>
         </div>
-        <p className="mt-1 text-body-sm font-semibold text-ink">{product.price}</p>
+        <p className="mt-1 text-body-md font-semibold text-ink">{product.salePrice?.toLocaleString()}원 <span className="line-through font-light text-muted text-body-sm" aria-hidden="true">{product.originPrice?.toLocaleString()}원</span></p>
         <Button
           className="mt-4 rounded-sm"
           type="button"
