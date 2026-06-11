@@ -161,7 +161,7 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
           </div>
         )}
 
-        {!isDislikeView &&
+        {isDislikeView &&
             (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-start bg-linear-to-t from-black/55 to-transparent px-3 pb-3 pt-8 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           <button
