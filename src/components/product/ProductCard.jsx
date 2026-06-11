@@ -32,7 +32,7 @@ function removeHiddenId(id) {
   sessionStorage.setItem(HIDDEN_STORAGE_KEY, JSON.stringify([...next]))
 }
 
-function ProductCard({ product, to, initialBookmarked = false }) {
+function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange, isDislikeView = true }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [isBookmarked, setIsBookmarked] = useState(initialBookmarked)
@@ -62,10 +62,12 @@ function ProductCard({ product, to, initialBookmarked = false }) {
       if (isBookmarked) {
         await removeBookmark(Number(product.id))
         setIsBookmarked(false)
+        onBookmarkChange?.(Number(product.id), false)
         toast.info(`${product.name}을(를) 찜 목록에서 제거했습니다.`)
       } else {
         await addBookmark(Number(product.id))
         setIsBookmarked(true)
+        onBookmarkChange?.(Number(product.id), true)
         toast.success(`${product.name}을(를) 찜 목록에 추가했습니다.`)
       }
       queryClient.invalidateQueries({ queryKey: ['bookmarkedIds'] })
@@ -159,6 +161,8 @@ function ProductCard({ product, to, initialBookmarked = false }) {
           </div>
         )}
 
+        {!isDislikeView &&
+            (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-start bg-linear-to-t from-black/55 to-transparent px-3 pb-3 pt-8 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           <button
             type="button"
@@ -169,7 +173,8 @@ function ProductCard({ product, to, initialBookmarked = false }) {
             당분간 보지 않기
           </button>
         </div>
-
+            )
+        }
         <button
           className="absolute top-2 right-2 inline-flex size-8 items-center justify-center rounded-full border border-border-soft bg-surface/95 text-ink motion-safe-transition hover:bg-surface-muted"
           type="button"
