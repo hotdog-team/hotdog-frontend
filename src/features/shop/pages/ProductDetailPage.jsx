@@ -208,16 +208,16 @@ function ProductDetailPage() {
             <div className="mt-9 flex gap-4 items-center">
                 <p className="mb-2 text-body-sm font-semibold">수량</p>
                 <div className="inline-flex h-11 overflow-hidden rounded border border-border bg-white">
-                  <button className="px-4" type="button" onClick={() => setQuantity((current) => Math.max(1, current - 1))}><Minus className="size-4" /></button>
+                  <button className="px-4 focus-ring focus-ring-inset focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink" type="button" onClick={() => setQuantity((current) => Math.max(1, current - 1))}><Minus className="size-4" /></button>
                   <input
                       type="number"
                       min={1}
                       max={product.stockQuantity}
                       value={quantity}
                       onChange={(e) => setQuantity(Math.min(product.stockQuantity, Math.max(1, Number(e.target.value))))}
-                      className="w-14 text-center"
+                      className="w-14 text-center focus-ring focus-ring-inset focus-visible:ring-2 focus-visible:ring-inset"
                   />
-                  <button className="px-4" type="button" onClick={() => setQuantity((q) => Math.min(product.stockQuantity, q + 1))}><Plus className="size-4" /></button>
+                  <button className="px-4 focus-ring focus-ring-inset focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink" type="button" onClick={() => setQuantity((q) => Math.min(product.stockQuantity, q + 1))}><Plus className="size-4" /></button>
               </div>
             </div>
             <div className="mt-12 flex flex-wrap gap-4">

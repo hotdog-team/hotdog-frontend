@@ -57,18 +57,25 @@ export default function MyBookmarks() {
               const productData = {
                 id: item.productId,
                 name: item.productName,
-                image: item.imageUrl || item.productImageUrl,
-                price: `${item.price?.toLocaleString()}원`,
-                category: item.categoryName || '기본 카테고리',
-                rating: item.rating || 0,
-                reviews: item.reviewCount || 0,
+                image: item.imageUrl || '',
+                salePrice: item.salePrice ?? item.originPrice ?? 0,
+                originPrice: item.originPrice ?? 0,
+                rating: item.averageRate ?? 0,
+                reviews: item.reviewCount ?? 0,
               }
 
               return (
                 <ProductCard
-                  key={item.id}
+                  key={item.bookmarkId}
                   product={productData}
                   to={`/shop/${item.productId}`}
+                  initialBookmarked
+                  onBookmarkChange={(productId, isBookmarked) => {
+                    if (!isBookmarked) {
+                      setBookmarks((prev) => prev.filter((b) => b.productId !== productId))
+                    }
+                  }}
+                  isDislikeView="false"
                 />
               )
             })}
