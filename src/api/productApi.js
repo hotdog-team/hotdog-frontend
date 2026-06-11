@@ -114,9 +114,10 @@ export async function fetchProductDetail(productId) {
 /**
  * 메타태그 기반 상품 목록 조회
  */
-export async function fetchProductsByMetaTags({ metaTagIds = [], match = 'any', sort = 'RECOMMEND', size = 4 } = {}) {
+export async function fetchProductsByMetaTags({ metaTagIds = [], match = 'any', sort = 'RECOMMEND', page = 0, size = 4 } = {}) {
   const searchParams = new URLSearchParams({
     sort,
+    page: String(page),
     size: String(size),
   })
 

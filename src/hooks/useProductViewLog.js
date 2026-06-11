@@ -20,7 +20,7 @@ export function useProductViewLog(productId) {
 
             const stayDuration = getStayDuration(productId);
 
-            console.log('[VIEW] 이탈 시도', {   // ② — 제일 중요
+            console.log('[VIEW] 이탈 시도', {
                 productId,
                 stayDuration,
                 sentRef: sentRef.current,
@@ -28,7 +28,7 @@ export function useProductViewLog(productId) {
                 hasToken: !!getAccessToken(),
             });
 
-            if (!productId || stayDuration < 3000) return;
+            if (!productId || stayDuration < 10000) return;
 
             try {
                 await sendBehaviorLog({
@@ -36,7 +36,7 @@ export function useProductViewLog(productId) {
                     actionType:'VIEW',
                     stayDuration,
                 });
-                console.log('[VIEW] 전송 성공', stayDuration);  // ③
+                console.log('[VIEW] 전송 성공', stayDuration);
 
                 markSent(productId);
                 sentRef.current = true;

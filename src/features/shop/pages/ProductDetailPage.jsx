@@ -158,6 +158,10 @@ function ProductDetailPage() {
       <div className="layout-container pt-12 pb-12">
         <nav aria-label="현재 위치" className="mb-10">
           <ol className="flex items-center gap-1 text-body-sm text-muted">
+            <Link to={'/home'} className="hover:text-ink transition-colors">
+              홈
+            </Link>
+            <li aria-hidden="true"><ChevronRight className="size-3.5 shrink-0" strokeWidth={2} /></li>
             <li>
               <Link to={`/shop?categoryId=${encodeURIComponent(product.categoryId ?? product.categoryCode)}`} className="hover:text-ink transition-colors">
                 {category?.navLabel ?? product.category}
@@ -199,11 +203,8 @@ function ProductDetailPage() {
                   {product.salePrice?.toLocaleString()}원</p>
                 <span className="rounded-sm bg-brand px-3 py-1 text-caption font-extrabold text-white">{product.discountRate}% 할인</span>
               </div>
-              {product.deliveryFee === 0 ? (
-                  <p className="flex items-center gap-1.5 text-body font-medium text-gray-600 mt-4"><Truck className="size-4" strokeWidth={2.0} aria-hidden="true"/> 무료 배송</p>
-              ) : null}
+                  <p className="flex items-center gap-1.5 text-body font-medium text-gray-600 mt-4"><Truck className="size-4" strokeWidth={2.0} aria-hidden="true"/> {product.deliveryFee === 0 ? `무료 배송` : `배송비 ${product.deliveryFee.toLocaleString()}원`}</p>
 
-            <p className="mt-8 max-w-content text-body leading-7 text-foreground">{product.description}</p>
             <div className="mt-9 flex gap-4 items-center">
                 <p className="mb-2 text-body-sm font-semibold">수량</p>
                 <div className="inline-flex h-11 overflow-hidden rounded border border-border bg-white">
