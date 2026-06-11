@@ -12,6 +12,8 @@ const ORDER_STATUS_LABEL = {
     DELIVERED: '배송 완료',
     PARTIAL_CANCELLED: '부분 취소',
     CANCELLED: '주문 취소',
+    RETURN_REQUESTED: '반품 신청',
+    RETURN_COMPLETED: '반품 완료',
 }
 
 const ORDER_STATUS_CLASS = {
@@ -23,6 +25,8 @@ const ORDER_STATUS_CLASS = {
     DELIVERED: 'bg-green-100 text-green-700',
     PARTIAL_CANCELLED: 'bg-red-100 text-red-600',
     CANCELLED: 'bg-gray-200 text-gray-500',
+    RETURN_REQUESTED: 'bg-purple-100 text-purple-700',
+    RETURN_COMPLETED: 'bg-gray-200 text-gray-500',
 }
 
 function getDisplayOrderStatus({ orderStatus, paymentMethod, isAllItemsCancelled }) {

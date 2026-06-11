@@ -3,8 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Pagination, Select } from '../../../components/index.js'
 import axiosInstance from '../../../api/axiosInstance.js'
-import { getOrderDetail, cancelOrderItems } from '../../../api/orderApi'
-
+import { getOrderDetail, cancelOrderItems, requestOrderReturn } from '../../../api/orderApi'
 
 const ORDER_STATUS_LABEL = {
   PENDING: '결제 대기',
@@ -15,6 +14,8 @@ const ORDER_STATUS_LABEL = {
   DELIVERED: '배송 완료',
   PARTIAL_CANCELLED: '부분 취소',
   CANCELLED: '주문 취소',
+  RETURN_REQUESTED: '반품 신청',
+  RETURN_COMPLETED: '반품 완료',
 }
 
 const ORDER_STATUS_CLASS = {
@@ -26,9 +27,12 @@ const ORDER_STATUS_CLASS = {
   DELIVERED: 'bg-green-100 text-green-700',
   PARTIAL_CANCELLED: 'bg-red-100 text-red-600',
   CANCELLED: 'bg-gray-200 text-gray-500',
+  RETURN_REQUESTED: 'bg-purple-100 text-purple-700',
+  RETURN_COMPLETED: 'bg-gray-200 text-gray-500',
 }
 
-const CANCELLED_STATUSES = ['CANCELLED', 'PARTIAL_CANCELLED']
+const CANCELLED_STATUSES = ['CANCELLED']
+const RETURN_STATUSES = ['RETURN_REQUESTED', 'RETURN_COMPLETED']
 
 function getOrderStatusLabel(status) {
   return ORDER_STATUS_LABEL[status] || status || '-'
@@ -36,6 +40,178 @@ function getOrderStatusLabel(status) {
 
 function getOrderStatusClass(status) {
   return ORDER_STATUS_CLASS[status] || 'bg-surface-muted text-ink'
+}
+
+function getOrderProductSummary(order) {
+  const items = order.orderItems || []
+
+  if (items.length === 0) {
+    return {
+      productName: order.productName || '-',
+      quantity: order.quantity || 1,
+    }
+  }
+
+  const firstItem = items[0]
+  const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+
+  return {
+    productName:
+      items.length > 1
+        ? `${firstItem.productName} 외 ${items.length - 1}건`
+        : firstItem.productName,
+    quantity: totalQuantity || firstItem.quantity || 1,
+  }
+}
+
+function TrackingModal({ order, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/55 px-4 py-8" role="dialog" aria-modal="true">
+      <div className="w-full max-w-md rounded-md bg-surface p-8 text-ink shadow-2xl">
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <h2 className="text-2xl font-medium">배송 조회</h2>
+            <p className="mt-3 text-body-sm text-foreground">주문번호 #{order.orderId}</p>
+          </div>
+
+          <Button variant="outline" size="sm" onClick={onClose}>
+            닫기
+          </Button>
+        </div>
+
+        <div className="mt-8 rounded-md border border-border bg-surface-muted p-5">
+          <p className="text-caption text-foreground">운송장 번호</p>
+
+          {order.trackingNumber ? (
+            <p className="mt-2 text-xl font-bold text-ink">{order.trackingNumber}</p>
+          ) : (
+            <p className="mt-2 text-body-sm font-medium text-foreground">
+              아직 운송장 번호가 등록되지 않았습니다.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReturnRequestModal({ order, onClose, onSubmit }) {
+  const [reason, setReason] = useState('')
+  const [detailReason, setDetailReason] = useState('')
+  const [validationMessage, setValidationMessage] = useState('')
+  const { productName, quantity } = getOrderProductSummary(order)
+  const formattedDate = order.orderDate
+    ? new Date(order.orderDate).toLocaleDateString('ko-KR')
+    : '-'
+
+  const reasonOptions = [
+    { value: '', label: '반품 사유를 선택해 주세요' },
+    { value: 'CHANGE_MIND', label: '단순 변심' },
+    { value: 'DEFECTIVE', label: '상품 불량' },
+    { value: 'WRONG_ITEM', label: '오배송' },
+    { value: 'OTHER', label: '기타' },
+  ]
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+
+    if (!reason) {
+      setValidationMessage('반품 사유를 선택해 주세요.')
+      return
+    }
+
+    onSubmit(order.orderId, {
+      reason,
+      detailReason,
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/55 px-4 py-8" role="dialog" aria-modal="true">
+      <form className="w-full max-w-xl rounded-md bg-surface p-8 text-ink shadow-2xl" onSubmit={handleSubmit}>
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <h2 className="text-2xl font-medium">반품 신청</h2>
+            <p className="mt-3 text-body-sm text-foreground">
+              반품 정보를 확인하고 사유를 입력해 주세요.
+            </p>
+          </div>
+
+          <Button variant="outline" size="sm" onClick={onClose}>
+            닫기
+          </Button>
+        </div>
+
+        <div className="mt-8 grid gap-4 rounded-md border border-border bg-surface-muted p-5 text-body-sm">
+          <p>
+            <span className="text-foreground">주문번호</span>
+            <br />
+            <strong>#{order.orderId}</strong>
+          </p>
+
+          <p>
+            <span className="text-foreground">상품명</span>
+            <br />
+            <strong>{productName}</strong>
+          </p>
+
+          <p>
+            <span className="text-foreground">수량</span>
+            <br />
+            <strong>{quantity}개</strong>
+          </p>
+
+          <p>
+            <span className="text-foreground">주문일</span>
+            <br />
+            <strong>{formattedDate}</strong>
+          </p>
+        </div>
+
+        <div className="mt-6">
+          <Select
+            id="return-reason"
+            label="반품 사유"
+            options={reasonOptions}
+            value={reason}
+            onChange={(e) => {
+              setReason(e.target.value)
+              setValidationMessage('')
+            }}
+            required={true}
+          />
+        </div>
+
+        <label className="mt-6 block text-body-sm font-medium" htmlFor="return-detail-reason">
+          상세 사유
+        </label>
+
+        <textarea
+          id="return-detail-reason"
+          className="mt-3 h-36 w-full resize-none border border-border p-4 text-body outline-none focus:border-brand focus:ring-3 focus:ring-brand/15"
+          placeholder="상세 사유를 입력해 주세요."
+          value={detailReason}
+          onChange={(event) => setDetailReason(event.target.value)}
+        />
+
+        {validationMessage && (
+          <p className="mt-4 rounded border border-error-border bg-error-soft px-4 py-3 text-body-sm font-semibold text-error" role="alert">
+            {validationMessage}
+          </p>
+        )}
+
+        <div className="mt-8 flex justify-end gap-3 border-t border-border pt-6">
+          <Button type="button" variant="outline" size="md" onClick={onClose}>
+            취소
+          </Button>
+
+          <Button type="submit" variant="primary" size="md">
+            반품 신청
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
 }
 
 const blockedWords = ['씨발', '시발', '병신', '개새끼', 'fuck', 'shit']
@@ -125,6 +301,7 @@ function ReviewModal({ order, onClose, onSubmit }) {
       setValidationMessage(message)
       return
     }
+
     onSubmit(order.orderId, { rating: Number(rating), content, file: fileInputRef.current?.files[0] })
   }
 
@@ -230,8 +407,8 @@ function ReviewModal({ order, onClose, onSubmit }) {
                         size="sm"
                         className="shrink-0 border border-white/70 text-white hover:bg-surface hover:text-ink"
                         onClick={(e) => {
-                          e.stopPropagation();
-                          clearSelectedImage();
+                          e.stopPropagation()
+                          clearSelectedImage()
                         }}
                       >
                         이미지 제거
@@ -273,9 +450,19 @@ function ReviewModal({ order, onClose, onSubmit }) {
     </div>
   )
 }
-function OrderCard({ order, onReviewClick, onDetailClick, onCancelClick }) {
+
+function OrderCard({
+  order,
+  onReviewClick,
+  onDetailClick,
+  onCancelClick,
+  onTrackingClick,
+  onReturnClick,
+}) {
   const isDelivered = order.orderStatus === 'DELIVERED'
+  const isInTransit = order.orderStatus === 'IN_TRANSIT'
   const isCancelled = CANCELLED_STATUSES.includes(order.orderStatus)
+  const isReturnStatus = RETURN_STATUSES.includes(order.orderStatus)
   const canReview = isDelivered && !order.hasReview
   const formattedDate = new Date(order.orderDate).toLocaleDateString('ko-KR')
   const badgeClass = getOrderStatusClass(order.orderStatus)
@@ -338,20 +525,28 @@ function OrderCard({ order, onReviewClick, onDetailClick, onCancelClick }) {
             <p className="text-center text-body-sm font-medium text-foreground">
               주문 취소 완료
             </p>
+          ) : order.orderStatus === 'PARTIAL_CANCELLED' ? (
+            <p className="text-center text-body-sm font-medium text-foreground">
+              일부 상품 취소 완료
+            </p>
+          ) : isReturnStatus ? (
+            <p className="text-center text-body-sm font-medium text-foreground">
+              {getOrderStatusLabel(order.orderStatus)}
+            </p>
           ) : (
             <>
-              {order.orderStatus === 'IN_TRANSIT' && (
+              {isInTransit && (
                 <>
-                  <Button variant="secondary" size="md" fullWidth>
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={() => onTrackingClick(order)}
+                    fullWidth
+                  >
                     배송 조회
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    size="md"
-                    disabled
-                    fullWidth
-                  >
+                  <Button variant="outline" size="md" disabled fullWidth>
                     반품 신청
                   </Button>
                 </>
@@ -373,6 +568,7 @@ function OrderCard({ order, onReviewClick, onDetailClick, onCancelClick }) {
                   <Button
                     variant="outline"
                     size="md"
+                    onClick={() => onReturnClick(order)}
                     fullWidth
                   >
                     반품 신청
@@ -405,6 +601,8 @@ function MyOrders() {
   const [orders, setOrders] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedReviewOrder, setSelectedReviewOrder] = useState(null)
+  const [selectedTrackingOrder, setSelectedTrackingOrder] = useState(null)
+  const [selectedReturnOrder, setSelectedReturnOrder] = useState(null)
   const [totalPages, setTotalPages] = useState(1)
 
   const page = Number(searchParams.get('page')) || 1
@@ -479,6 +677,26 @@ function MyOrders() {
     }
   }
 
+  const handleReturnSubmit = async (orderId, returnData) => {
+    try {
+      await requestOrderReturn(orderId, returnData)
+
+      setOrders((currentOrders) =>
+        currentOrders.map((order) =>
+          order.orderId === orderId
+            ? { ...order, orderStatus: 'RETURN_REQUESTED' }
+            : order
+        )
+      )
+
+      setSelectedReturnOrder(null)
+      alert('반품 신청이 완료되었습니다.')
+    } catch (error) {
+      console.error('반품 신청 실패:', error)
+      alert('반품 신청에 실패했습니다.')
+    }
+  }
+
   const handleReviewSubmit = async (orderId, reviewData) => {
     try {
       setOrders((currentOrders) =>
@@ -512,6 +730,8 @@ function MyOrders() {
               onReviewClick={setSelectedReviewOrder}
               onDetailClick={handleDetailClick}
               onCancelClick={handleCancelOrder}
+              onTrackingClick={setSelectedTrackingOrder}
+              onReturnClick={setSelectedReturnOrder}
             />
           ))
         )}
@@ -526,6 +746,21 @@ function MyOrders() {
           />
         )}
       </section>
+
+      {selectedTrackingOrder && (
+        <TrackingModal
+          order={selectedTrackingOrder}
+          onClose={() => setSelectedTrackingOrder(null)}
+        />
+      )}
+
+      {selectedReturnOrder && (
+        <ReturnRequestModal
+          order={selectedReturnOrder}
+          onClose={() => setSelectedReturnOrder(null)}
+          onSubmit={handleReturnSubmit}
+        />
+      )}
 
       {selectedReviewOrder && (
         <ReviewModal
