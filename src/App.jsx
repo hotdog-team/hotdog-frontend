@@ -23,6 +23,7 @@ import RequireAuth from './features/auth/RequireAuth.jsx';
 import GlobalLayout from './layout/GlobalLayout.jsx';
 import MyPageLayout from './layout/MyPageLayout.jsx';
 import MyPageProfile from './features/mypage/pages/MyPageProfile.jsx';
+import MyPageCart from './features/mypage/pages/MyPageCart.jsx'
 import AddressManagement from './features/mypage/pages/AddressManagement.jsx'
 import AdminLayout from './layout/AdminLayout.jsx'
 import AdminPlaceholderPage from './features/admin/pages/AdminPlaceholderPage.jsx'
@@ -82,6 +83,7 @@ function App() {
               <Route path="orders" element={<MyOrders />} />
               <Route path="bookmarks" element={<MyBookmarks />} />
               <Route path="inquiries" element={<MyInquiries />} />
+              <Route path="cart" element={<MyPageCart />} />
               <Route path="addresses" element={<AddressManagement />} />
               <Route path="reviews" element={<MyReviews />} />
             </Route>
