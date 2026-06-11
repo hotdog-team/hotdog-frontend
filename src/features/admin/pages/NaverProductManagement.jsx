@@ -87,40 +87,35 @@ export default function NaverProductManagement() {
     }
 
     setIsSubmitting(true)
-    let successCount = 0
-    let failCount = 0
 
-    for (const prod of productsToRegister) {
-      const payload = {
-        categoryId: parseInt(selectedCategoryId),
-        title: cleanHtmlTags(prod.title),
-        image: prod.image,
-        lprice: prod.lprice,
-        brand: prod.brand || '브랜드 없음',
-        mallName: prod.mallName,
-        link: prod.link,
-        productId: prod.productId
-      }
+    const bulkPayload = productsToRegister.map(prod => ({
+      categoryId: parseInt(selectedCategoryId),
+      name: cleanHtmlTags(prod.title),
+      price: parseInt(prod.lprice),
+      imageUrl: prod.image,
+      brand: prod.brand || '브랜드 없음',
+      discountRate: 0,
+      deliveryFee: 3000,
+      stockQuantity: 100, // 임의의 초기 재고
+      shortDescription: prod.mallName,
+      description: `네이버 쇼핑 연동 상품 - 링크: ${prod.link}`,
+      specInfo: '',
+      altText: cleanHtmlTags(prod.title),
+      metaTagIds: [] 
+    }))
 
-      try {
-        await axiosInstance.post('/api/admin/products/naver', payload)
-        successCount++
-      } catch (err) {
-        failCount++
-      }
+    try {
+      await axiosInstance.post('/api/admin/products/bulk', bulkPayload)
+
+      toast.success(`${productsToRegister.length}개 상품이 성공적으로 일괄 등록되었습니다!`)
+      setIsModalOpen(false)
+      setProductsToRegister([])
+      setSelectedProducts([])
+    } catch (err) {
+      toast.error('일괄 등록에 실패했습니다. 관리자에게 문의하세요.')
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setIsSubmitting(false)
-
-    if (failCount === 0) {
-      toast.success(`${successCount}개 상품이 성공적으로 등록되었습니다!`)
-    } else {
-      toast.warning(`${successCount}개 성공, ${failCount}개 실패 (이미 등록된 상품일 수 있습니다).`)
-    }
-
-    setIsModalOpen(false)
-    setProductsToRegister([])
-    setSelectedProducts([])
   }
 
   return (
