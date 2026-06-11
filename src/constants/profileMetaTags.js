@@ -56,3 +56,11 @@ export function buildProfileTagIds(categoryIds, purposeId, merchandisingIds) {
     ...merchandisingIds,
   ]
 }
+
+export function buildMetaTagListPath({ metaTagIds, sort, match, title, size = 100 }) {
+  const params = new URLSearchParams({ sort, size: String(size), page: '0' })
+  if (match === 'all') params.set('match', 'all')
+  if (title) params.set('title', title)
+  metaTagIds.forEach((id) => params.append('metaTagIds', String(id)))
+  return `/shop?${params.toString()}`
+}

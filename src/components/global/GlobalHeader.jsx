@@ -25,16 +25,21 @@ function getCategoryIdFromPath(path) {
   return new URLSearchParams(queryString).get('categoryId')
 }
 
-function isCategoryNavActive(category, location, fallbackLabel) {
+function isCategoryNavActive(category, location) {
+  const searchParams = new URLSearchParams(location.search)
   const categoryId = getCategoryIdFromPath(category.to)
-  const currentCategoryId = new URLSearchParams(location.search).get('categoryId')
+  const currentCategoryId = searchParams.get('categoryId')
 
   if (currentCategoryId) {
-    return categoryId === currentCategoryId
+    return String(categoryId) === String(currentCategoryId)
   }
 
   if (location.pathname === '/shop') {
-    return category.label === fallbackLabel
+    const hasMetaTags = searchParams.getAll('metaTagIds').length > 0
+    const hasQuery = Boolean(searchParams.get('query')?.trim())
+    if (hasMetaTags || hasQuery) {
+      return false
+    }
   }
 
   return false
@@ -49,7 +54,6 @@ function getCategoryNavLinkClass(isActive) {
 }
 
 function GlobalHeader({
-  activeCategory = '건강',
   categories,
   searchPlaceholder = '상품을 검색해 보세요',
   onSearchSubmit,
@@ -169,7 +173,7 @@ function GlobalHeader({
         <nav className="min-w-0 shrink-0 overflow-x-auto py-1" aria-label="상품 카테고리">
           <ul className="flex items-center gap-8 whitespace-nowrap px-0.5 max-sm:gap-5">
             {headerCategories.map((category) => {
-              const isTabActive = isCategoryNavActive(category, location, activeCategory)
+              const isTabActive = isCategoryNavActive(category, location)
 
               return (
                 <li key={category.label}>
@@ -214,7 +218,7 @@ function GlobalHeader({
         <nav className="flex shrink-0 items-center gap-6 text-ink max-sm:gap-4" aria-label="사용자 메뉴">
           <Link
             className={`inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted ${focusRingClass}`}
-            to="/wishlist"
+            to="/mypage/bookmarks"
             aria-label="찜 목록"
           >
             <Heart className="size-5" strokeWidth={2.4} aria-hidden="true" />

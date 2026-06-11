@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import {Link, useSearchParams} from 'react-router-dom'
 import { fetchCategories } from '../../../api/categoryApi'
 import { Button, Pagination, ProductCard } from '../../../components/index.js'
-import { useCategoryProductsQuery, useProductsQuery } from '../../../hooks/queries/useProductQuery'
+import { useCategoryProductsQuery, useMetaTagProductsQuery, useProductsQuery } from '../../../hooks/queries/useProductQuery'
 import useBookmarkedIds from '../../../hooks/useBookmarkedIds.js'
 
 import {
@@ -11,9 +11,12 @@ import {
 } from '../data/catalog'
 import EmptySearchResultsPage from './EmptySearchResultsPage'
 import SearchPage from './SearchPage'
+import {ChevronRight} from "lucide-react";
 
 const DEFAULT_PAGE_SIZE = 20
 const DEFAULT_SORT = 'RECOMMEND'
+
+const PAGE_SIZE_OPTIONS = [20, 40, 60, 100]
 
 const SORT_OPTIONS = [
   { label: '기본', value: 'RECOMMEND' },
@@ -21,13 +24,20 @@ const SORT_OPTIONS = [
   { label: '판매순', value: 'SALES' },
   { label: '낮은 가격순', value: 'LOW_PRICE' },
   { label: '높은 가격순', value: 'HIGH_PRICE' },
-  { label: '인기순', value: 'POPULAR' }
+  { label: '인기순', value: 'POPULAR' },
 
 ]
+
+const META_TAG_SORT_VALUES = new Set([...SORT_OPTIONS.map((o) => o.value), 'ATTENTION'])
 
 function parsePage(value) {
   const page = Number(value)
   return Number.isInteger(page) && page >= 0 ? page : 0
+}
+
+function parsePageSize(value) {
+  const size = Number(value)
+  return PAGE_SIZE_OPTIONS.includes(size) ? size : DEFAULT_PAGE_SIZE
 }
 
 function normalizeCategory(category) {
@@ -57,6 +67,19 @@ function buildFallbackCategories() {
   return categoryCatalog.map((category) => normalizeCategory({ ...category, id: category.code, name: category.label })).filter(Boolean)
 }
 
+function buildMetaTagCategory(title) {
+  return {
+    id: 'meta-tags',
+    code: 'meta-tags',
+    label: title || '맞춤 상품',
+    navLabel: title || '맞춤 상품',
+    description: '',
+    heroTitle: '',
+    heroDescription: '',
+    image: '',
+  }
+}
+
 function buildSearchCategory() {
   return {
     id: 'search',
@@ -76,9 +99,11 @@ function ProductGrid({
   error,
   isLoading,
   onRetry,
+  onSizeChange,
   onSortChange,
   page,
   pageData,
+  pageSize,
   products,
   query,
   sort,
@@ -93,10 +118,9 @@ function ProductGrid({
 
   const totalElements = pageData?.totalElements ?? 0
   const totalPages = Math.max(1, pageData?.totalPages ?? 1)
-  const pageSize = pageData?.size ?? DEFAULT_PAGE_SIZE
   const visibleStart = totalElements === 0 ? 0 : page * pageSize + 1
   const visibleEnd = Math.min(page * pageSize + products.length, totalElements)
-  const title = query ? `'${query}' 검색 결과` : category.label
+  const title = query ? `'${query}' 검색 결과` : `${category.label} 카테고리`
 
   return (
     <main className="layout-container pt-10 pb-24">
@@ -104,24 +128,46 @@ function ProductGrid({
         <div>
           <nav aria-label="현재 위치">
             <ol className="flex items-center text-caption text-muted">
-              <li aria-current="page">{category.navLabel}</li>
+              <Link to={'/home'} className="hover:text-ink transition-colors">
+                홈
+              </Link>
+              <li aria-hidden="true"><ChevronRight className="size-3.5 shrink-0" strokeWidth={2} /></li>
+              <li aria-current="page">
+                <Link to={`/shop?categoryId=${encodeURIComponent(category.id ?? category.id)}`} className="hover:text-ink transition-colors">
+                {category.navLabel}
+                </Link>
+                </li>
             </ol>
           </nav>
-          <h1 className="mt-5 text-3xl font-medium">{title}</h1>
+          <h1 className="mt-5 text-3xl font-bold">{title}</h1>
           {category.description && <p className="mt-4 text-body-lg text-foreground">{category.description}</p>}
         </div>
-        <label className="flex items-center gap-3 text-body-sm">
-          <span className="text-muted">정렬 기준:</span>
-          <select
-            className="h-11 rounded border border-border bg-surface px-4 text-ink"
-            value={sort}
-            onChange={(event) => onSortChange(event.target.value)}
-          >
-            {SORT_OPTIONS.map((option) => (
-              <option value={option.value} key={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-wrap items-center gap-4 text-body-sm">
+          <label className="flex items-center gap-3">
+            <span className="text-muted">표시 개수:</span>
+            <select
+              className="h-11 rounded border border-border bg-surface px-4 text-ink"
+              value={pageSize}
+              onChange={(event) => onSizeChange(Number(event.target.value))}
+            >
+              {PAGE_SIZE_OPTIONS.map((option) => (
+                <option value={option} key={option}>{option}개씩 보기</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-3">
+            <span className="text-muted">정렬 기준:</span>
+            <select
+              className="h-11 rounded border border-border bg-surface px-4 text-ink"
+              value={sort}
+              onChange={(event) => onSortChange(event.target.value)}
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option value={option.value} key={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       {category.image && (
@@ -193,7 +239,12 @@ function ProductListPage() {
   const categoryIdParam = searchParams.get('categoryId') ?? ''
   const legacyCategoryCode = searchParams.get('category') ?? ''
   const page = parsePage(searchParams.get('page'))
-  const sort = SORT_OPTIONS.some((option) => option.value === searchParams.get('sort')) ? searchParams.get('sort') : DEFAULT_SORT
+  const pageSize = parsePageSize(searchParams.get('size'))
+  const metaTagIds = searchParams.getAll('metaTagIds').map(Number).filter((id) => Number.isFinite(id) && id > 0)
+  const match = searchParams.get('match') === 'all' ? 'all' : 'any'
+  const listTitle = searchParams.get('title')?.trim() ?? ''
+  const sortParam = searchParams.get('sort')
+  const sort = META_TAG_SORT_VALUES.has(sortParam) ? sortParam : DEFAULT_SORT
   const [categories, setCategories] = useState(() => buildFallbackCategories())
   const legacyCategory = useMemo(() => {
     const fallbackCategory = getCategoryByCode(legacyCategoryCode)
@@ -207,9 +258,14 @@ function ProductListPage() {
   }, [categories, legacyCategoryCode])
   const categoryId = categoryIdParam || legacyCategory?.id || legacyCategoryCode
   const category = useMemo(() => categories.find((item) => item.id === categoryId) ?? normalizeCategory({ id: categoryId, name: '상품' }), [categories, categoryId])
-  const categoryProductsQuery = useCategoryProductsQuery({ categoryId, page, size: DEFAULT_PAGE_SIZE, sort, keyword: query })
-  const productsQuery = useProductsQuery({ keyword: query, page, size: DEFAULT_PAGE_SIZE, sort })
-  const activeProductsQuery = categoryId ? categoryProductsQuery : productsQuery
+  const categoryProductsQuery = useCategoryProductsQuery({ categoryId, page, size: pageSize, sort, keyword: query })
+  const productsQuery = useProductsQuery({ keyword: query, page, size: pageSize, sort })
+  const metaTagProductsQuery = useMetaTagProductsQuery({ metaTagIds, match, page, size: pageSize, sort })
+  const activeProductsQuery = metaTagIds.length > 0
+    ? metaTagProductsQuery
+    : categoryId
+      ? categoryProductsQuery
+      : productsQuery
 
   useEffect(() => {
     let isMounted = true
@@ -257,6 +313,10 @@ function ProductListPage() {
     updateListParams({ sort: nextSort, page: 0 })
   }
 
+  const handleSizeChange = (nextSize) => {
+    updateListParams({ size: nextSize, page: 0 })
+  }
+
   const getCategoryPath = (categoryCode) => {
     const fallbackCategory = getCategoryByCode(categoryCode)
     const nextCategory = categories.find((item) => (
@@ -267,26 +327,34 @@ function ProductListPage() {
     ))
     const nextCategoryId = nextCategory?.id ?? categoryCode
 
-    return `/shop?categoryId=${encodeURIComponent(nextCategoryId)}&sort=${DEFAULT_SORT}&page=0`
+    return `/shop?categoryId=${encodeURIComponent(nextCategoryId)}&sort=${DEFAULT_SORT}&size=${DEFAULT_PAGE_SIZE}&page=0`
   }
 
   let content
 
-  if (!categoryId && !query) {
+  if (!categoryId && !query && metaTagIds.length === 0) {
     content = <SearchPage getCategoryPath={getCategoryPath} />
-  } else if (query && !activeProductsQuery.isLoading && !activeProductsQuery.error && activeProductsQuery.data?.totalElements === 0) {
+  } else if (query && metaTagIds.length === 0 && !activeProductsQuery.isLoading && !activeProductsQuery.error && activeProductsQuery.data?.totalElements === 0) {
     content = <EmptySearchResultsPage getCategoryPath={getCategoryPath} query={query} />
   } else {
     content = (
       <ProductGrid
-        category={categoryId ? category : buildSearchCategory()}
+        category={
+          metaTagIds.length > 0
+            ? buildMetaTagCategory(listTitle)
+            : categoryId
+              ? category
+              : buildSearchCategory()
+        }
         categories={categories}
         error={activeProductsQuery.error}
         isLoading={activeProductsQuery.isLoading}
         onRetry={activeProductsQuery.refetch}
+        onSizeChange={handleSizeChange}
         onSortChange={handleSortChange}
         page={page}
         pageData={activeProductsQuery.data}
+        pageSize={pageSize}
         products={activeProductsQuery.data?.content ?? []}
         query={query}
         sort={sort}
