@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { getCheckoutFromCart } from '../../../api/checkoutApi'
+import {
+    getCheckoutFromCart,
+    getCheckoutDirect,
+} from '../../../api/checkoutApi'
 import { getAddresses } from '../../../api/addressApi'
 import { createOrder } from '../../../api/orderApi'
 import AddressModal from '../components/AddressModal'
@@ -11,7 +14,12 @@ export default function CheckoutPage() {
     const location = useLocation()
     const navigate = useNavigate()
 
-    const cartItemIds = location.state?.cartItemIds || []
+    const {
+        type,
+        productId,
+        quantity,
+        cartItemIds = [],
+    } = location.state ?? {}
 
     const [checkoutData, setCheckoutData] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -26,9 +34,17 @@ export default function CheckoutPage() {
     const [isCashModalOpen, setIsCashModalOpen] = useState(false)
 
     useEffect(() => {
+        const isDirect = type === 'direct' && productId
+        const isCart = Array.isArray(cartItemIds) && cartItemIds.length > 0
+
         const fetchCheckout = async () => {
             try {
-                const data = await getCheckoutFromCart(cartItemIds)
+
+                let data;
+                if (isDirect) { data = await getCheckoutDirect(productId, quantity); }
+                else if (isCart) { data = await getCheckoutFromCart(cartItemIds); }
+                else { alert('주문 정보가 없습니다.'); return; }
+
                 console.log('주문서 조회 결과:', data)
                 setCheckoutData(data)
 
@@ -47,12 +63,12 @@ export default function CheckoutPage() {
             }
         }
 
-        if (cartItemIds.length > 0) {
+        if (isDirect || isCart) {
             fetchCheckout()
         } else {
             setLoading(false)
         }
-    }, [])
+    }, [type, productId, quantity, cartItemIds])
 
     if (loading) {
         return (

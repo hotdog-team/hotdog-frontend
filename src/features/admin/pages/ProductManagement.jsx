@@ -12,6 +12,8 @@ export default function ProductManagement() {
   const [availableTags, setAvailableTags] = useState([])
   const [totalCount, setTotalCount] = useState(0)
 
+  const [selectedProductIds, setSelectedProductIds] = useState([])
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [newProduct, setNewProduct] = useState({
     categoryId: 1, name: '', brand: '', price: 0, discountRate: 0, stockQuantity: 0,
@@ -60,6 +62,20 @@ export default function ProductManagement() {
     tag.type !== 'CATEGORY' && tag.type !== 'POPULARITY' && tag.type !== 'RELEASE_OR_UPDATE'
   )
 
+  const handleSelectAll = (isChecked) => {
+    if (isChecked) {
+      setSelectedProductIds(products.map(p => p.id))
+    } else {
+      setSelectedProductIds([])
+    }
+  }
+
+  const handleSelectProduct = (productId) => {
+    setSelectedProductIds(prev =>
+      prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]
+    )
+  }
+
   // 등록 로직
   const handleAddProduct = async (e) => {
     e.preventDefault()
@@ -84,15 +100,35 @@ export default function ProductManagement() {
     }
   }
 
-  // 삭제 로직
+  // 단건 삭제 로직
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('이 상품을 삭제하시겠습니까?')) return
     try {
       await axiosInstance.delete(`/api/admin/products/${id}`)
       toast.success('상품이 삭제 처리되었습니다.')
+      setSelectedProductIds(prev => prev.filter(selectedId => selectedId !== id))
       fetchProducts()
     } catch (err) {
       toast.error('상품 삭제에 실패했습니다.')
+    }
+  }
+
+  // 다건 선택 삭제 로직
+  const handleDeleteSelected = async () => {
+    if (selectedProductIds.length === 0) {
+      return toast.warn('삭제할 상품을 선택해 주세요.')
+    }
+    if (!window.confirm(`선택하신 ${selectedProductIds.length}개 상품을 삭제하시겠습니까?`)) return
+
+    try {
+      await Promise.all(
+        selectedProductIds.map(id => axiosInstance.delete(`/api/admin/products/${id}`))
+      )
+      toast.success('선택한 상품이 모두 삭제 처리되었습니다.')
+      setSelectedProductIds([])
+      fetchProducts()
+    } catch (err) {
+      toast.error('일부 상품 삭제에 실패했습니다.')
     }
   }
 
@@ -127,7 +163,7 @@ export default function ProductManagement() {
     }
   }
 
-  // 수정 완료 로직
+  // 수정 완료
   const handleUpdateProduct = async (e) => {
     e.preventDefault()
     try {
@@ -170,6 +206,8 @@ export default function ProductManagement() {
     }
   }
 
+  const isAllSelected = products.length > 0 && selectedProductIds.length === products.length
+
   return (
     <div className="space-y-8">
       <div className="border-b border-border-soft pb-6 flex justify-between items-end">
@@ -181,6 +219,16 @@ export default function ProductManagement() {
         </div>
 
         <div className="flex gap-3">
+          {selectedProductIds.length > 0 && (
+            <Button
+              variant="secondary"
+              size="md"
+              className="flex items-center gap-2 border-error text-error hover:bg-error/10 transition-colors"
+              onClick={handleDeleteSelected}
+            >
+              <Trash2 size={20} /> 선택 삭제 ({selectedProductIds.length})
+            </Button>
+          )}
           <Button
             variant="secondary"
             size="md"
@@ -207,6 +255,14 @@ export default function ProductManagement() {
         <table className="w-full text-left text-body-sm">
           <thead className="bg-surface-muted border-b border-border-soft text-muted">
             <tr>
+              <th className="p-4 font-semibold w-12 text-center">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 cursor-pointer accent-brand"
+                  checked={isAllSelected}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                />
+              </th>
               <th className="p-4 font-semibold w-20">ID</th>
               <th className="p-4 font-semibold">상품명</th>
               <th className="p-4 font-semibold">판매가</th>
@@ -216,10 +272,18 @@ export default function ProductManagement() {
           </thead>
           <tbody className="divide-y divide-border-soft">
             {products.length === 0 ? (
-              <tr><td colSpan="5" className="p-8 text-center text-muted">등록된 상품이 없습니다.</td></tr>
+              <tr><td colSpan="6" className="p-8 text-center text-muted">등록된 상품이 없습니다.</td></tr>
             ) : (
               products.map((product) => (
                 <tr key={product.id} className="hover:bg-surface-muted/50 transition-colors">
+                  <td className="p-4 text-center">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 cursor-pointer accent-brand"
+                      checked={selectedProductIds.includes(product.id)}
+                      onChange={() => handleSelectProduct(product.id)}
+                    />
+                  </td>
                   <td className="p-4 text-muted">#{product.id}</td>
                   <td className="p-4 font-bold text-ink">
                     <div className="truncate max-w-[250px]">{product.name}</div>
@@ -229,7 +293,7 @@ export default function ProductManagement() {
                     {product.discountRate > 0 ? (
                       <div className="space-y-1">
                         <div className="font-bold text-blue-600">
-                          {Math.floor(product.price * (1 - product.discountRate / 100)).toLocaleString()}원
+                          {(product.salePrice ?? product.price).toLocaleString()}원
                         </div>
                         <div className="text-xs text-muted flex items-center gap-1.5 font-normal">
                           <span className="line-through">{product.price?.toLocaleString()}원</span>
