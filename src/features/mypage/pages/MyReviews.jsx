@@ -47,14 +47,18 @@ export default function MyReviews() {
   }
 
   const openEditModal = (review) => {
-    setEditingReview({ id: review.id, rating: review.rating, content: review.content })
+    setEditingReview({
+      id: review.reviewId,
+      rating: review.rating,
+      content: review.content
+    })
     setIsEditModalOpen(true)
   }
 
   const handleUpdateReview = async (e) => {
     e.preventDefault()
     try {
-      await axiosInstance.put(`/api/reviews/${editingReview.id}`, {
+      await axiosInstance.patch(`/api/reviews/${editingReview.id}`, {
         rating: editingReview.rating,
         content: editingReview.content
       })
@@ -84,7 +88,7 @@ export default function MyReviews() {
         <>
           <div className="grid gap-6 mb-10">
             {reviews.map((review) => (
-              <div key={review.id} className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+              <div key={review.reviewId} className="rounded-xl border border-border bg-surface p-6 shadow-sm">
                 <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border-soft pb-4">
                   <div className="flex items-center gap-4 min-w-0">
                     <img src={review.productImageUrl || '/assets/placeholder.jpg'} alt={review.productName} className="size-16 rounded-lg object-cover border border-border-soft bg-surface-muted" />
@@ -100,11 +104,10 @@ export default function MyReviews() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    {/* 💡 수정 버튼 추가 */}
                     <Button variant="secondary" size="sm" onClick={() => openEditModal(review)} className="flex items-center gap-1">
                       <Edit2 className="size-3.5" /> 수정
                     </Button>
-                    <Button variant="danger" size="sm" onClick={() => handleDelete(review.id)} className="flex items-center gap-1">
+                    <Button variant="danger" size="sm" onClick={() => handleDelete(review.reviewId)} className="flex items-center gap-1">
                       <Trash2 className="size-3.5" /> 삭제
                     </Button>
                   </div>
@@ -117,6 +120,7 @@ export default function MyReviews() {
         </>
       )}
 
+      {/* 리뷰 수정 모달 */}
       {isEditModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-surface p-6 rounded-lg shadow-xl w-full max-w-md border border-border-soft">
