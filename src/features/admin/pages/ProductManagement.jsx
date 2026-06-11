@@ -1,16 +1,21 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { ShoppingBag, Search, Plus, Edit2, Trash2, XCircle } from 'lucide-react'
 import { toast } from 'react-toastify'
-import { Button } from '../../../components/index.js'
+import { Button, Pagination } from '../../../components/index.js'
 import axiosInstance from '../../../api/axiosInstance.js'
 
 export default function ProductManagement() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const location = useLocation()
+
+  const currentPage = parseInt(searchParams.get('page') || '1', 10)
 
   const [products, setProducts] = useState([])
   const [availableTags, setAvailableTags] = useState([])
   const [totalCount, setTotalCount] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
 
   const [selectedProductIds, setSelectedProductIds] = useState([])
 
@@ -33,11 +38,17 @@ export default function ProductManagement() {
 
   const fetchProducts = async () => {
     try{
-      const response = await axiosInstance.get('/api/products?page=0&size=20&sort=latest')
+      const response = await axiosInstance.get(`/api/products?page=${currentPage - 1}&size=20&sort=latest`)
       if (typeof response.data === 'string' && response.data.includes('<html')) throw new Error('인증 실패')
+
       const payload = response.data.data || response.data
       setProducts(Array.isArray(payload) ? payload : (payload?.content || []))
-      setTotalCount(payload?.totalElements || payload?.length || 0)
+
+      const totalElements = payload?.totalElements || payload?.length || 0;
+      setTotalCount(totalElements)
+      setTotalPages(payload?.totalPages || Math.ceil(totalElements / 20) || 1)
+
+      setSelectedProductIds([])
     } catch (err) {
       toast.error(err.message || '상품 목록을 불러오는 데 실패했습니다.')
     }
@@ -54,9 +65,12 @@ export default function ProductManagement() {
   }
 
   useEffect(() => {
-    fetchProducts()
     fetchTags()
   }, [])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [currentPage])
 
   const visibleTags = availableTags.filter(tag =>
     tag.type !== 'CATEGORY' && tag.type !== 'POPULARITY' && tag.type !== 'RELEASE_OR_UPDATE'
@@ -215,7 +229,9 @@ export default function ProductManagement() {
           <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
             <ShoppingBag className="text-blue-500" size={28} /> 등록 상품 관리
           </h1>
-          <p className="mt-2 text-muted">플랫폼에 등록된 전체 상품을 조회하고 상태 및 재고를 관리합니다.</p>
+          <p className="mt-2 text-muted">
+            플랫폼에 등록된 전체 상품을 조회하고 상태 및 재고를 관리합니다. (총 {totalCount.toLocaleString()}개)
+          </p>
         </div>
 
         <div className="flex gap-3">
@@ -321,6 +337,14 @@ export default function ProductManagement() {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 0 && (
+        <Pagination
+          page={currentPage}
+          totalPages={totalPages}
+          getPageHref={(p) => `${location.pathname}?page=${p}`}
+        />
+      )}
 
       {/* 등록 모달 */}
       {isAddModalOpen && (
