@@ -6,6 +6,7 @@ const navItems = [
     { to: '/mypage/addresses', label: '내 배송지 관리' },
     { to: '/mypage/orders', label: '주문/배송 내역' },
     { to: '/mypage/bookmarks', label: '찜한 상품' },
+    { to: '/mypage/cart', label: '내 장바구니' },
     { to: '/mypage/reviews', label: '내 리뷰' },
     { to: '/mypage/inquiries', label: '문의 내역' },
 ]

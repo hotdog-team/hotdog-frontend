@@ -28,5 +28,7 @@ export default function useHomeRecommendations() {
     return {
         purposeProducts: purposeData?.content ?? [],
         personalizedProducts: personalizedData?.content ?? [],
+        purposeTagIds,
+        merchandisingIds,
     }
 }

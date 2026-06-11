@@ -43,7 +43,7 @@ function normalizeProduct(product) {
     name: product.name ?? product.productName ?? '이름 없는 상품',
     image: product.image ?? product.imageUrl ?? product.thumbnailUrl ?? product.thumbnail ?? '',
     category: categoryName,
-    originPrice: product.originPrice ?? 0,
+    originPrice: product.originPrice ?? product.price ?? 0,
     discountRate: product.discountRate ?? 0,
     salePrice: product.salePrice ?? priceValue,
     price: typeof priceValue === 'number'
@@ -114,9 +114,10 @@ export async function fetchProductDetail(productId) {
 /**
  * 메타태그 기반 상품 목록 조회
  */
-export async function fetchProductsByMetaTags({ metaTagIds = [], match = 'any', sort = 'RECOMMEND', size = 4 } = {}) {
+export async function fetchProductsByMetaTags({ metaTagIds = [], match = 'any', sort = 'RECOMMEND', page = 0, size = 4 } = {}) {
   const searchParams = new URLSearchParams({
     sort,
+    page: String(page),
     size: String(size),
   })
 

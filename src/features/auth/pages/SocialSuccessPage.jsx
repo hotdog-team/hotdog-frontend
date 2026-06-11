@@ -1,23 +1,45 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {useAuthStore} from "../../../store/useAuthStore.js";
+import { useAuthStore } from "../../../store/useAuthStore.js";
 
 export default function SocialSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
+    const isNewUser = searchParams.get('isNewUser') === 'true';
+
+    if (isNewUser) {
+      const provider = searchParams.get('provider');
+      const providerId = searchParams.get('providerId');
+
+      useAuthStore.setState({ tempSocialUser: { provider, providerId } });
+      navigate('/signup', { replace: true });
+      return;
+    }
+
     const accessToken = searchParams.get('accessToken');
     const refreshToken = searchParams.get('refreshToken');
+    const email = searchParams.get('email');
+    const role = searchParams.get('role');
 
     if (accessToken) {
       localStorage.setItem('accessToken', accessToken);
       if (refreshToken) {
         localStorage.setItem('refreshToken', refreshToken);
       }
-      useAuthStore.setState({ accessToken, refreshToken, isAuthenticated: true, });
 
-      navigate('/', { replace: true });
+      useAuthStore.setState({
+        accessToken,
+        refreshToken,
+        isAuthenticated: true,
+        user: {
+          email: email,
+          role: role
+        }
+      });
+
+      navigate('/home', { replace: true });
     } else {
       alert('인증 토큰을 찾을 수 없습니다. 다시 로그인해 주세요.');
       navigate('/', { replace: true });

@@ -5,17 +5,18 @@ import { ProductCard, Button } from '../../../components/index.js'
 import { useAuthStore } from '../../../store/useAuthStore.js'
 import { useHomeProductsQuery } from '../../../hooks/queries/useProductQuery.js'
 import useHomeRecommendations from '../../../hooks/useHomeRecommendations.js'
+import { buildMetaTagListPath } from '../../../constants/profileMetaTags.js'
 import useBookmarkedIds from '../../../hooks/useBookmarkedIds.js'
 import MainSlides from '../components/MainSlides.jsx'
 
-function SectionHeader({ title, showMore = true }) {
+function SectionHeader({ title, showMore = true, moreTo }) {
   return (
     <div className="flex gap-5 justify-between items-end mb-8">
       <div>
         <h2 className="text-2xl leading-tight font-bold text-ink">{title}</h2>
       </div>
-      {showMore && (
-        <Link className="shrink-0 text-sm font-medium text-ink hover:text-brand" to="/shop">
+      {showMore && moreTo && (
+        <Link className="shrink-0 text-sm font-medium text-ink hover:text-brand" to={moreTo}>
           전체 보기
         </Link>
       )}
@@ -31,7 +32,7 @@ function HomePage() {
   const { data: pageData } = useHomeProductsQuery({ size: 12 })
   const products = pageData?.content ?? []
 
-  const { purposeProducts, personalizedProducts } = useHomeRecommendations()
+  const { purposeProducts, personalizedProducts, purposeTagIds, merchandisingIds } = useHomeRecommendations()
   const bookmarkedIds = useBookmarkedIds()
 
   return (
@@ -81,8 +82,16 @@ function HomePage() {
             </div>
           </section>
 
-          <section className="layout-container mt-16">
-            <SectionHeader title="관심 분야 인기 상품" />
+          <section className="layout-container mt-24">
+            <SectionHeader
+              title="관심 분야 인기 상품"
+              showMore={purposeTagIds.length > 0}
+              moreTo={purposeTagIds.length > 0 ? buildMetaTagListPath({
+                metaTagIds: purposeTagIds,
+                sort: 'POPULAR',
+                title: '관심 분야 인기 상품',
+              }) : undefined}
+            />
             <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
               {purposeProducts.map((product) => (
                 <ProductCard
@@ -95,8 +104,16 @@ function HomePage() {
             </div>
           </section>
 
-          <section className="layout-container mt-16">
-            <SectionHeader title="이런 상품은 어떠세요?" />
+          <section className="layout-container mt-24">
+            <SectionHeader
+              title="이런 상품은 어떠세요?"
+              showMore={merchandisingIds.length > 0}
+              moreTo={merchandisingIds.length > 0 ? buildMetaTagListPath({
+                metaTagIds: merchandisingIds,
+                sort: 'ATTENTION',
+                title: '이런 상품은 어떠세요?',
+              }) : undefined}
+            />
             <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
               {personalizedProducts.map((product) => (
                 <ProductCard

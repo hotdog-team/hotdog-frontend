@@ -1,8 +1,8 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getBookmarks } from '../api/bookmarkApi'
 import { useAuthStore } from '../store/useAuthStore'
 
-// bookmarkIds를 가져온다(useQuery사용)
 export default function useBookmarkedIds() {
     const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
@@ -13,7 +13,10 @@ export default function useBookmarkedIds() {
         staleTime: 1000 * 60 * 5,
     })
 
-    return new Set(
-        (data?.content ?? []).map((b) => Number(b.productId))
+    const bookmarkedIds = useMemo(
+        () => new Set((data?.content ?? []).map((b) => Number(b.productId))),
+        [data]
     )
+
+    return bookmarkedIds
 }
