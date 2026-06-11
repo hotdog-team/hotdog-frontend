@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import AuthLogo from '../components/AuthLogo.jsx'
 import { signup } from '../../../api/authApi.js'
+import { useAuthStore } from '../../../store/useAuthStore.js'
 import {
   Button,
   Checkbox,
@@ -117,6 +118,8 @@ function SignUpPage() {
     const validMerchandisingIds = selectedMerchandisingIds.filter((id) => id !== null && id !== -1)
     const purposeId = selectedPurposeId !== -1 ? selectedPurposeId : null
 
+    const tempSocialUser = useAuthStore.getState().tempSocialUser;
+
     const signupData = {
       email,
       password,
@@ -129,10 +132,15 @@ function SignUpPage() {
         ...validMerchandisingIds,
       ],
       isJobRecommendEnabled,
+      provider: tempSocialUser?.provider || null,
+      providerId: tempSocialUser?.providerId || null,
     }
 
     try {
       await signup(signupData)
+
+      useAuthStore.setState({ tempSocialUser: null });
+
       toast.success('회원가입이 완료되었습니다!')
       navigate('/')
     } catch (err) {
