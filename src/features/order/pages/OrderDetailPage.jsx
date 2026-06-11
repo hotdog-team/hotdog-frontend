@@ -1,11 +1,54 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { getOrderDetail, cancelOrderItems } from '../../../api/orderApi'
 import CashPaymentModal from '../../payment/components/CashPaymentModal'
 
+const ORDER_STATUS_LABEL = {
+    PENDING: '결제 대기',
+    PROCESSING: '결제 중',
+    COMPLETED: '결제 완료',
+    BEFORE_SHIPMENT: '배송 준비 중',
+    IN_TRANSIT: '배송 중',
+    DELIVERED: '배송 완료',
+    PARTIAL_CANCELLED: '부분 취소',
+    CANCELLED: '주문 취소',
+}
+
+const ORDER_STATUS_CLASS = {
+    PENDING: 'bg-gray-100 text-gray-600',
+    PROCESSING: 'bg-yellow-100 text-yellow-700',
+    COMPLETED: 'bg-blue-100 text-blue-700',
+    BEFORE_SHIPMENT: 'bg-orange-100 text-orange-700',
+    IN_TRANSIT: 'bg-sky-100 text-sky-700',
+    DELIVERED: 'bg-green-100 text-green-700',
+    PARTIAL_CANCELLED: 'bg-red-100 text-red-600',
+    CANCELLED: 'bg-gray-200 text-gray-500',
+}
+
+function getDisplayOrderStatus({ orderStatus, paymentMethod, isAllItemsCancelled }) {
+    if (isAllItemsCancelled || orderStatus === 'CANCELLED') {
+        return 'CANCELLED'
+    }
+
+    if (orderStatus === 'PARTIAL_CANCELLED') {
+        return paymentMethod === 'CASH' ? 'PENDING' : 'COMPLETED'
+    }
+
+    return orderStatus
+}
+
+function OrderStatusBadge({ status }) {
+    return (
+        <span
+            className={`inline-flex rounded-full px-3 py-1 text-sm font-bold ${ORDER_STATUS_CLASS[status] || 'bg-gray-100 text-gray-600'}`}
+        >
+            {ORDER_STATUS_LABEL[status] || status || '-'}
+        </span>
+    )
+}
+
 export default function OrderDetailPage() {
     const { orderId } = useParams()
-    const navigate = useNavigate()
 
     const [order, setOrder] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -68,14 +111,16 @@ export default function OrderDetailPage() {
     const isAllItemsCancelled =
         orderItems.length > 0 && activeOrderItems.length === 0
 
-    const displayOrderStatus =
-        isAllItemsCancelled || orderStatus === 'CANCELLED'
-            ? 'CANCELLED'
-            : orderStatus === 'PARTIAL_CANCELLED'
-                ? paymentMethod === 'CASH'
-                    ? 'PENDING'
-                    : 'COMPLETED'
-                : orderStatus
+    const displayOrderStatus = getDisplayOrderStatus({
+        orderStatus,
+        paymentMethod,
+        isAllItemsCancelled,
+    })
+
+    const isOrderCancelled = displayOrderStatus === 'CANCELLED'
+    const canCancelOrder =
+        ['PENDING', 'PROCESSING', 'COMPLETED', 'BEFORE_SHIPMENT'].includes(displayOrderStatus) &&
+        activeOrderItems.length > 0
 
     const paymentMethodText =
         paymentMethod === 'CASH'
@@ -86,22 +131,28 @@ export default function OrderDetailPage() {
                     ? '모바일 결제'
                     : '-'
 
-    const statusText =
-        displayOrderStatus === 'PENDING'
-            ? '입금 대기'
-            : displayOrderStatus === 'COMPLETED'
-                ? '결제 완료'
-                : displayOrderStatus === 'BEFORE_SHIPMENT'
-                    ? '배송 준비 중'
-                    : displayOrderStatus === 'IN_TRANSIT'
-                        ? '배송 중'
-                        : displayOrderStatus === 'DELIVERED'
-                            ? '배송 완료'
-                            : displayOrderStatus === 'CANCELLED'
-                                ? '주문 취소'
-                                : displayOrderStatus
+    const statusText = ORDER_STATUS_LABEL[displayOrderStatus] || displayOrderStatus
+
+    const handleCancelOrder = async () => {
+        if (!canCancelOrder) return
+        if (!window.confirm('주문을 취소하시겠습니까?')) return
+
+        try {
+            const cancelTargetItemIds = activeOrderItems.map((item) => item.orderItemId)
+
+            await cancelOrderItems(order.orderId, cancelTargetItemIds)
+            alert('주문이 취소되었습니다.')
+
+            const data = await getOrderDetail(orderId)
+            setOrder(data)
+        } catch (error) {
+            console.error('주문 취소 실패:', error)
+            alert('주문 취소에 실패했습니다.')
+        }
+    }
 
     const handleCancelOrderItem = async (orderItemId) => {
+        if (isOrderCancelled) return
         if (!window.confirm('해당 상품을 취소하시겠습니까?')) return
 
         try {
@@ -114,10 +165,6 @@ export default function OrderDetailPage() {
             console.error('상품 취소 실패:', error)
             alert('상품 취소에 실패했습니다.')
         }
-    }
-
-    const handleWriteReview = (productId) => {
-        navigate(`/products/${productId}`)
     }
 
     return (
@@ -143,12 +190,15 @@ export default function OrderDetailPage() {
                     )}
                 </div>
 
-                <Link
-                    to="/mypage/orders"
-                    className="rounded-md border border-border px-5 py-3 text-body-sm font-bold text-ink"
-                >
-                    주문 목록
-                </Link>
+                <div className="flex flex-col items-end gap-3">
+
+                    <Link
+                        to="/mypage/orders"
+                        className="rounded-md border border-border px-5 py-3 text-body-sm font-bold text-ink"
+                    >
+                        주문 목록
+                    </Link>
+                </div>
             </div>
 
             <div className="mt-8 grid grid-cols-[1fr_18rem] gap-8">
@@ -159,9 +209,9 @@ export default function OrderDetailPage() {
                                 <p className="text-sm text-gray-500">
                                     현재 주문 상태
                                 </p>
-                                <p className="text-xl font-bold text-orange-500">
-                                    {statusText}
-                                </p>
+                                <div className="mt-2">
+                                    <OrderStatusBadge status={displayOrderStatus} />
+                                </div>
                             </div>
 
                             {displayOrderStatus === 'PENDING' &&
@@ -175,6 +225,12 @@ export default function OrderDetailPage() {
                                     </button>
                                 )}
                         </div>
+
+                        {isOrderCancelled && (
+                            <p className="mt-4 text-sm font-bold text-gray-500">
+                                주문 취소 완료
+                            </p>
+                        )}
 
                         {displayOrderStatus === 'PENDING' &&
                             paymentMethod === 'CASH' && (
@@ -203,6 +259,12 @@ export default function OrderDetailPage() {
                                     item.priceAtOrder ||
                                     item.price ||
                                     0
+
+                                const isItemCancelled = item.status === 'CANCELLED'
+                                const canCancelItem =
+                                    !isOrderCancelled &&
+                                    !isItemCancelled &&
+                                    ['PENDING', 'COMPLETED', 'PARTIAL_CANCELLED'].includes(orderStatus)
 
                                 return (
                                     <div
@@ -242,25 +304,17 @@ export default function OrderDetailPage() {
                                                 {itemPrice.toLocaleString()}원
                                             </p>
 
-                                            {item.status === 'CANCELLED' ? (
-                                                <span className="text-sm font-medium text-red-500">
+                                            {isItemCancelled ? (
+                                                <span className="text-sm font-medium text-gray-500">
                                                     주문 취소 완료
                                                 </span>
-                                            ) : ['PENDING', 'COMPLETED', 'PARTIAL_CANCELLED'].includes(orderStatus) ? (
+                                            ) : canCancelItem ? (
                                                 <button
                                                     type="button"
                                                     onClick={() => handleCancelOrderItem(item.orderItemId)}
                                                     className="rounded border border-red-500 px-3 py-1 text-xs text-red-500 hover:bg-red-50"
                                                 >
                                                     주문 취소
-                                                </button>
-                                            ) : orderStatus === 'DELIVERED' ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleWriteReview(item.productId)}
-                                                    className="rounded border border-blue-500 px-3 py-1 text-xs text-blue-500 hover:bg-blue-50"
-                                                >
-                                                    리뷰 작성
                                                 </button>
                                             ) : null}
                                         </div>

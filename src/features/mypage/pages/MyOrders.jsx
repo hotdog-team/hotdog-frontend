@@ -1,8 +1,42 @@
-import { Camera, Star, Truck } from 'lucide-react'
+import { Camera, Truck } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Pagination, Select } from '../../../components/index.js'
 import axiosInstance from '../../../api/axiosInstance.js'
+import { getOrderDetail, cancelOrderItems } from '../../../api/orderApi'
+
+
+const ORDER_STATUS_LABEL = {
+  PENDING: '결제 대기',
+  PROCESSING: '결제 중',
+  COMPLETED: '결제 완료',
+  BEFORE_SHIPMENT: '배송 준비 중',
+  IN_TRANSIT: '배송 중',
+  DELIVERED: '배송 완료',
+  PARTIAL_CANCELLED: '부분 취소',
+  CANCELLED: '주문 취소',
+}
+
+const ORDER_STATUS_CLASS = {
+  PENDING: 'bg-gray-100 text-gray-600',
+  PROCESSING: 'bg-yellow-100 text-yellow-700',
+  COMPLETED: 'bg-blue-100 text-blue-700',
+  BEFORE_SHIPMENT: 'bg-orange-100 text-orange-700',
+  IN_TRANSIT: 'bg-sky-100 text-sky-700',
+  DELIVERED: 'bg-green-100 text-green-700',
+  PARTIAL_CANCELLED: 'bg-red-100 text-red-600',
+  CANCELLED: 'bg-gray-200 text-gray-500',
+}
+
+const CANCELLED_STATUSES = ['CANCELLED', 'PARTIAL_CANCELLED']
+
+function getOrderStatusLabel(status) {
+  return ORDER_STATUS_LABEL[status] || status || '-'
+}
+
+function getOrderStatusClass(status) {
+  return ORDER_STATUS_CLASS[status] || 'bg-surface-muted text-ink'
+}
 
 const blockedWords = ['씨발', '시발', '병신', '개새끼', 'fuck', 'shit']
 const xssPattern = /<script|javascript:|onerror=|onload=|iframe|object|embed/i
@@ -182,7 +216,7 @@ function ReviewModal({ order, onClose, onSubmit }) {
                 }
               }}
             >
-            {previewImageUrl ? (
+              {previewImageUrl ? (
                 <>
                   <img className="absolute inset-0 size-full object-cover" src={previewImageUrl} alt={`${selectedFileName} 미리보기`} />
                   <div className="absolute inset-x-0 bottom-0 bg-ink/80 px-4 py-3 text-left text-white">
@@ -239,52 +273,125 @@ function ReviewModal({ order, onClose, onSubmit }) {
     </div>
   )
 }
-
-function OrderCard({ order, onReviewClick }) {
+function OrderCard({ order, onReviewClick, onDetailClick, onCancelClick }) {
   const isDelivered = order.orderStatus === 'DELIVERED'
+  const isCancelled = CANCELLED_STATUSES.includes(order.orderStatus)
   const canReview = isDelivered && !order.hasReview
   const formattedDate = new Date(order.orderDate).toLocaleDateString('ko-KR')
-
-  let badgeClass = 'bg-surface-muted text-ink'
-  let statusText = '처리 중'
-
-  if (order.orderStatus === 'DELIVERED') { badgeClass = 'bg-badge-delivered text-success'; statusText = '배송 완료' }
-  else if (order.orderStatus === 'IN_TRANSIT') { badgeClass = 'bg-badge-shipping text-ink'; statusText = '배송 중' }
-  else if (order.orderStatus === 'BEFORE_SHIPMENT') { badgeClass = 'bg-badge-preparing text-brand'; statusText = '상품 준비 중' }
+  const badgeClass = getOrderStatusClass(order.orderStatus)
+  const statusText = getOrderStatusLabel(order.orderStatus)
 
   return (
-    <article className="rounded-md border border-border bg-surface">
+    <article
+      className="cursor-pointer rounded-md border border-border bg-surface"
+      onClick={() => onDetailClick(order.orderId)}
+    >
       <header className="grid grid-cols-3 gap-5 border-b border-border bg-surface-muted px-8 py-5">
-        <div><p className="text-caption text-foreground">주문일</p><p className="text-2xl font-bold">{formattedDate}</p></div>
-        <div><p className="text-caption text-foreground">주문 번호</p><p className="text-2xl font-bold">#{order.orderId}</p></div>
-        <div className="text-right"><p className="text-caption text-foreground">총 결제 금액</p><p className="text-2xl font-bold">{order.totalPrice?.toLocaleString()}원</p></div>
+        <div>
+          <p className="text-caption text-foreground">주문일</p>
+          <p className="text-2xl font-bold">{formattedDate}</p>
+        </div>
+
+        <div>
+          <p className="text-caption text-foreground">주문 번호</p>
+          <p className="text-2xl font-bold">#{order.orderId}</p>
+        </div>
+
+        <div className="text-right">
+          <p className="text-caption text-foreground">총 결제 금액</p>
+          <p className="text-2xl font-bold">{order.totalPrice?.toLocaleString()}원</p>
+        </div>
       </header>
+
       <div className="grid grid-cols-split gap-6 px-8 py-7 max-md:grid-cols-1">
         <div className="flex gap-6">
-          <img className="size-thumb rounded object-cover" src={order.imageUrl || 'https://via.placeholder.com/100'} alt={order.productName} />
+          <img
+            className="size-thumb rounded object-cover"
+            src={order.imageUrl || 'https://via.placeholder.com/100'}
+            alt={order.productName}
+          />
+
           <div>
             <span className={`inline-flex rounded-full px-4 py-2 text-caption font-medium ${badgeClass}`}>
               <Truck className="mr-1 size-4" /> {statusText}
             </span>
 
             {order.category && (
-               <p className="mt-5 text-caption font-bold text-brand">{order.category}</p>
+              <p className="mt-5 text-caption font-bold text-brand">{order.category}</p>
             )}
 
-            <h3 className={`${order.category ? 'mt-2' : 'mt-5'} text-2xl font-medium`}>{order.productName}</h3>
+            <h3 className={`${order.category ? 'mt-2' : 'mt-5'} text-2xl font-medium`}>
+              {order.productName}
+            </h3>
 
             {order.description && (
-               <p className="mt-2 text-foreground">{order.description}</p>
+              <p className="mt-2 text-foreground">{order.description}</p>
             )}
           </div>
         </div>
-        <div className="grid content-center gap-2">
-          <Button variant="secondary" size="md" disabled={order.orderStatus !== 'IN_TRANSIT'} fullWidth>배송 조회</Button>
-          {isDelivered && <Button variant="outline" size="md" fullWidth>다시 구매</Button>}
-          {canReview && <Button variant="primary" size="md" onClick={() => onReviewClick(order)} fullWidth>리뷰 작성</Button>}
-          <Button variant="outline" size="md" disabled={!['BEFORE_SHIPMENT', 'PENDING'].includes(order.orderStatus)} fullWidth>
-             {['BEFORE_SHIPMENT', 'PENDING'].includes(order.orderStatus) ? '주문 취소' : '반품 신청'}
-          </Button>
+
+        <div
+          className="grid content-center gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {isCancelled ? (
+            <p className="text-center text-body-sm font-medium text-foreground">
+              주문 취소 완료
+            </p>
+          ) : (
+            <>
+              {order.orderStatus === 'IN_TRANSIT' && (
+                <>
+                  <Button variant="secondary" size="md" fullWidth>
+                    배송 조회
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="md"
+                    disabled
+                    fullWidth
+                  >
+                    반품 신청
+                  </Button>
+                </>
+              )}
+
+              {isDelivered && (
+                <>
+                  {canReview && (
+                    <Button
+                      variant="primary"
+                      size="md"
+                      onClick={() => onReviewClick(order)}
+                      fullWidth
+                    >
+                      리뷰 작성
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    size="md"
+                    fullWidth
+                  >
+                    반품 신청
+                  </Button>
+                </>
+              )}
+
+              {['PENDING', 'PROCESSING', 'COMPLETED', 'BEFORE_SHIPMENT'].includes(order.orderStatus) && (
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={() => onCancelClick(order)}
+                  fullWidth
+                >
+                  주문 취소
+                </Button>
+              )}
+            </>
+          )}
         </div>
       </div>
     </article>
@@ -292,18 +399,31 @@ function OrderCard({ order, onReviewClick }) {
 }
 
 function MyOrders() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+
   const [orders, setOrders] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedReviewOrder, setSelectedReviewOrder] = useState(null)
   const [totalPages, setTotalPages] = useState(1)
+
   const page = Number(searchParams.get('page')) || 1
+
+  const handleDetailClick = (orderId) => {
+    navigate(`/mypage/orders/${orderId}`)
+  }
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         setIsLoading(true)
-        const res = await axiosInstance.get(`/api/orders?page=${page}`)
+        const res = await axiosInstance.get('/api/orders', {
+          params: {
+            page: page - 1,
+            size: 10,
+            sort: 'createdAt,desc',
+          },
+        })
         setOrders(res.data.content || res.data)
         setTotalPages(res.data.totalPages || 1)
       } catch (e) {
@@ -312,17 +432,65 @@ function MyOrders() {
         setIsLoading(false)
       }
     }
+
     fetchOrders()
   }, [page])
 
+  const handleCancelOrder = async (order) => {
+    if (!['PENDING', 'PROCESSING', 'COMPLETED', 'BEFORE_SHIPMENT'].includes(order.orderStatus)) {
+      return
+    }
+
+    if (!window.confirm('주문을 취소하시겠습니까?')) {
+      return
+    }
+
+    try {
+      const orderDetail = await getOrderDetail(order.orderId)
+      const cancelTargetItemIds = (orderDetail.orderItems || [])
+        .filter((item) => item.status !== 'CANCELLED')
+        .map((item) => item.orderItemId)
+
+      if (cancelTargetItemIds.length === 0) {
+        setOrders((currentOrders) =>
+          currentOrders.map((currentOrder) =>
+            currentOrder.orderId === order.orderId
+              ? { ...currentOrder, orderStatus: 'CANCELLED' }
+              : currentOrder
+          )
+        )
+        return
+      }
+
+      await cancelOrderItems(order.orderId, cancelTargetItemIds)
+
+      setOrders((currentOrders) =>
+        currentOrders.map((currentOrder) =>
+          currentOrder.orderId === order.orderId
+            ? { ...currentOrder, orderStatus: 'CANCELLED' }
+            : currentOrder
+        )
+      )
+
+      alert('주문이 취소되었습니다.')
+    } catch (error) {
+      console.error('주문 취소 실패:', error)
+      alert('주문 취소에 실패했습니다.')
+    }
+  }
+
   const handleReviewSubmit = async (orderId, reviewData) => {
     try {
-      setOrders((currentOrders) => currentOrders.map((order) => (order.orderId === orderId ? { ...order, hasReview: true } : order)))
+      setOrders((currentOrders) =>
+        currentOrders.map((order) =>
+          order.orderId === orderId ? { ...order, hasReview: true } : order
+        )
+      )
       setSelectedReviewOrder(null)
-      alert("리뷰가 성공적으로 등록되었습니다.")
+      alert('리뷰가 성공적으로 등록되었습니다.')
     } catch (error) {
-      console.error("리뷰 등록 실패:", error)
-      alert("리뷰 등록에 실패했습니다.")
+      console.error('리뷰 등록 실패:', error)
+      alert('리뷰 등록에 실패했습니다.')
     }
   }
 
@@ -337,11 +505,25 @@ function MyOrders() {
         ) : orders.length === 0 ? (
           <p className="py-10 text-center text-foreground">주문 내역이 없습니다.</p>
         ) : (
-          orders.map(o => <OrderCard key={o.orderId} order={o} onReviewClick={setSelectedReviewOrder} />)
+          orders.map((order) => (
+            <OrderCard
+              key={order.orderId}
+              order={order}
+              onReviewClick={setSelectedReviewOrder}
+              onDetailClick={handleDetailClick}
+              onCancelClick={handleCancelOrder}
+            />
+          ))
         )}
 
         {orders.length > 0 && (
-          <Pagination className="mt-4" page={page} totalPages={totalPages} getPageHref={p => `/mypage/orders?page=${p}`} ariaLabel="주문 페이지" />
+          <Pagination
+            className="mt-4"
+            page={page}
+            totalPages={totalPages}
+            getPageHref={(p) => `/mypage/orders?page=${p}`}
+            ariaLabel="주문 페이지"
+          />
         )}
       </section>
 
