@@ -21,7 +21,16 @@ export const cancelOrderItems = async (
         {
             orderItemIds,
         }
-    );
+    )
 
-    return response.data;
-};
+    return response.data
+}
+
+export const requestOrderReturn = async (orderId, returnData) => {
+    const response = await axiosInstance.post(
+        `/api/orders/${orderId}/return-request`,
+        returnData
+    )
+
+    return response.data
+}
