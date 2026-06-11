@@ -75,7 +75,7 @@ export default function MyBookmarks() {
                       setBookmarks((prev) => prev.filter((b) => b.productId !== productId))
                     }
                   }}
-                  isDislikeView="false"
+                  isDislikeView={false}
                 />
               )
             })}
