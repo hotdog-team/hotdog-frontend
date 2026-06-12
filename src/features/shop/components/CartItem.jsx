@@ -9,7 +9,12 @@ export default function CartItem({
     onDecrease,
     onDelete,
 }) {
-    const subtotal = item.price * item.quantity
+    const discountAmount = item.discountRate
+        ? Math.floor(item.price * (item.discountRate / 100))
+        : 0;
+    const discountedPrice = item.price - discountAmount;
+
+    const subtotal = discountedPrice * item.quantity;
 
     const imageUrl =
         item.image?.trim() ||
@@ -57,12 +62,24 @@ export default function CartItem({
                     <h3 className="mt-2 truncate text-body font-bold text-ink">
                         {item.productName}
                     </h3>
-
                 </div>
             </div>
 
-            <div className="text-right text-body-sm font-bold text-ink">
-                ₩{item.price.toLocaleString()}
+            <div className="text-right flex flex-col justify-center">
+                {item.discountRate > 0 ? (
+                    <>
+                        <span className="text-caption text-muted line-through">
+                            ₩{item.price.toLocaleString()}
+                        </span>
+                        <span className="text-body-sm font-bold text-ink">
+                            ₩{discountedPrice.toLocaleString()}
+                        </span>
+                    </>
+                ) : (
+                    <span className="text-body-sm font-bold text-ink">
+                        ₩{item.price.toLocaleString()}
+                    </span>
+                )}
             </div>
 
             <div className="flex justify-center">

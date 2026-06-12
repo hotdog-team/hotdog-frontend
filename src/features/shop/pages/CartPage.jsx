@@ -40,7 +40,16 @@ export default function CartPage() {
         0,
     )
 
-    const discountPrice = 0
+        const discountPrice = selectedCartItems.reduce(
+            (sum, item) => {
+                const itemDiscount = item.discountRate
+                    ? Math.floor(item.price * (item.discountRate / 100))
+                    : 0;
+
+                return sum + (itemDiscount * item.quantity);
+            },
+            0,
+        )
     const deliveryFee = 0
     const finalPrice = totalPrice - discountPrice + deliveryFee
 

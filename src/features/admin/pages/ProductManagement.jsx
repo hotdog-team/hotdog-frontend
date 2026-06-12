@@ -7,10 +7,13 @@ import axiosInstance from '../../../api/axiosInstance.js'
 
 export default function ProductManagement() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10)
+
+  const searchKeyword = searchParams.get('keyword') || ''
+  const [searchInput, setSearchInput] = useState(searchKeyword)
 
   const [products, setProducts] = useState([])
   const [availableTags, setAvailableTags] = useState([])
@@ -37,8 +40,18 @@ export default function ProductManagement() {
   const [editSelectedTagIds, setEditSelectedTagIds] = useState([])
 
   const fetchProducts = async () => {
-    try{
-      const response = await axiosInstance.get(`/api/products?page=${currentPage - 1}&size=20&sort=latest`)
+    try {
+      const params = {
+        page: currentPage - 1,
+        size: 20,
+        sort: 'latest'
+      }
+
+      if (searchKeyword) {
+        params.keyword = searchKeyword
+      }
+
+      const response = await axiosInstance.get('/api/products', { params })
       if (typeof response.data === 'string' && response.data.includes('<html')) throw new Error('인증 실패')
 
       const payload = response.data.data || response.data
@@ -70,7 +83,7 @@ export default function ProductManagement() {
 
   useEffect(() => {
     fetchProducts()
-  }, [currentPage])
+  }, [currentPage, searchKeyword])
 
   const visibleTags = availableTags.filter(tag =>
     tag.type !== 'CATEGORY' && tag.type !== 'POPULARITY' && tag.type !== 'RELEASE_OR_UPDATE'
@@ -90,7 +103,19 @@ export default function ProductManagement() {
     )
   }
 
-  // 등록 로직
+  const handleSearch = () => {
+    const params = new URLSearchParams(searchParams)
+    params.set('page', '1')
+
+    if (searchInput.trim()) {
+      params.set('keyword', searchInput.trim())
+    } else {
+      params.delete('keyword')
+    }
+
+    setSearchParams(params)
+  }
+
   const handleAddProduct = async (e) => {
     e.preventDefault()
     try {
@@ -262,9 +287,16 @@ export default function ProductManagement() {
       <div className="flex gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={20} />
-          <input type="text" placeholder="상품명 또는 브랜드 검색" className="w-full pl-10 p-3 border border-border-soft rounded-md focus:border-brand outline-none" />
+          <input
+            type="text"
+            placeholder="상품명 또는 브랜드 검색 후 엔터"
+            className="w-full pl-10 p-3 border border-border-soft rounded-md focus:border-brand outline-none"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
         </div>
-        <Button variant="secondary" size="md">검색</Button>
+        <Button variant="secondary" size="md" onClick={handleSearch}>검색</Button>
       </div>
 
       <div className="bg-surface border border-border-soft rounded-lg shadow-sm overflow-hidden">
@@ -288,7 +320,11 @@ export default function ProductManagement() {
           </thead>
           <tbody className="divide-y divide-border-soft">
             {products.length === 0 ? (
-              <tr><td colSpan="6" className="p-8 text-center text-muted">등록된 상품이 없습니다.</td></tr>
+              <tr>
+                <td colSpan="6" className="p-8 text-center text-muted">
+                  {searchKeyword ? `"${searchKeyword}"에 대한 검색 결과가 없습니다.` : '등록된 상품이 없습니다.'}
+                </td>
+              </tr>
             ) : (
               products.map((product) => (
                 <tr key={product.id} className="hover:bg-surface-muted/50 transition-colors">
@@ -342,7 +378,11 @@ export default function ProductManagement() {
         <Pagination
           page={currentPage}
           totalPages={totalPages}
-          getPageHref={(p) => `${location.pathname}?page=${p}`}
+          getPageHref={(p) => {
+            const params = new URLSearchParams(searchParams)
+            params.set('page', p)
+            return `${location.pathname}?${params.toString()}`
+          }}
         />
       )}
 
