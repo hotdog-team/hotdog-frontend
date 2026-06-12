@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { Button, Checkbox } from '../../../components/index.js'
@@ -9,6 +9,7 @@ export default function MyPageCart() {
   const [cartItems, setCartItems] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedIds, setSelectedIds] = useState([])
+  const navigate = useNavigate();
 
   // 1. 장바구니 조회 (GET)
   const fetchCartItems = async () => {
@@ -89,14 +90,30 @@ export default function MyPageCart() {
     }
   }
 
-  const handleCheckout = () => {
-    if (selectedIds.length === 0) return toast.warn('결제할 상품을 선택해 주세요.');
-    toast.info('결제 페이지 준비 중입니다.');
-  }
+  const selectedTotalPrice = cartItems
+    .filter(item => selectedIds.includes(item.cartId || item.id))
+    .reduce((acc, item) => {
+      const discountAmount = item.discountRate ? Math.floor(item.price * (item.discountRate / 100)) : 0;
+      const displayPrice = item.salePrice ?? (item.price - discountAmount);
+      return acc + (displayPrice * item.quantity);
+    }, 0);
 
-  const totalPrice = cartItems.reduce((acc, item) => {
-    return acc + ((item.salePrice ?? item.price) * item.quantity);
-  }, 0)
+  const handleCheckout = () => {
+    if (selectedIds.length === 0) {
+      return toast.warn('결제할 상품을 선택해 주세요.');
+    }
+
+    if (selectedTotalPrice <= 0) {
+      return toast.warn('결제 금액이 0원 이하인 상품은 주문할 수 없습니다.');
+    }
+
+    navigate('/orders/checkout', {
+      state: {
+        type: 'cart',
+        cartItemIds: selectedIds,
+      }
+    });
+  }
 
   const isAllSelected = cartItems.length > 0 && selectedIds.length === cartItems.length
 
@@ -139,9 +156,10 @@ export default function MyPageCart() {
 
             <ul className="divide-y divide-border-soft">
               {cartItems.map((item) => {
-                const itemId = item.cartId;
-                const displayPrice = item.salePrice ?? item.price;
-                const hasDiscount = item.salePrice < item.price;
+                const itemId = item.cartId || item.id;
+                const discountAmount = item.discountRate ? Math.floor(item.price * (item.discountRate / 100)) : 0;
+                const displayPrice = item.salePrice ?? (item.price - discountAmount);
+                const hasDiscount = item.price > displayPrice;
 
                 return (
                   <li key={itemId} className="flex items-center gap-6 py-6">
@@ -208,9 +226,9 @@ export default function MyPageCart() {
 
             <div className="mt-8 border-t border-border-soft pt-8 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted">총 상품 금액</p>
+                <p className="text-sm font-medium text-muted">선택 상품 총 금액</p>
                 <p className="text-3xl font-extrabold text-brand">
-                  {totalPrice.toLocaleString()}원
+                  {selectedTotalPrice.toLocaleString()}원
                 </p>
               </div>
               <Button type="button" variant="primary" size="lg" className="w-48 font-bold" onClick={handleCheckout}>

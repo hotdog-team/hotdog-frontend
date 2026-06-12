@@ -4,7 +4,10 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { fetchCategories } from '../../api/categoryApi.js'
 import dtoLogo from '../../assets/d-to-logo.png'
 import { useAuthStore } from '../../store/useAuthStore.js'
-import { useAccessibility } from '../../context/AccessibilityContext.jsx';
+import { useAccessibility } from '../../context/AccessibilityContext.jsx'
+
+import { useQueryClient } from '@tanstack/react-query'
+import axiosInstance from '../../api/axiosInstance.js'
 
 const DEFAULT_CATEGORIES = [
   { label: '건강', to: '/shop?categoryId=health' },
@@ -66,6 +69,8 @@ function GlobalHeader({
   const headerCategories = useMemo(() => categories ?? apiCategories, [apiCategories, categories])
   const { settings, setSettings, save } = useAccessibility();
 
+  const queryClient = useQueryClient()
+
   const logout = useAuthStore((s) => s.logout)
   const user = useAuthStore((s) => s.user)
 
@@ -105,7 +110,7 @@ function GlobalHeader({
     }
   }, [categories])
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     const formData = new FormData(event.currentTarget)
@@ -117,6 +122,23 @@ function GlobalHeader({
     }
 
     if (searchValue) {
+      try {
+        await axiosInstance.post(`/api/search/log?keyword=${encodeURIComponent(searchValue)}`);
+
+        queryClient.invalidateQueries({ queryKey: ['popularSearchKeywords'] });
+
+        const userId = user?.memberId || user?.id || user?.email || 'guest';
+        const storageKey = `d-to-recent-searches-${userId}`;
+        const storedSearches = JSON.parse(window.localStorage.getItem(storageKey) || '[]');
+
+        const nextSearches = [searchValue, ...storedSearches.filter(s => s !== searchValue)].slice(0, 5);
+        window.localStorage.setItem(storageKey, JSON.stringify(nextSearches));
+
+        window.dispatchEvent(new Event('storage'));
+      } catch (error) {
+        console.error('상단바 검색어 로깅 실패:', error);
+      }
+
       const nextSearchParams = new URLSearchParams()
       const categoryId = new URLSearchParams(search).get('categoryId')
 
