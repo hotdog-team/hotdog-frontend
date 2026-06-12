@@ -1,39 +1,42 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { ChevronRight, CornerDownRight, Search, Tags } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../components/index.js'
 import { usePopularSearchKeywordsQuery } from '../../../hooks/queries/useSearchQuery'
+import axiosInstance from '../../../api/axiosInstance.js'
+import { useAuthStore } from '../../../store/useAuthStore'
+import { useQueryClient } from '@tanstack/react-query'
+
 import {
   findExactProductByName,
   getSearchSuggestions,
-  popularKeywords,
-  quickCategories,
   recommendedCategories,
 } from '../data/catalog'
 
-const RECENT_SEARCHES_STORAGE_KEY = 'd-to-recent-searches'
 const MAX_RECENT_SEARCHES = 5
+
+const getRecentSearchesKey = (userId) => `d-to-recent-searches-${userId || 'guest'}`
 
 function buildSearchPath(query) {
   return `/shop?query=${encodeURIComponent(query)}`
 }
 
-function readRecentSearches() {
+function readRecentSearches(userId) {
   try {
-    const storedSearches = window.localStorage.getItem(RECENT_SEARCHES_STORAGE_KEY)
+    const key = getRecentSearchesKey(userId)
+    const storedSearches = window.localStorage.getItem(key)
     const parsedSearches = JSON.parse(storedSearches)
-
     return Array.isArray(parsedSearches) ? parsedSearches.filter((search) => typeof search === 'string') : []
   } catch {
     return []
   }
 }
 
-function writeRecentSearches(searches) {
+function writeRecentSearches(userId, searches) {
   try {
-    window.localStorage.setItem(RECENT_SEARCHES_STORAGE_KEY, JSON.stringify(searches))
+    const key = getRecentSearchesKey(userId)
+    window.localStorage.setItem(key, JSON.stringify(searches))
   } catch {
-    // Ignore storage failures; search should still navigate.
   }
 }
 
@@ -58,7 +61,6 @@ function SearchHero({ getCategoryPath, initialValue = '', onProductSearch, onSea
       onProductSearch(suggestion.label, suggestion.productId)
       return
     }
-
     onSearch(suggestion.label)
   }
 
@@ -87,12 +89,7 @@ function SearchHero({ getCategoryPath, initialValue = '', onProductSearch, onSea
               }}
             />
           </div>
-          <Button
-            className="min-w-action tracking-wide max-sm:min-w-20"
-            type="submit"
-            variant="secondary"
-            size="md"
-          >
+          <Button className="min-w-action tracking-wide max-sm:min-w-20" type="submit" variant="secondary" size="md">
             SEARCH
           </Button>
         </form>
@@ -150,16 +147,36 @@ function SearchHero({ getCategoryPath, initialValue = '', onProductSearch, onSea
 
 function SearchPage({ getCategoryPath = (categoryCode) => `/shop?categoryId=${encodeURIComponent(categoryCode)}` }) {
   const navigate = useNavigate()
-  const [recentSearches, setRecentSearches] = useState(() => readRecentSearches())
+  const queryClient = useQueryClient()
+
+  const user = useAuthStore((state) => state.user)
+  const userId = user?.memberId || user?.id || user?.email || 'guest'
+
+  const [recentSearches, setRecentSearches] = useState(() => readRecentSearches(userId))
+
+  useEffect(() => {
+    setRecentSearches(readRecentSearches(userId))
+  }, [userId])
+
   const popularSearchKeywordsQuery = usePopularSearchKeywordsQuery()
-  const displayedPopularKeywords = (popularSearchKeywordsQuery.data?.length > 0 ? popularSearchKeywordsQuery.data : popularKeywords).slice(0, 10)
+
+  const popularData = popularSearchKeywordsQuery.data || [];
+  const displayedPopularKeywords = Array.isArray(popularData) ? popularData : [];
+  const isLoadingPopular = popularSearchKeywordsQuery.isLoading;
+
+  const logSearchToBackend = async (keyword) => {
+    try {
+      await axiosInstance.post(`/api/search/log?keyword=${encodeURIComponent(keyword)}`)
+
+      queryClient.invalidateQueries({ queryKey: ['popularSearchKeywords'] })
+    } catch (error) {
+      console.error('인기 검색어 저장 실패:', error)
+    }
+  }
 
   const saveRecentSearch = (keyword) => {
     const nextKeyword = keyword.trim()
-
-    if (!nextKeyword) {
-      return []
-    }
+    if (!nextKeyword) return []
 
     const nextSearches = [
       nextKeyword,
@@ -167,19 +184,24 @@ function SearchPage({ getCategoryPath = (categoryCode) => `/shop?categoryId=${en
     ].slice(0, MAX_RECENT_SEARCHES)
 
     setRecentSearches(nextSearches)
-    writeRecentSearches(nextSearches)
+    writeRecentSearches(userId, nextSearches)
 
     return nextSearches
   }
 
+  const handleRemoveRecentSearch = (e, keywordToRemove) => {
+    e.stopPropagation()
+    const nextSearches = recentSearches.filter((search) => search !== keywordToRemove)
+    setRecentSearches(nextSearches)
+    writeRecentSearches(userId, nextSearches)
+  }
+
   const handleSearch = (keyword) => {
     const nextKeyword = keyword.trim()
-
-    if (!nextKeyword) {
-      return
-    }
+    if (!nextKeyword) return
 
     saveRecentSearch(nextKeyword)
+    logSearchToBackend(nextKeyword)
 
     const exactProduct = findExactProductByName(nextKeyword)
     navigate(exactProduct ? `/shop/${exactProduct.id}` : buildSearchPath(nextKeyword))
@@ -187,24 +209,24 @@ function SearchPage({ getCategoryPath = (categoryCode) => `/shop?categoryId=${en
 
   const handleProductSearch = (keyword, productId) => {
     const nextKeyword = keyword.trim()
-
-    if (!nextKeyword) {
-      return
-    }
+    if (!nextKeyword) return
 
     saveRecentSearch(nextKeyword)
+    logSearchToBackend(nextKeyword)
+
     navigate(`/shop/${productId}`)
   }
 
   const handleClearRecentSearches = () => {
     setRecentSearches([])
-    writeRecentSearches([])
+    writeRecentSearches(userId, [])
   }
 
   return (
     <>
       <SearchHero getCategoryPath={getCategoryPath} onProductSearch={handleProductSearch} onSearch={handleSearch} />
-      <section className="layout-container mt-16 max-w-form">
+      <section className="layout-container mt-16 max-w-form mb-20">
+
         <div className="mb-16">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-xl font-medium text-ink">최근 검색어</h2>
@@ -213,8 +235,19 @@ function SearchPage({ getCategoryPath = (categoryCode) => `/shop?categoryId=${en
           {recentSearches.length > 0 ? (
             <div className="flex flex-wrap gap-3">
               {recentSearches.map((keyword) => (
-                <button className="rounded-lg border border-border px-5 py-3 text-body font-medium text-foreground hover:border-ink" type="button" key={keyword} onClick={() => handleSearch(keyword)}>
-                  {keyword} ×
+                <button
+                  className="flex items-center rounded-lg border border-border px-5 py-3 text-body font-medium text-foreground hover:border-ink"
+                  type="button"
+                  key={keyword}
+                  onClick={() => handleSearch(keyword)}
+                >
+                  {keyword}
+                  <span
+                    className="ml-2 px-1 text-muted hover:text-ink"
+                    onClick={(e) => handleRemoveRecentSearch(e, keyword)}
+                  >
+                    ×
+                  </span>
                 </button>
               ))}
             </div>
@@ -223,30 +256,25 @@ function SearchPage({ getCategoryPath = (categoryCode) => `/shop?categoryId=${en
           )}
         </div>
 
-        <div className="mb-16">
+        <div>
           <h2 className="mb-6 text-xl font-medium text-ink">인기 검색어</h2>
           <div className="grid grid-cols-2 gap-5 max-sm:grid-cols-1">
-            {displayedPopularKeywords.map((keyword, index) => (
-              <button className="flex h-16 items-center justify-between rounded border border-border bg-surface px-5 text-left text-body-lg font-medium hover:border-ink" type="button" key={keyword} onClick={() => handleSearch(keyword)}>
-                <span><span className="mr-4 text-muted">{String(index + 1).padStart(2, '0')}</span>{keyword}</span>
-                <CornerDownRight className="size-5 text-brand" aria-hidden="true" />
-              </button>
-            ))}
-            {displayedPopularKeywords.length === 0 && (
-              <p className="text-muted">인기 검색어를 불러오는 중입니다.</p>
+            {isLoadingPopular ? (
+              <p className="text-muted">인기 검색어를 불러오는 중입니다...</p>
+            ) : displayedPopularKeywords.length > 0 ? (
+              displayedPopularKeywords.map((keyword, index) => (
+                <button className="flex h-16 items-center justify-between rounded border border-border bg-surface px-5 text-left text-body-lg font-medium hover:border-ink" type="button" key={keyword?.keyword || keyword} onClick={() => handleSearch(keyword?.keyword || keyword)}>
+                  <span>
+                    <span className="mr-4 text-muted">{String(index + 1).padStart(2, '0')}</span>
+                    {keyword?.keyword || keyword}
+                    {keyword?.searchCount > 0 && <span className="text-sm text-brand ml-2">({keyword.searchCount})</span>}
+                  </span>
+                  <CornerDownRight className="size-5 text-brand" aria-hidden="true" />
+                </button>
+              ))
+            ) : (
+              <p className="text-muted">집계된 인기 검색어가 없습니다.</p>
             )}
-          </div>
-        </div>
-
-        <div>
-          <h2 className="mb-6 text-xl font-medium text-ink">빠른 카테고리</h2>
-          <div className="grid grid-cols-4 gap-5 max-md:grid-cols-2 max-sm:grid-cols-1">
-            {quickCategories.map((category) => (
-              <button className="text-center" type="button" key={category.categoryCode} onClick={() => navigate(getCategoryPath(category.categoryCode))}>
-                <img className="aspect-square w-full rounded-lg object-cover shadow-card-hover" src={category.image} alt="" />
-                <span className="mt-3 block text-body font-medium text-foreground">{category.label}</span>
-              </button>
-            ))}
           </div>
         </div>
       </section>
