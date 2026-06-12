@@ -56,8 +56,8 @@ export default function AdminReviewManagement() {
               <tr><td colSpan="5" className="p-8 text-center text-muted">등록된 리뷰가 없습니다.</td></tr>
             ) : (
               reviews.map((review) => (
-                <tr key={review.id} className={`transition-colors ${review.status === 'HIDDEN' ? 'bg-surface-muted/30 opacity-60' : 'hover:bg-surface-muted/50'}`}>
-                  <td className="p-4 text-muted">#{review.id}</td>
+                <tr key={review.reviewId} className={`transition-colors ${review.status === 'HIDDEN' ? 'bg-surface-muted/30 opacity-60' : 'hover:bg-surface-muted/50'}`}>
+                  <td className="p-4 text-muted">#{review.reviewId}</td>
                   <td className="p-4 font-medium text-ink truncate">{review.productName || '알 수 없는 상품'}</td>
                   <td className="p-4">
                     <div className="flex items-center gap-1 mb-1">
@@ -72,7 +72,7 @@ export default function AdminReviewManagement() {
                   </td>
                   <td className="p-4 text-right">
                     {review.status !== 'HIDDEN' && (
-                      <button onClick={() => handleHideReview(review.id)} className="text-error hover:bg-error/10 p-2 rounded-md transition-colors flex items-center gap-1 ml-auto" title="블라인드">
+                      <button onClick={() => handleHideReview(review.reviewId)} className="text-error hover:bg-error/10 p-2 rounded-md transition-colors flex items-center gap-1 ml-auto" title="블라인드">
                         <EyeOff size={16} /> <span className="text-xs font-bold">숨김</span>
                       </button>
                     )}
