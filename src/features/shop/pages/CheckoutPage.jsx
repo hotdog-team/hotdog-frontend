@@ -35,15 +35,14 @@ export default function CheckoutPage() {
 
     useEffect(() => {
         const isDirect = type === 'direct' && productId
-        const isCart = Array.isArray(cartItemIds) && cartItemIds.length > 0
+        const isCart = Array.isArray(cartItemIds) && cartItemIds.length > 0 || type === 'cart'
 
         const fetchCheckout = async () => {
             try {
-
                 let data;
                 if (isDirect) { data = await getCheckoutDirect(productId, quantity); }
                 else if (isCart) { data = await getCheckoutFromCart(cartItemIds); }
-                else { alert('주문 정보가 없습니다.'); return; }
+                else { alert('주문 정보가 없습니다.'); return navigate('/home'); }
 
                 console.log('주문서 조회 결과:', data)
                 setCheckoutData(data)
@@ -68,7 +67,7 @@ export default function CheckoutPage() {
         } else {
             setLoading(false)
         }
-    }, [type, productId, quantity])
+    }, [type, productId, quantity, cartItemIds, navigate])
 
     if (loading) {
         return (
@@ -81,8 +80,21 @@ export default function CheckoutPage() {
     }
 
     const orderItems = checkoutData?.items || []
-    const totalAmount = checkoutData?.totalAmount || 0
-    const employeeDiscount = checkoutData?.employeeDiscount || 0
+
+    const { originalTotalAmount, totalDiscountAmount } = orderItems.reduce((acc, item) => {
+        const price = Number(item.price ?? item.unitPrice ?? item.salePrice ?? 0);
+        const qty = Number(item.quantity ?? 1);
+        const discountRate = Number(item.discountRate ?? 0);
+
+        const itemDiscount = Math.floor(price * (discountRate / 100));
+
+        return {
+            originalTotalAmount: acc.originalTotalAmount + (price * qty),
+            totalDiscountAmount: acc.totalDiscountAmount + (itemDiscount * qty)
+        };
+    }, { originalTotalAmount: 0, totalDiscountAmount: 0 });
+
+    const finalTotalAmount = originalTotalAmount - totalDiscountAmount;
 
     const handlePayment = async () => {
         if (!address) {
@@ -95,24 +107,18 @@ export default function CheckoutPage() {
                 orderItems: checkoutData.items.map((item) => ({
                     productId: item.productId,
                     source: item.source || "INTERNAL",
-                    quantity: item.quantity,
+                    quantity: Number(item.quantity ?? 1),
                 })),
                 receiverName: address.receiverName,
                 receiverPhone: address.receiverPhone,
                 deliveryAddress: `(${address.zipCode}) ${address.baseAddress} ${address.detailAddress}`,
                 requestMessage,
-                totalAmount,
+                totalAmount: finalTotalAmount,
                 deliveryFee: 0,
                 paymentMethod,
             };
 
-            console.log("주문 생성 요청:", orderRequest);
-            console.log("주문 상품 목록:", orderRequest.orderItems);
-
             const orderId = await createOrder(orderRequest);
-
-            console.log("주문 생성 완료:", orderId);
-
             navigate(`/mypage/orders/${orderId}`);
         } catch (error) {
             console.error("주문 생성 실패:", error);
@@ -121,9 +127,6 @@ export default function CheckoutPage() {
     };
 
     const handleTossPayment = async () => {
-
-        console.log(import.meta.env.VITE_TOSS_CLIENT_KEY)
-
         if (!address) {
             alert('배송지를 선택해주세요.')
             return
@@ -134,46 +137,34 @@ export default function CheckoutPage() {
                 orderItems: checkoutData.items.map((item) => ({
                     productId: item.productId,
                     source: item.source || 'INTERNAL',
-                    quantity: item.quantity,
+                    quantity: Number(item.quantity ?? 1),
                 })),
                 receiverName: address.receiverName,
                 receiverPhone: address.receiverPhone,
                 deliveryAddress: `(${address.zipCode}) ${address.baseAddress} ${address.detailAddress}`,
                 requestMessage,
-                totalAmount,
+                totalAmount: finalTotalAmount,
                 deliveryFee: 0,
                 paymentMethod: 'CARD',
             }
 
-            // 주문 먼저 생성
-            const orderId = await createOrder(orderRequest)
-
-            console.log('토스 결제용 주문 생성:', orderId)
+           // 주문 먼저 생성
+           const orderId = await createOrder(orderRequest)
 
             const tossPayments = await loadTossPayments(
                 import.meta.env.VITE_TOSS_CLIENT_KEY
             )
 
             await tossPayments.requestPayment('카드', {
-                amount: totalAmount,
-
-                // 토스용 주문번호
+                amount: finalTotalAmount,
                 orderId: `ORDER-${orderId}-${Date.now()}`,
-
                 orderName:
                     checkoutData.items.length > 1
-                        ? `${checkoutData.items[0].productName} 외 ${checkoutData.items.length - 1
-                        }건`
+                        ? `${checkoutData.items[0].productName} 외 ${checkoutData.items.length - 1}건`
                         : checkoutData.items[0].productName,
-
                 customerName: address.receiverName,
-
-                successUrl:
-                    `${window.location.origin}/payment/success`
-                    + `?localOrderId=${orderId}`,
-
-                failUrl:
-                    `${window.location.origin}/payment/fail`,
+                successUrl: `${window.location.origin}/payment/success?localOrderId=${orderId}`,
+                failUrl: `${window.location.origin}/payment/fail`,
             })
         } catch (error) {
             console.error('토스 결제 요청 실패:', error)
@@ -182,6 +173,14 @@ export default function CheckoutPage() {
     }
 
     const handleClickPayment = () => {
+        if (!address) {
+            return alert('배송지를 선택해주세요.');
+        }
+
+        if (finalTotalAmount <= 0) {
+            return handlePayment();
+        }
+
         if (paymentMethod === 'CASH') {
             setIsCashModalOpen(true)
             return
@@ -202,15 +201,9 @@ export default function CheckoutPage() {
                     onClose={() => setIsAddressModalOpen(false)}
                     onSuccess={async () => {
                         const addressData = await getAddresses()
-
                         setAddresses(addressData)
-
-                        const defaultAddress =
-                            addressData.find((item) => item.isDefault) ||
-                            addressData[0]
-
+                        const defaultAddress = addressData.find((item) => item.isDefault) || addressData[0]
                         setAddress(defaultAddress)
-
                         setIsAddressModalOpen(false)
                     }}
                 />
@@ -218,7 +211,7 @@ export default function CheckoutPage() {
 
             {isCashModalOpen && (
                 <CashPaymentModal
-                    totalAmount={totalAmount}
+                    totalAmount={finalTotalAmount}
                     onClose={() => setIsCashModalOpen(false)}
                     onConfirm={handlePayment}
                 />
@@ -238,29 +231,44 @@ export default function CheckoutPage() {
                             </h2>
 
                             <div className="mt-5 border-t border-border pt-5">
-                                {orderItems.map((item) => (
-                                    <div
-                                        key={item.productId}
-                                        className="grid grid-cols-[1fr_8rem] items-start gap-4 border-b border-border py-4 last:border-b-0"
-                                    >
-                                        <div>
-                                            <p className="font-bold text-ink">
-                                                {item.productName}
-                                            </p>
-                                            <p className="mt-1 text-body-sm text-muted">
-                                                수량 {item.quantity}개
-                                            </p>
-                                        </div>
+                                {orderItems.map((item) => {
+                                    const price = Number(item.price ?? item.unitPrice ?? item.salePrice ?? 0);
+                                    const qty = Number(item.quantity ?? 1);
+                                    const discountRate = Number(item.discountRate ?? 0);
 
-                                        <p className="text-right font-bold text-ink">
-                                            {(
-                                                item.totalPrice ||
-                                                item.price * item.quantity
-                                            ).toLocaleString()}
-                                            원
-                                        </p>
-                                    </div>
-                                ))}
+                                    const discountAmount = Math.floor(price * (discountRate / 100));
+                                    const discountedPrice = price - discountAmount;
+                                    const itemSubtotal = discountedPrice * qty;
+
+                                    return (
+                                        <div
+                                            key={item.productId}
+                                            className="grid grid-cols-[1fr_8rem] items-start gap-4 border-b border-border py-4 last:border-b-0"
+                                        >
+                                            <div>
+                                                <p className="font-bold text-ink">{item.productName}</p>
+                                                <p className="mt-1 text-body-sm text-muted">수량 {qty}개</p>
+                                            </div>
+
+                                            <div className="text-right flex flex-col justify-center">
+                                                {discountRate > 0 ? (
+                                                    <>
+                                                        <span className="text-caption text-muted line-through">
+                                                            {(price * qty).toLocaleString()}원
+                                                        </span>
+                                                        <span className="font-bold text-ink">
+                                                            {itemSubtotal.toLocaleString()}원
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <span className="font-bold text-ink">
+                                                        {(price * qty).toLocaleString()}원
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
 
@@ -399,7 +407,7 @@ export default function CheckoutPage() {
                             <div className="flex justify-between text-muted">
                                 <span>상품 금액</span>
                                 <strong className="text-ink">
-                                    {totalAmount.toLocaleString()}원
+                                    {originalTotalAmount.toLocaleString()}원
                                 </strong>
                             </div>
 
@@ -411,7 +419,7 @@ export default function CheckoutPage() {
                             <div className="flex justify-between text-muted">
                                 <span>임직원 할인</span>
                                 <strong className="text-danger">
-                                    -{employeeDiscount.toLocaleString()}원
+                                    -{totalDiscountAmount.toLocaleString()}원
                                 </strong>
                             </div>
 
@@ -421,7 +429,7 @@ export default function CheckoutPage() {
                                         최종 결제 금액
                                     </span>
                                     <strong className="text-2xl font-bold text-ink">
-                                        {totalAmount.toLocaleString()}원
+                                        {finalTotalAmount.toLocaleString()}원
                                     </strong>
                                 </div>
                             </div>
