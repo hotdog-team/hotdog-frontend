@@ -3,6 +3,7 @@ import { useSearchParams, useLocation } from 'react-router-dom'
 import { Star, XCircle } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { Button, Pagination } from '../../../components/index.js'
+import { resolveImageUrl } from '../../../api/imageApi.js'
 import { getProductReviews, updateReview, deleteReview } from '../../../api/reviewApi.js'
 import { useAuthStore } from '../../../store/useAuthStore.js'
 
@@ -15,7 +16,7 @@ function StarDisplay({ rating, size = 'sm' }) {
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`${cls} ${star <= rating ? 'fill-brand text-brand' : 'fill-border text-border-soft'}`}
+          className={`${cls} ${star <= rating ? 'fill-rating text-rating' : 'fill-border text-border-soft'}`}
           strokeWidth={0}
         />
       ))}
@@ -39,7 +40,7 @@ function StarSelector({ value, onChange }) {
           <Star
             className={`size-7 transition-colors ${
               star <= (hovered || value)
-                ? 'fill-brand text-brand'
+                ? 'fill-rating text-rating'
                 : 'fill-border text-border-soft hover:fill-brand/40'
             }`}
             strokeWidth={0}
@@ -195,6 +196,13 @@ export default function ProductReviewSection({ productId, averageRate, reviewCou
                   <p className="mt-3 text-body-sm leading-relaxed text-foreground whitespace-pre-wrap pl-12">
                     {review.content}
                   </p>
+                  {review.imageUrl && (
+                    <img
+                      src={resolveImageUrl(review.imageUrl)}
+                      alt="리뷰 첨부 이미지"
+                      className="mt-3 ml-12 max-h-48 max-w-xs rounded-md border border-border object-cover"
+                    />
+                  )}
                 </div>
               )
             })}

@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
-import { Star, MessageCircle, Trash2, Edit2, XCircle } from 'lucide-react'
+import { Star, MessageCircle, Trash2, Edit2 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { Button, Pagination } from '../../../components/index.js'
+import ReviewFormModal from '../../../components/review/ReviewFormModal.jsx'
 import axiosInstance from '../../../api/axiosInstance.js'
+import { deleteReview, updateReview } from '../../../api/reviewApi.js'
+import { resolveImageUrl } from '../../../api/imageApi.js'
+import { resolveReviewImageUrl } from '../../../utils/reviewImage.js'
 
 export default function MyReviews() {
   const [reviews, setReviews] = useState([])
   const [totalPages, setTotalPages] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
-
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editingReview, setEditingReview] = useState({ id: null, rating: 5, content: '' })
+  const [selectedReview, setSelectedReview] = useState(null)
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
 
   const [searchParams] = useSearchParams()
   const location = useLocation()
@@ -23,7 +26,7 @@ export default function MyReviews() {
       const response = await axiosInstance.get(`/api/reviews/my?page=${currentPage - 1}&size=10`)
       setReviews(response.data.content || [])
       setTotalPages(response.data.totalPages || 1)
-    } catch (err) {
+    } catch {
       toast.error('리뷰 내역을 불러오는 데 실패했습니다.')
     } finally {
       setIsLoading(false)
@@ -37,36 +40,46 @@ export default function MyReviews() {
   const handleDelete = async (reviewId) => {
     if (window.confirm('리뷰를 삭제하시겠습니까? 삭제된 리뷰는 복구할 수 없습니다.')) {
       try {
-        await axiosInstance.delete(`/api/reviews/${reviewId}`)
-        setReviews((prev) => prev.filter((r) => r.id !== reviewId))
+        await deleteReview(reviewId)
+        setReviews((prev) => prev.filter((r) => r.reviewId !== reviewId))
         toast.success('리뷰가 정상적으로 삭제되었습니다.')
-      } catch (err) {
+      } catch {
         toast.error('리뷰 삭제에 실패했습니다.')
       }
     }
   }
 
-  const openEditModal = (review) => {
-    setEditingReview({
-      id: review.reviewId,
-      rating: review.rating,
-      content: review.content
-    })
-    setIsEditModalOpen(true)
-  }
+  const handleReviewSubmit = async ({ rating, content, file, imageUrl }) => {
+    if (!selectedReview?.reviewId) return
 
-  const handleUpdateReview = async (e) => {
-    e.preventDefault()
+    setIsSubmittingReview(true)
     try {
-      await axiosInstance.patch(`/api/reviews/${editingReview.id}`, {
-        rating: editingReview.rating,
-        content: editingReview.content
+      let uploadedImageUrl = null
+      if (file) {
+        uploadedImageUrl = await resolveReviewImageUrl({ file, imageUrl: null })
+      } else if (imageUrl) {
+        uploadedImageUrl = imageUrl
+      }
+
+      await updateReview(selectedReview.reviewId, {
+        rating,
+        content,
+        imageUrl: uploadedImageUrl,
       })
+
       toast.success('리뷰가 성공적으로 수정되었습니다.')
-      setIsEditModalOpen(false)
+      setSelectedReview(null)
       fetchReviews()
-    } catch (err) {
-      toast.error('리뷰 수정에 실패했습니다.')
+    } catch (error) {
+      console.error('리뷰 수정 실패:', error)
+      const isUploadError = file && String(error?.config?.url ?? '').includes('/api/images/upload')
+      toast.error(
+        isUploadError
+          ? '이미지 업로드에 실패했습니다. JPG/PNG 파일인지 확인해 주세요.'
+          : '리뷰 수정에 실패했습니다.',
+      )
+    } finally {
+      setIsSubmittingReview(false)
     }
   }
 
@@ -91,20 +104,31 @@ export default function MyReviews() {
               <div key={review.reviewId} className="rounded-xl border border-border bg-surface p-6 shadow-sm">
                 <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border-soft pb-4">
                   <div className="flex items-center gap-4 min-w-0">
-                    <img src={review.productImageUrl || '/assets/placeholder.jpg'} alt={review.productName} className="size-16 rounded-lg object-cover border border-border-soft bg-surface-muted" />
+                    <img
+                      src={resolveImageUrl(review.productImageUrl) || 'https://via.placeholder.com/100'}
+                      alt={review.productName}
+                      className="size-16 rounded-lg object-cover border border-border-soft bg-surface-muted"
+                    />
                     <div className="min-w-0">
                       <h3 className="font-bold text-ink truncate">{review.productName}</h3>
                       <div className="mt-1 flex items-center gap-0.5">
+                        <span className="sr-only">별점 {review.rating}점</span>
                         {[...Array(5)].map((_, i) => (
-                          <Star key={i} className={`size-4 ${i < review.rating ? 'fill-brand text-brand' : 'fill-border text-border-soft'}`} />
+                          <Star
+                            key={i}
+                            className={`size-4 ${i < review.rating ? 'fill-rating text-rating' : 'fill-border text-border-soft'}`}
+                            strokeWidth={0}
+                          />
                         ))}
-                        <span className="ml-2 text-xs text-muted">{review.createdAt ? new Date(review.createdAt).toLocaleDateString() : ''}</span>
+                        <span className="ml-2 text-xs text-muted">
+                          작성일 {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : ''}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <Button variant="secondary" size="sm" onClick={() => openEditModal(review)} className="flex items-center gap-1">
+                    <Button variant="secondary" size="sm" onClick={() => setSelectedReview(review)} className="flex items-center gap-1">
                       <Edit2 className="size-3.5" /> 수정
                     </Button>
                     <Button variant="danger" size="sm" onClick={() => handleDelete(review.reviewId)} className="flex items-center gap-1">
@@ -113,6 +137,13 @@ export default function MyReviews() {
                   </div>
                 </div>
                 <p className="text-ink text-sm leading-relaxed whitespace-pre-wrap pl-1">{review.content}</p>
+                {review.imageUrl && (
+                  <img
+                    src={resolveImageUrl(review.imageUrl)}
+                    alt="리뷰 첨부 이미지"
+                    className="mt-4 max-h-48 max-w-xs rounded-md border border-border object-cover"
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -120,43 +151,22 @@ export default function MyReviews() {
         </>
       )}
 
-      {/* 리뷰 수정 모달 */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-surface p-6 rounded-lg shadow-xl w-full max-w-md border border-border-soft">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-ink">리뷰 수정</h2>
-              <button onClick={() => setIsEditModalOpen(false)} className="text-muted hover:text-error"><XCircle size={24} /></button>
-            </div>
-            <form onSubmit={handleUpdateReview} className="space-y-5">
-              <div>
-                <label className="block text-sm font-bold text-ink mb-2">별점</label>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button type="button" key={star} onClick={() => setEditingReview({ ...editingReview, rating: star })}>
-                      <Star className={`size-8 ${star <= editingReview.rating ? 'fill-brand text-brand' : 'fill-border text-border-soft hover:fill-brand/50 hover:text-brand/50'} transition-colors`} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-ink mb-1">리뷰 내용</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={editingReview.content}
-                  onChange={(e) => setEditingReview({ ...editingReview, content: e.target.value })}
-                  className="w-full p-3 border border-border-soft rounded-md focus:border-brand outline-none resize-none bg-white"
-                  placeholder="상품에 대한 솔직한 리뷰를 남겨주세요."
-                />
-              </div>
-              <div className="pt-4 border-t border-border-soft flex justify-end gap-2">
-                <Button type="button" variant="secondary" onClick={() => setIsEditModalOpen(false)}>취소</Button>
-                <Button type="submit" variant="primary">수정 완료</Button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {selectedReview && (
+        <ReviewFormModal
+          mode="edit"
+          product={{
+            name: selectedReview.productName,
+            imageUrl: selectedReview.productImageUrl,
+          }}
+          initialValues={{
+            rating: selectedReview.rating,
+            content: selectedReview.content,
+            imageUrl: selectedReview.imageUrl,
+          }}
+          onClose={() => setSelectedReview(null)}
+          onSubmit={handleReviewSubmit}
+          isSubmitting={isSubmittingReview}
+        />
       )}
     </div>
   )
