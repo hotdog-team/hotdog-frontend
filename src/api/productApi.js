@@ -57,8 +57,10 @@ function normalizeProduct(product) {
     origin: product.origin ?? '',
     specInfo: product.specInfo ?? '',
     altText: product.altText ?? '',
-    rating: product.rating ?? product.averageRating ?? 0,
+    rating: product.rating ?? product.averageRate ?? product.averageRating ?? 0,
     reviews: product.reviews ?? product.reviewCount ?? 0,
+    averageRate: product.averageRate ?? product.rating ?? 0,
+    reviewCount: product.reviewCount ?? product.reviews ?? 0,
     tags: Array.isArray(product.tags) ? product.tags : [],
     status: product.status ?? '',
   };

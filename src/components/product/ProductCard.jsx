@@ -134,6 +134,9 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
   }
 
   const cardLinkLabel = to ? `${product.name} 상세 보기` : undefined
+  const averageRate = product.averageRate ?? product.rating ?? 0
+  const reviewCount = product.reviewCount ?? product.reviews ?? 0
+  const filledStars = Math.round(averageRate)
 
   if (isHidden) {
     return null
@@ -192,14 +195,18 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
       <div className="px-5 pt-5 pb-4">
         <h3 className="line-clamp-2 text-body font-medium text-ink">{product.name}</h3>
         <div className="mt-1 flex items-center gap-1 text-caption font-semibold text-ink">
-          <span className="flex text-rating" aria-hidden="true">
-            {Array.from({ length: product.rating > 0 || 5 }).map((_, index) => (
-              <Star key={index} className="size-3 fill-current" strokeWidth={0} />
+          <span className="flex gap-0.5" aria-hidden="true">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`size-3 ${star <= filledStars ? 'fill-rating text-rating' : 'fill-border text-border-soft'}`}
+                strokeWidth={0}
+              />
             ))}
           </span>
-          <span className="sr-only">별점 {product.rating}점, 리뷰 {product.reviews}개</span>
-          <span aria-hidden="true">{product.rating}</span>
-          <span className="text-muted" aria-hidden="true">({product.reviews}개)</span>
+          <span className="sr-only">별점 {averageRate.toFixed(1)}점, 리뷰 {reviewCount}개</span>
+          <span aria-hidden="true">{averageRate.toFixed(1)}</span>
+          <span className="text-muted" aria-hidden="true">({reviewCount}개)</span>
         </div>
         <p className="mt-1 text-body-md font-semibold text-ink">
           {product.salePrice?.toLocaleString()}원{' '}

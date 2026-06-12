@@ -102,6 +102,9 @@ function ProductDetailPage() {
 
   const category = { label: product.category, navLabel: product.category, }
   const thumbnails = product.thumbnails ?? []
+  const averageRate = product.averageRate ?? product.rating ?? 0
+  const reviewCount = product.reviewCount ?? product.reviews ?? 0
+  const filledStars = Math.round(averageRate)
 
   const handleWishlistClick = async (event) => {
     event.stopPropagation();
@@ -189,12 +192,19 @@ function ProductDetailPage() {
           <div>
             <p className="mb-1 text-body font-bold text-brand">{product.category}</p>
             <h1 className="text-2xl font-medium">{product.name}</h1>
-            <span className="sr-only">별점 {product.rating}점, 리뷰 {product.reviews}건</span>
-            <div className="mt-4 flex items-center gap-0 text-rating" aria-hidden="true">
-              {Array.from({ length: product.rating > 0 || 5 }).map((_, index) => (
-                <Star className="size-5 fill-current" key={index} strokeWidth={0}/>
-              ))}
-              <span className="ml-2 text-body-sm text-ink" aria-hidden="true">(리뷰 {product.reviews}건)</span>
+            <span className="sr-only">별점 {averageRate.toFixed(1)}점, 리뷰 {reviewCount}건</span>
+            <div className="mt-4 flex items-center gap-1" aria-hidden="true">
+              <span className="flex gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`size-5 ${star <= filledStars ? 'fill-rating text-rating' : 'fill-border text-border-soft'}`}
+                    strokeWidth={0}
+                  />
+                ))}
+              </span>
+              <span className="ml-2 text-body-sm font-semibold text-ink">{averageRate.toFixed(1)}</span>
+              <span className="text-body-sm text-muted">(리뷰 {reviewCount}건)</span>
             </div>
             <p className="text-body-lg text-gray-400 mt-6"><span className="sr-only">원가 </span><span className="line-through">{product.originPrice?.toLocaleString()}원</span></p>
               <div className="mt-1 flex items-center gap-4">

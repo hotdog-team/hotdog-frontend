@@ -210,7 +210,7 @@ export default function OrderDetailPage() {
                     <div className="mt-5 rounded-md bg-surface-muted p-5">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-lg font-bold">
                                     현재 주문 상태
                                 </p>
                                 <div className="mt-2">
