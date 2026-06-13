@@ -5,10 +5,17 @@ import { toast } from 'react-toastify'
 import { Button, Pagination, Select } from '../../../components/index.js'
 import ReviewFormModal from '../../../components/review/ReviewFormModal.jsx'
 import axiosInstance from '../../../api/axiosInstance.js'
-import { getOrderDetail, cancelOrderItems, requestOrderReturn } from '../../../api/orderApi'
 import { createReview, getReviewByOrderItem, updateReview } from '../../../api/reviewApi.js'
 import { resolveImageUrl } from '../../../api/imageApi.js'
 import { resolveReviewImageUrl } from '../../../utils/reviewImage.js'
+import { addCartItem, addCartItems } from '../../../api/cartApi'
+import {
+  getOrderDetail,
+  cancelOrderItems,
+  requestOrderReturn,
+  requestReturnItems,
+} from '../../../api/orderApi'
+
 
 const ORDER_STATUS_LABEL = {
   PENDING: '결제 대기',
@@ -21,6 +28,8 @@ const ORDER_STATUS_LABEL = {
   CANCELLED: '주문 취소',
   RETURN_REQUESTED: '반품 신청',
   RETURN_COMPLETED: '반품 완료',
+  PARTIAL_RETURN_REQUESTED: '부분 반품 신청',
+  PARTIAL_RETURN_COMPLETED: '부분 반품 완료',
 }
 
 const ORDER_STATUS_CLASS = {
@@ -34,10 +43,12 @@ const ORDER_STATUS_CLASS = {
   CANCELLED: 'bg-gray-200 text-gray-500',
   RETURN_REQUESTED: 'bg-purple-100 text-purple-700',
   RETURN_COMPLETED: 'bg-gray-200 text-gray-500',
+  PARTIAL_RETURN_REQUESTED: 'bg-purple-100 text-purple-700',
+  PARTIAL_RETURN_COMPLETED: 'bg-gray-200 text-gray-500',
 }
 
 const CANCELLED_STATUSES = ['CANCELLED']
-const RETURN_STATUSES = ['RETURN_REQUESTED', 'RETURN_COMPLETED']
+const RETURN_STATUSES = ['RETURN_REQUESTED', 'RETURN_COMPLETED', 'PARTIAL_RETURN_REQUESTED', 'PARTIAL_RETURN_COMPLETED']
 const ORDER_ITEM_PREVIEW_LIMIT = 3
 
 function getOrderStatusLabel(status) {
@@ -183,11 +194,22 @@ function TrackingModal({ order, onClose }) {
   )
 }
 
-function ReturnRequestModal({ order, onClose, onSubmit }) {
+function ReturnRequestModal({
+  order,
+  item,
+  onClose,
+  onSubmit,
+}) {
   const [reason, setReason] = useState('')
   const [detailReason, setDetailReason] = useState('')
   const [validationMessage, setValidationMessage] = useState('')
-  const { productName, quantity } = getOrderProductSummary(order)
+  const productName =
+    item?.productName ||
+    getOrderProductSummary(order).productName
+
+  const quantity =
+    item?.quantity ||
+    getOrderProductSummary(order).quantity
   const formattedDate = order.orderDate
     ? new Date(order.orderDate).toLocaleDateString('ko-KR')
     : '-'
@@ -302,6 +324,90 @@ function ReturnRequestModal({ order, onClose, onSubmit }) {
   )
 }
 
+
+function CancelRequestModal({
+  order,
+  item,
+  onClose,
+  onSubmit,
+}) {
+  const formattedDate = order.orderDate
+    ? new Date(order.orderDate).toLocaleDateString('ko-KR')
+    : '-'
+
+  const isAllCancel = !item
+
+  const productName = isAllCancel
+    ? getOrderProductSummary(order).productName
+    : item.productName
+
+  const quantity = isAllCancel
+    ? getOrderProductSummary(order).quantity
+    : item.quantity || 1
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/55 px-4 py-8" role="dialog" aria-modal="true">
+      <div className="w-full max-w-xl rounded-md bg-surface p-8 text-ink shadow-2xl">
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <h2 className="text-2xl font-medium">
+              {isAllCancel ? '전체 주문 취소' : '주문 취소'}
+            </h2>
+            <p className="mt-3 text-body-sm text-foreground">
+              취소할 주문 정보를 확인해 주세요.
+            </p>
+          </div>
+
+          <Button variant="outline" size="sm" onClick={onClose}>
+            닫기
+          </Button>
+        </div>
+
+        <div className="mt-8 grid gap-4 rounded-md border border-border bg-surface-muted p-5 text-body-sm">
+          <p>
+            <span className="text-foreground">주문번호</span>
+            <br />
+            <strong>#{order.orderId}</strong>
+          </p>
+
+          <p>
+            <span className="text-foreground">상품명</span>
+            <br />
+            <strong>{productName}</strong>
+          </p>
+
+          <p>
+            <span className="text-foreground">수량</span>
+            <br />
+            <strong>{quantity}개</strong>
+          </p>
+
+          <p>
+            <span className="text-foreground">주문일</span>
+            <br />
+            <strong>{formattedDate}</strong>
+          </p>
+        </div>
+
+        <div className="mt-8 flex justify-end gap-3 border-t border-border pt-6">
+          <Button type="button" variant="outline" size="md" onClick={onClose}>
+            취소
+          </Button>
+
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            onClick={() => onSubmit(order, item)}
+          >
+            주문 취소
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function buildReviewContext(order, item) {
   return {
     orderId: order.orderId,
@@ -315,11 +421,42 @@ function buildReviewContext(order, item) {
 
 function canWriteReview(order, item) {
   return (
-    order.orderStatus === 'DELIVERED'
+    [
+      'DELIVERED',
+      'PARTIAL_RETURN_REQUESTED',
+      'PARTIAL_RETURN_COMPLETED',
+    ].includes(order.orderStatus)
+    && item?.status === 'ORDERED'
     && item?.source === 'INTERNAL'
     && item?.productId
     && !item?.hasReview
   )
+}
+
+function getValidTotalPrice(order) {
+  if (
+    order.orderStatus === 'CANCELLED' ||
+    order.orderStatus === 'RETURN_COMPLETED'
+  ) {
+    return 0
+  }
+
+  const productTotal = (order.orderItems || [])
+    .filter(
+      (item) =>
+        ![
+          'CANCELLED',
+          'RETURN_REQUESTED',
+          'RETURN_COMPLETED',
+        ].includes(item.status),
+    )
+    .reduce(
+      (sum, item) =>
+        sum + (item.priceAtOrder || 0) * (item.quantity || 0),
+      0,
+    )
+
+  return productTotal + (order.deliveryFee || 0)
 }
 
 function OrderCard({
@@ -328,8 +465,11 @@ function OrderCard({
   onViewReviewClick,
   onDetailClick,
   onCancelClick,
+  onCancelItemClick,
   onTrackingClick,
   onReturnClick,
+  onRepurchaseItem,
+  onRepurchaseAll,
 }) {
   const [isItemsExpanded, setIsItemsExpanded] = useState(false)
 
@@ -340,6 +480,24 @@ function OrderCard({
   const formattedDate = new Date(order.orderDate).toLocaleDateString('ko-KR')
   const statusText = getOrderStatusLabel(order.orderStatus)
   const statusClass = getOrderStatusClass(order.orderStatus)
+  const canCancel = ['PENDING', 'PROCESSING', 'COMPLETED', 'PARTIAL_CANCELLED'].includes(order.orderStatus)
+  const canCancelAll = ['PENDING', 'PROCESSING', 'COMPLETED', 'PARTIAL_CANCELLED'].includes(order.orderStatus)
+  const canTrack = ['BEFORE_SHIPMENT', 'IN_TRANSIT'].includes(order.orderStatus)
+  const canReturnOrReview = [
+    'DELIVERED',
+    'PARTIAL_RETURN_REQUESTED',
+    'PARTIAL_RETURN_COMPLETED',
+  ].includes(order.orderStatus)
+  const canReturnAll = [
+    'DELIVERED',
+    'PARTIAL_RETURN_REQUESTED',
+    'PARTIAL_RETURN_COMPLETED',
+  ].includes(order.orderStatus)
+  const canRepurchaseAll = [
+    'DELIVERED',
+    'PARTIAL_RETURN_REQUESTED',
+    'PARTIAL_RETURN_COMPLETED',
+  ].includes(order.orderStatus)
 
   const orderItems = order.orderItems?.length
     ? order.orderItems
@@ -355,20 +513,49 @@ function OrderCard({
       className="cursor-pointer rounded-md border border-border bg-surface shadow-card"
       onClick={() => onDetailClick(order.orderId)}
     >
-      <header className="grid grid-cols-3 gap-5 border-b border-border px-8 py-5">
+      <header className="grid grid-cols-3 items-center gap-5 border-b border-border px-8 py-5">
         <div>
           <p className="text-caption text-foreground">주문일</p>
           <p className="text-xl font-bold">{formattedDate}</p>
         </div>
 
-        <div>
-          <p className="text-caption text-foreground">주문 번호</p>
-          <p className="text-xl font-bold">#{order.orderId}</p>
+        <div className="text-center">
+          <p className="text-caption text-foreground">총 결제 금액</p>
+          <p className="text-xl font-bold">
+            {getValidTotalPrice(order).toLocaleString()}원
+          </p>
         </div>
 
-        <div className="text-right">
-          <p className="text-caption text-foreground">총 결제 금액</p>
-          <p className="text-xl font-bold">{order.totalPrice?.toLocaleString()}원</p>
+        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          {canCancelAll && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onCancelClick(order)}
+            >
+              전체 주문취소
+            </Button>
+          )}
+
+          {canReturnAll && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onReturnClick(order, null)}
+            >
+              전체 반품
+            </Button>
+          )}
+
+          {canRepurchaseAll && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => onRepurchaseAll(order)}
+            >
+              전체 재구매
+            </Button>
+          )}
         </div>
       </header>
 
@@ -392,34 +579,93 @@ function OrderCard({
                   <p className="mt-1 text-body-sm text-muted">수량 {item.quantity}개</p>
                 )}
                 <p className="mt-1 text-body font-bold text-brand">{(item.priceAtOrder * item.quantity).toLocaleString()}원</p>
+                {item.status === 'CANCELLED' && (
+                  <p className="mt-2 text-body-sm font-semibold text-muted">주문 취소 완료</p>
+                )}
+                {item.status ===
+                  'RETURN_REQUESTED' && (
+                    <p className="mt-2 text-body-sm font-semibold text-purple-700">
+                      반품 신청 완료
+                    </p>
+                  )}
+                {item.status ===
+                  'RETURN_COMPLETED' && (
+                    <p className="mt-2 text-body-sm font-semibold text-muted">
+                      반품 완료
+                    </p>
+                  )}
               </div>
 
               <div
-                className="flex shrink-0 flex-col items-center gap-2"
+                className="mt-4 flex flex-wrap gap-2"
                 onClick={(e) => e.stopPropagation()}
               >
-                <span className={`inline-flex rounded-full py-1 text-body font-medium text-muted`}>
-                </span>
-
-                {canWriteReview(order, item) && (
+                {canCancel && item.status === 'ORDERED' && (
                   <Button
-                    variant="primary"
+                    variant="outline"
                     size="sm"
-                    onClick={() => onReviewClick(buildReviewContext(order, item))}
+                    onClick={() => onCancelItemClick(order, item)}
                   >
-                    리뷰 작성
+                    주문 취소
                   </Button>
                 )}
 
-                {isDelivered && item.hasReview && (
+                {canTrack && (
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => onViewReviewClick(buildReviewContext(order, item))}
+                    onClick={() => onTrackingClick(order)}
                   >
-                    내 리뷰 보기
+                    배송 조회
                   </Button>
                 )}
+
+                {canReturnOrReview &&
+                  item.status === 'ORDERED' &&
+                  canWriteReview(order, item) && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => onReviewClick(buildReviewContext(order, item))}
+                    >
+                      리뷰 작성
+                    </Button>
+                  )}
+
+                {canReturnOrReview &&
+                  item.status === 'ORDERED' &&
+                  item.hasReview && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => onViewReviewClick(buildReviewContext(order, item))}
+                    >
+                      내 리뷰 보기
+                    </Button>
+                  )}
+
+                {canReturnOrReview &&
+                  item.status === 'ORDERED' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onReturnClick(order, item)}
+                    >
+                      반품 신청
+                    </Button>
+                  )}
+
+                {canReturnOrReview &&
+                  item.status === 'ORDERED' &&
+                  item.productId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onRepurchaseItem(item)}
+                    >
+                      재구매
+                    </Button>
+                  )}
               </div>
             </div>
           ))}
@@ -440,64 +686,6 @@ function OrderCard({
           )}
         </div>
 
-        <div
-          className="grid content-center gap-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {isCancelled ? (
-            <p className="text-center text-body-sm font-medium text-foreground">
-              주문 취소 완료
-            </p>
-          ) : order.orderStatus === 'PARTIAL_CANCELLED' ? (
-            <p className="text-center text-body-sm font-medium text-foreground">
-              일부 상품 취소 완료
-            </p>
-          ) : isReturnStatus ? (
-            <p className="text-center text-body-sm font-medium text-foreground">
-              {statusText}
-            </p>
-          ) : (
-            <>
-              {isInTransit && (
-                <>
-                  <Button
-                    variant="secondary"
-                    size="md"
-                    onClick={() => onTrackingClick(order)}
-                    fullWidth
-                  >
-                    배송 조회
-                  </Button>
-                  <Button variant="outline" size="md" disabled fullWidth>
-                    반품 신청
-                  </Button>
-                </>
-              )}
-
-              {isDelivered && (
-                <Button
-                  variant="outline"
-                  size="md"
-                  onClick={() => onReturnClick(order)}
-                  fullWidth
-                >
-                  반품 신청
-                </Button>
-              )}
-
-              {['PENDING', 'PROCESSING', 'COMPLETED', 'BEFORE_SHIPMENT'].includes(order.orderStatus) && (
-                <Button
-                  variant="outline"
-                  size="md"
-                  onClick={() => onCancelClick(order)}
-                  fullWidth
-                >
-                  주문 취소
-                </Button>
-              )}
-            </>
-          )}
-        </div>
       </div>
     </article>
   )
@@ -510,6 +698,7 @@ function MyOrders() {
   const [orders, setOrders] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedReviewOrder, setSelectedReviewOrder] = useState(null)
+  const [selectedCancelOrderItem, setSelectedCancelOrderItem] = useState(null)
   const [isSubmittingReview, setIsSubmittingReview] = useState(false)
   const [viewingReview, setViewingReview] = useState(null)
   const [editingReview, setEditingReview] = useState(null)
@@ -523,103 +712,203 @@ function MyOrders() {
     navigate(`/mypage/orders/${orderId}`)
   }
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setIsLoading(true)
-        const res = await axiosInstance.get('/api/orders', {
-          params: {
-            page: page - 1,
-            size: 10,
-            sort: 'createdAt,desc',
-          },
-        })
-        setOrders(res.data.content || res.data)
-        setTotalPages(res.data.totalPages || 1)
-      } catch (e) {
-        console.error(e)
-      } finally {
-        setIsLoading(false)
-      }
+  const handleRepurchaseItem = async (item) => {
+    if (!item?.productId) {
+      toast.info('재구매 가능한 상품이 아닙니다.')
+      return
     }
 
+    try {
+      await addCartItem(item.productId, item.quantity || 1)
+      toast.success('장바구니에 담았습니다.')
+      navigate('/cart')
+    } catch (error) {
+      if (error.response?.status === 409) {
+        toast.info('이미 장바구니에 담긴 상품입니다.')
+        navigate('/cart')
+        return
+      }
+
+      console.error('상품별 재구매 실패:', error)
+      toast.error('재구매에 실패했습니다.')
+    }
+  }
+
+  const handleRepurchaseAll = async (order) => {
+    if (order.orderStatus === 'RETURN_COMPLETED') {
+      toast.info('재구매 가능한 상품이 없습니다.')
+      return
+    }
+
+    const items = (order.orderItems || [])
+      .filter(
+        (item) =>
+          ![
+            'CANCELLED',
+            'RETURN_REQUESTED',
+            'RETURN_COMPLETED',
+          ].includes(item.status) &&
+          item.productId,
+      )
+      .map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity || 1,
+      }))
+
+    if (items.length === 0) {
+      toast.info('재구매 가능한 상품이 없습니다.')
+      return
+    }
+
+    try {
+      await addCartItems(items)
+      toast.success('장바구니에 담았습니다.')
+      navigate('/cart')
+    } catch (error) {
+      if (error.response?.status === 409) {
+        toast.info('일부 상품이 이미 장바구니에 담겨 있습니다.')
+        navigate('/cart')
+        return
+      }
+
+      console.error('전체 재구매 실패:', error)
+      toast.error('전체 재구매에 실패했습니다.')
+    }
+  }
+
+  const fetchOrders = async () => {
+    try {
+      setIsLoading(true)
+
+      const res = await axiosInstance.get('/api/orders', {
+        params: {
+          page: page - 1,
+          size: 10,
+          sort: 'createdAt,desc',
+        },
+      })
+
+      setOrders(res.data.content || res.data)
+      setTotalPages(res.data.totalPages || 1)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchOrders()
   }, [page])
 
   const handleCancelOrder = async (order) => {
-    if (!['PENDING', 'PROCESSING', 'COMPLETED', 'BEFORE_SHIPMENT'].includes(order.orderStatus)) {
-      return
-    }
-
-    if (!window.confirm('주문을 취소하시겠습니까?')) {
+    if (
+      ![
+        'PENDING',
+        'PROCESSING',
+        'COMPLETED',
+        'PARTIAL_CANCELLED',
+      ].includes(order.orderStatus)
+    ) {
+      toast.info('현재 상태에서는 주문 취소가 불가능합니다.')
       return
     }
 
     try {
       const orderDetail = await getOrderDetail(order.orderId)
       const cancelTargetItemIds = (orderDetail.orderItems || [])
-        .filter((item) => item.status !== 'CANCELLED')
+        .filter((item) => item.status === 'ORDERED')
         .map((item) => item.orderItemId)
 
       if (cancelTargetItemIds.length === 0) {
-        setOrders((currentOrders) =>
-          currentOrders.map((currentOrder) =>
-            currentOrder.orderId === order.orderId
-              ? { ...currentOrder, orderStatus: 'CANCELLED' }
-              : currentOrder
-          )
-        )
+        await fetchOrders()
+        setSelectedCancelOrderItem(null)
+        toast.info('취소 가능한 상품이 없습니다.')
         return
       }
 
       await cancelOrderItems(order.orderId, cancelTargetItemIds)
+      await fetchOrders()
 
-      setOrders((currentOrders) =>
-        currentOrders.map((currentOrder) =>
-          currentOrder.orderId === order.orderId
-            ? { ...currentOrder, orderStatus: 'CANCELLED' }
-            : currentOrder
-        )
-      )
-
-      alert('주문이 취소되었습니다.')
+      setSelectedCancelOrderItem(null)
+      toast.success('주문이 취소되었습니다.')
     } catch (error) {
       console.error('주문 취소 실패:', error)
-      alert('주문 취소에 실패했습니다.')
+      toast.error('주문 취소에 실패했습니다.')
     }
   }
 
-  const handleReturnSubmit = async (orderId, returnData) => {
-    try {
-      await requestOrderReturn(orderId, returnData)
+  const handleCancelOrderItem = async (order, item) => {
+    if (
+      ![
+        'PENDING',
+        'PROCESSING',
+        'COMPLETED',
+        'PARTIAL_CANCELLED',
+      ].includes(order.orderStatus)
+    ) {
+      toast.info('현재 상태에서는 주문 취소가 불가능합니다.')
+      return
+    }
 
-      setOrders((currentOrders) =>
-        currentOrders.map((order) =>
-          order.orderId === orderId
-            ? { ...order, orderStatus: 'RETURN_REQUESTED' }
-            : order
+    if (!item?.orderItemId) {
+      toast.error('주문 상품 정보를 찾을 수 없습니다.')
+      return
+    }
+
+    if (item.status !== 'ORDERED') {
+      toast.info('취소 가능한 상품이 아닙니다.')
+      return
+    }
+
+    try {
+      await cancelOrderItems(order.orderId, [item.orderItemId])
+      await fetchOrders()
+
+      setSelectedCancelOrderItem(null)
+      toast.success('상품이 취소되었습니다.')
+    } catch (error) {
+      console.error('상품 취소 실패:', error)
+      toast.error('상품 취소에 실패했습니다.')
+    }
+  }
+
+  const handleReturnSubmit = async (
+    orderId,
+    returnData,
+  ) => {
+    try {
+      if (selectedReturnOrder?.item?.orderItemId) {
+        await requestReturnItems(orderId, {
+          orderItemIds: [
+            selectedReturnOrder.item.orderItemId,
+          ],
+          ...returnData,
+        })
+      } else {
+        await requestOrderReturn(
+          orderId,
+          returnData,
         )
-      )
+      }
+
+      await fetchOrders()
 
       setSelectedReturnOrder(null)
-      alert('반품 신청이 완료되었습니다.')
+
+      toast.success('반품 신청이 완료되었습니다.')
     } catch (error) {
-      console.error('반품 신청 실패:', error)
-      alert('반품 신청에 실패했습니다.')
+      console.error(
+        '반품 신청 실패:',
+        error,
+      )
+
+      toast.error('반품 신청에 실패했습니다.')
     }
   }
 
-  const handleViewReviewClick = async (context) => {
-    setViewingReview({ context, review: null, isLoading: true })
-
-    try {
-      const review = await getReviewByOrderItem(context.orderItemId)
-      setViewingReview({ context, review, isLoading: false })
-    } catch (error) {
-      console.error('리뷰 조회 실패:', error)
-      toast.error('리뷰를 불러오지 못했습니다.')
-      setViewingReview(null)
-    }
+  const handleViewReviewClick = () => {
+    navigate('/mypage/reviews')
   }
 
   const handleEditReviewClick = () => {
@@ -733,9 +1022,27 @@ function MyOrders() {
               onReviewClick={setSelectedReviewOrder}
               onViewReviewClick={handleViewReviewClick}
               onDetailClick={handleDetailClick}
-              onCancelClick={handleCancelOrder}
+              onCancelClick={(order) =>
+                setSelectedCancelOrderItem({
+                  order,
+                  item: null,
+                })
+              }
+              onCancelItemClick={(order, item) =>
+                setSelectedCancelOrderItem({
+                  order,
+                  item,
+                })
+              }
               onTrackingClick={setSelectedTrackingOrder}
-              onReturnClick={setSelectedReturnOrder}
+              onReturnClick={(order, item) =>
+                setSelectedReturnOrder({
+                  order,
+                  item,
+                })
+              }
+              onRepurchaseItem={handleRepurchaseItem}
+              onRepurchaseAll={handleRepurchaseAll}
             />
           ))
         )}
@@ -758,10 +1065,26 @@ function MyOrders() {
         />
       )}
 
+      {selectedCancelOrderItem && (
+        <CancelRequestModal
+          order={selectedCancelOrderItem.order}
+          item={selectedCancelOrderItem.item}
+          onClose={() => setSelectedCancelOrderItem(null)}
+          onSubmit={(order, item) =>
+            item?.orderItemId
+              ? handleCancelOrderItem(order, item)
+              : handleCancelOrder(order)
+          }
+        />
+      )}
+
       {selectedReturnOrder && (
         <ReturnRequestModal
-          order={selectedReturnOrder}
-          onClose={() => setSelectedReturnOrder(null)}
+          order={selectedReturnOrder.order}
+          item={selectedReturnOrder.item}
+          onClose={() =>
+            setSelectedReturnOrder(null)
+          }
           onSubmit={handleReturnSubmit}
         />
       )}

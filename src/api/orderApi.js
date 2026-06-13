@@ -34,3 +34,15 @@ export const requestOrderReturn = async (orderId, returnData) => {
 
     return response.data
 }
+
+export const requestReturnItems = async (
+    orderId,
+    returnData,
+) => {
+    const response = await axiosInstance.post(
+        `/api/orders/${orderId}/return-items`,
+        returnData,
+    )
+
+    return response.data
+}
