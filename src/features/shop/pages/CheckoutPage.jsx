@@ -104,6 +104,7 @@ export default function CheckoutPage() {
 
         try {
             const orderRequest = {
+                cartItemIds,
                 orderItems: checkoutData.items.map((item) => ({
                     productId: item.productId,
                     source: item.source || "INTERNAL",
@@ -148,8 +149,8 @@ export default function CheckoutPage() {
                 paymentMethod: 'CARD',
             }
 
-           // 주문 먼저 생성
-           const orderId = await createOrder(orderRequest)
+            // 주문 먼저 생성
+            const orderId = await createOrder(orderRequest)
 
             const tossPayments = await loadTossPayments(
                 import.meta.env.VITE_TOSS_CLIENT_KEY

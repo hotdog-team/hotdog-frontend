@@ -1,5 +1,6 @@
 import Button from '../../../components/ui/Button.jsx'
 import QuantitySelector from './QuantitySelector'
+import { useNavigate } from 'react-router-dom'
 
 export default function CartItem({
     item,
@@ -9,6 +10,12 @@ export default function CartItem({
     onDecrease,
     onDelete,
 }) {
+    const navigate = useNavigate()
+
+    const handleMoveDetail = () => {
+        navigate(`/shop/${item.productId}`)
+    }
+
     const discountAmount = item.discountRate
         ? Math.floor(item.price * (item.discountRate / 100))
         : 0;
@@ -38,7 +45,10 @@ export default function CartItem({
                     onChange={onSelect}
                     aria-label={`${item.productName} 선택`}
                 />
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md bg-surface-muted">
+                <div
+                    className="h-20 w-20 shrink-0 overflow-hidden rounded-md bg-surface-muted cursor-pointer"
+                    onClick={handleMoveDetail}
+                >
                     {imageUrl ? (
                         <img
                             src={imageUrl}
@@ -59,7 +69,10 @@ export default function CartItem({
                         </span>
                     )}
 
-                    <h3 className="mt-2 truncate text-body font-bold text-ink">
+                    <h3
+                        className="mt-2 truncate text-body font-bold text-ink cursor-pointer hover:text-brand"
+                        onClick={handleMoveDetail}
+                    >
                         {item.productName}
                     </h3>
                 </div>
