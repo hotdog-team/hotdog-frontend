@@ -195,7 +195,6 @@ export default function OrderDetailPage() {
                 </div>
 
                 <div className="flex flex-col items-end gap-3">
-
                     <Link
                         to="/mypage/orders"
                         className="rounded-md border border-border px-5 py-3 text-body-sm font-bold text-ink"
@@ -275,22 +274,26 @@ export default function OrderDetailPage() {
                                         key={item.orderItemId || item.productId}
                                         className="grid grid-cols-[5rem_1fr_8rem] items-start gap-4 border-b border-border py-4 last:border-b-0"
                                     >
-                                        {item.thumbnailImage || item.imageUrl ? (
-                                            <img
-                                                src={item.thumbnailImage || item.imageUrl}
-                                                alt={item.productName}
-                                                className="h-16 w-16 rounded border object-cover"
-                                            />
-                                        ) : (
-                                            <div className="flex h-16 w-16 items-center justify-center rounded border text-xs text-blue-600">
-                                                이미지 없음
-                                            </div>
-                                        )}
+                                        <Link to={`/shop/${item.productId}`} className="shrink-0 hover:opacity-80 transition-opacity">
+                                            {item.thumbnailImage || item.imageUrl ? (
+                                                <img
+                                                    src={item.thumbnailImage || item.imageUrl}
+                                                    alt={item.productName}
+                                                    className="h-16 w-16 rounded border object-cover"
+                                                />
+                                            ) : (
+                                                <div className="flex h-16 w-16 items-center justify-center rounded border text-xs text-blue-600 bg-surface-muted">
+                                                    이미지 없음
+                                                </div>
+                                            )}
+                                        </Link>
 
                                         <div>
-                                            <p className="font-bold text-ink">
-                                                {item.productName}
-                                            </p>
+                                            <Link to={`/shop/${item.productId}`} className="hover:underline">
+                                                <p className="font-bold text-ink">
+                                                    {item.productName}
+                                                </p>
+                                            </Link>
 
                                             {item.description && (
                                                 <p className="mt-1 line-clamp-2 text-body-sm text-muted">

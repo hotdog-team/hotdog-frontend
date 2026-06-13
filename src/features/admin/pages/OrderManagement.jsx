@@ -43,8 +43,10 @@ export default function OrderManagement() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'PENDING': return <span className="text-orange-500 bg-orange-500/10 px-2 py-1 rounded-sm text-xs font-bold">결제대기</span>
-      case 'PAID': return <span className="text-blue-500 bg-blue-500/10 px-2 py-1 rounded-sm text-xs font-bold">결제완료</span>
-      case 'SHIPPING': return <span className="text-indigo-500 bg-indigo-500/10 px-2 py-1 rounded-sm text-xs font-bold">배송중</span>
+      case 'PROCESSING': return <span className="text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-sm text-xs font-bold">결제중</span>
+      case 'COMPLETED': return <span className="text-blue-500 bg-blue-500/10 px-2 py-1 rounded-sm text-xs font-bold">결제완료</span>
+      case 'BEFORE_SHIPMENT': return <span className="text-indigo-500 bg-indigo-500/10 px-2 py-1 rounded-sm text-xs font-bold">배송준비중</span>
+      case 'IN_TRANSIT': return <span className="text-sky-500 bg-sky-500/10 px-2 py-1 rounded-sm text-xs font-bold">배송중</span>
       case 'DELIVERED': return <span className="text-success bg-success/10 px-2 py-1 rounded-sm text-xs font-bold">배송완료</span>
       case 'CANCELLED': return <span className="text-error bg-error/10 px-2 py-1 rounded-sm text-xs font-bold">취소됨</span>
       default: return <span className="text-muted bg-surface-muted px-2 py-1 rounded-sm text-xs font-bold">{status || '상태없음'}</span>
@@ -87,22 +89,37 @@ export default function OrderManagement() {
             {orders.length === 0 ? (
               <tr><td colSpan="6" className="p-8 text-center text-muted">조회된 주문 내역이 없습니다.</td></tr>
             ) : (
-              orders.map((order) => (
-                <tr key={order.id} className="hover:bg-surface-muted/50 transition-colors">
-                  <td className="p-4 text-muted">#{order.id}</td>
-                  <td className="p-4 font-bold text-ink truncate max-w-[200px]">{order.orderName || '상품 외 N건'}</td>
-                  <td className="p-4 text-muted">{order.receiverName || '이름없음'}</td>
-                  <td className="p-4 font-bold text-ink">{order.totalAmount?.toLocaleString()}원</td>
-                  <td className="p-4">{getStatusBadge(order.status)}</td>
-                  <td className="p-4 text-right">
-                    {order.status !== 'CANCELLED' && (
-                      <button onClick={() => handleCancelOrder(order.id)} className="text-error hover:bg-error/10 p-2 rounded-md transition-colors" title="주문 취소">
-                        <XCircle size={18} />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))
+              orders.map((order) => {
+                const orderId = order.orderId || order.id || '-';
+                const status = order.orderStatus || order.status;
+                const amount = order.totalAmount || order.totalPrice || 0;
+                const receiver = order.receiverName || order.memberName || '이름없음';
+
+                let orderName = order.orderName;
+                if (!orderName && order.orderItems && order.orderItems.length > 0) {
+                  const firstItemName = order.orderItems[0].productName;
+                  const extraCount = order.orderItems.length - 1;
+                  orderName = extraCount > 0 ? `${firstItemName} 외 ${extraCount}건` : firstItemName;
+                }
+                orderName = orderName || '상품 정보 없음';
+
+                return (
+                  <tr key={orderId} className="hover:bg-surface-muted/50 transition-colors">
+                    <td className="p-4 text-muted">#{orderId}</td>
+                    <td className="p-4 font-bold text-ink truncate max-w-[200px]">{orderName}</td>
+                    <td className="p-4 text-muted">{receiver}</td>
+                    <td className="p-4 font-bold text-ink">{amount.toLocaleString()}원</td>
+                    <td className="p-4">{getStatusBadge(status)}</td>
+                    <td className="p-4 text-right">
+                      {status !== 'CANCELLED' && (
+                        <button onClick={() => handleCancelOrder(orderId)} className="text-error hover:bg-error/10 p-2 rounded-md transition-colors" title="주문 취소">
+                          <XCircle size={18} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
