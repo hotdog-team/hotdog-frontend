@@ -1,13 +1,18 @@
 import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
 import { ShieldCheck, ArrowRight } from 'lucide-react'
 
 import { ProductCard, Button } from '../../../components/index.js'
 import { useAuthStore } from '../../../store/useAuthStore.js'
 import { useHomeProductsQuery } from '../../../hooks/queries/useProductQuery.js'
 import useHomeRecommendations from '../../../hooks/useHomeRecommendations.js'
-import { buildMetaTagListPath } from '../../../constants/profileMetaTags.js'
+import { buildMetaTagListPath, buildRecommendListPath } from '../../../constants/profileMetaTags.js'
 import useBookmarkedIds from '../../../hooks/useBookmarkedIds.js'
+import { getHiddenIds } from '../../../utils/dislikeHiddenStorage.js'
 import MainSlides from '../components/MainSlides.jsx'
+
+const HOME_RECOMMEND_DISPLAY_COUNT = 12
+const HOME_RECOMMEND_FETCH_SIZE = 20
 
 function SectionHeader({ title, showMore = true, moreTo }) {
   return (
@@ -29,8 +34,14 @@ function HomePage() {
   const user = useAuthStore((state) => state.user)
   const isAdmin = user?.role === 'ROLE_ADMIN'
 
-  const { data: pageData } = useHomeProductsQuery({ size: 12 })
+  const { data: pageData } = useHomeProductsQuery({ size: HOME_RECOMMEND_FETCH_SIZE })
   const products = pageData?.content ?? []
+  const recommendProducts = useMemo(() => {
+    const hiddenIds = getHiddenIds()
+    return products
+      .filter((product) => !hiddenIds.has(Number(product.id)))
+      .slice(0, HOME_RECOMMEND_DISPLAY_COUNT)
+  }, [products])
 
   const { purposeProducts, personalizedProducts, purposeTagIds, merchandisingIds } = useHomeRecommendations()
   const bookmarkedIds = useBookmarkedIds()
@@ -69,9 +80,12 @@ function HomePage() {
 
         <div className="pb-24">
           <section className="layout-container mt-16">
-            <SectionHeader title="오늘의 맞춤 추천" showMore={false} />
+            <SectionHeader
+              title="오늘의 맞춤 추천"
+              moreTo={buildRecommendListPath({ title: '오늘의 맞춤 추천' })}
+            />
             <div className="a11y-grid-4col grid grid-cols-4 gap-7 max-lg:grid-cols-2 max-sm:grid-cols-1">
-              {products.slice(0, 12).map((product) => (
+              {recommendProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}

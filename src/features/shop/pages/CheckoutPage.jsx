@@ -67,7 +67,7 @@ export default function CheckoutPage() {
         } else {
             setLoading(false)
         }
-    }, [type, productId, quantity, cartItemIds, navigate])
+    }, [type, productId, quantity, navigate])
 
     if (loading) {
         return (
