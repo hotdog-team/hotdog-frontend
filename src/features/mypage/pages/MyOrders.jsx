@@ -705,6 +705,8 @@ function MyOrders() {
   const [selectedTrackingOrder, setSelectedTrackingOrder] = useState(null)
   const [selectedReturnOrder, setSelectedReturnOrder] = useState(null)
   const [totalPages, setTotalPages] = useState(1)
+  const [statusGroup, setStatusGroup] = useState('ALL')
+  const [months, setMonths] = useState(null)
 
   const page = Number(searchParams.get('page')) || 1
 
@@ -776,15 +778,21 @@ function MyOrders() {
     }
   }
 
-  const fetchOrders = async () => {
+  const fetchOrders = async ({
+    targetPage = page,
+    nextStatusGroup = statusGroup,
+    nextMonths = months,
+  } = {}) => {
     try {
       setIsLoading(true)
 
       const res = await axiosInstance.get('/api/orders', {
         params: {
-          page: page - 1,
+          page: targetPage - 1,
           size: 10,
           sort: 'createdAt,desc',
+          ...(nextStatusGroup !== 'ALL' && { statusGroup: nextStatusGroup }),
+          ...(nextMonths && { months: nextMonths }),
         },
       })
 
@@ -795,6 +803,23 @@ function MyOrders() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSearch = () => {
+    navigate('/mypage/orders?page=1')
+    fetchOrders({ targetPage: 1 })
+  }
+
+  const handleReset = () => {
+    setStatusGroup('ALL')
+    setMonths(null)
+
+    navigate('/mypage/orders?page=1')
+    fetchOrders({
+      targetPage: 1,
+      nextStatusGroup: 'ALL',
+      nextMonths: null,
+    })
   }
 
   useEffect(() => {
@@ -1009,7 +1034,64 @@ function MyOrders() {
       <h1 className="text-3xl font-extrabold">주문/배송 내역</h1>
       <p className="mt-2 text-md text-muted">내 구매 내역/배송 상태를 확인합니다.</p>
 
-      <section className="mt-12 grid gap-6">
+      <div className="mt-8 rounded-md border border-border bg-surface p-6">
+        <div className="flex flex-wrap items-end gap-6">
+          <div>
+            <label className="mb-2 block text-body-sm font-medium text-ink" htmlFor="order-status-filter">
+              주문 상태
+            </label>
+
+            <select
+              id="order-status-filter"
+              value={statusGroup}
+              onChange={(event) => setStatusGroup(event.target.value)}
+              className="h-10 min-w-36 rounded border border-border bg-surface px-3 text-body-sm outline-none focus:border-brand focus:ring-3 focus:ring-brand/15"
+            >
+              <option value="ALL">전체</option>
+              <option value="PENDING">입금대기</option>
+              <option value="SHIPPING">배송중</option>
+              <option value="DELIVERED">배송완료</option>
+              <option value="CANCEL_RETURN">취소/반품</option>
+            </select>
+          </div>
+
+          <div>
+            <p className="mb-2 text-body-sm font-medium text-ink">조회 기간</p>
+
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: '전체', value: null },
+                { label: '1개월', value: 1 },
+                { label: '3개월', value: 3 },
+                { label: '6개월', value: 6 },
+                { label: '1년', value: 12 },
+              ].map((period) => (
+                <Button
+                  key={period.label}
+                  type="button"
+                  variant={months === period.value ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={() => setMonths(period.value)}
+                >
+                  {period.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button type="button" size="sm" onClick={handleSearch}>
+              조회
+            </Button>
+
+            <Button type="button" variant="outline" size="sm" onClick={handleReset}>
+              초기화
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <section className="mt-8 grid gap-6">
         {isLoading ? (
           <p>로딩 중...</p>
         ) : orders.length === 0 ? (
