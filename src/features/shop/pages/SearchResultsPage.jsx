@@ -57,7 +57,7 @@ function SearchResultsPage({ query, products }) {
           <p className="mb-6 text-body-sm font-semibold text-foreground">총 {products.length}개 상품 중 {filteredProducts.length}개 표시</p>
           <div className="grid grid-cols-3 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
             {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} />
+              <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} isDislikeView={false} />
             ))}
           </div>
           {filteredProducts.length === 0 && (

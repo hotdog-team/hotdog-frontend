@@ -57,10 +57,21 @@ export function buildProfileTagIds(categoryIds, purposeId, merchandisingIds) {
   ]
 }
 
-export function buildMetaTagListPath({ metaTagIds, sort, match, title, size = 100 }) {
+export function buildMetaTagListPath({ metaTagIds, sort, match, title, size = 20 }) {
   const params = new URLSearchParams({ sort, size: String(size), page: '0' })
   if (match === 'all') params.set('match', 'all')
   if (title) params.set('title', title)
   metaTagIds.forEach((id) => params.append('metaTagIds', String(id)))
+  return `/shop?${params.toString()}`
+}
+
+export function buildRecommendListPath({ sort = 'RECOMMEND', title = '오늘의 맞춤 추천', size = 20 } = {}) {
+  const params = new URLSearchParams({
+    list: 'recommend',
+    sort,
+    size: String(size),
+    page: '0',
+  })
+  if (title) params.set('title', title)
   return `/shop?${params.toString()}`
 }
