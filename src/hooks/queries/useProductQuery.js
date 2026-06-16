@@ -34,9 +34,20 @@ export function useProductDetailQuery(productId) {
   });
 }
 /**
+ * 맞춤 추천 상품 목록 조회
+ */
+export function useRecommendProductsQuery({ page = 0, size = 20, sort = 'RECOMMEND' } = {}) {
+  return useQuery({
+    queryKey: ['recommendProducts', page, size, sort],
+    queryFn: () => fetchProducts({ page, size, sort }),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/**
  * 메인 페이지 상품 목록 조회
  */
-export function useHomeProductsQuery({ page = 0, size = 12, sort = 'RECOMMEND' } = {}) {
+export function useHomeProductsQuery({ page = 0, size = 20, sort = 'RECOMMEND' } = {}) {
   return useQuery({
     queryKey: ['homeProducts', page, size, sort],
     queryFn: () => fetchProducts({ page, size, sort }),

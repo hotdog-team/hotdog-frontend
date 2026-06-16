@@ -313,8 +313,8 @@ function ProductDetailPage() {
           </div>
           <div className="a11y-grid-products grid grid-cols-4 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
             {relatedProducts.map((relatedProduct) => (
-              <article key={relatedProduct.id}>
-                <Link to={`/shop/${relatedProduct.id}`}>
+              <article key={relatedProduct.id} aria-label={relatedProduct.name}>
+                <Link to={`/shop/${relatedProduct.id}`} className="focus-ring focus-ring-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink">
                   <img className="h-card w-full rounded-md border border-border-soft object-cover" src={relatedProduct.image} alt={relatedProduct.name} />
                   <p className="mt-4 text-caption text-foreground">{relatedProduct.category}</p>
                   <h3 className="mt-1 text-body-md font-bold">{relatedProduct.name}</h3>

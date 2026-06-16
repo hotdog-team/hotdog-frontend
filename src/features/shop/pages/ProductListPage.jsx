@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import {Link, useSearchParams} from 'react-router-dom'
 import { fetchCategories } from '../../../api/categoryApi'
 import { Button, Pagination, ProductCard } from '../../../components/index.js'
-import { useCategoryProductsQuery, useMetaTagProductsQuery, useProductsQuery } from '../../../hooks/queries/useProductQuery'
+import { useCategoryProductsQuery, useMetaTagProductsQuery, useProductsQuery, useRecommendProductsQuery } from '../../../hooks/queries/useProductQuery'
 import useBookmarkedIds from '../../../hooks/useBookmarkedIds.js'
 
 import {
   categoryCatalog,
   getCategoryByCode,
 } from '../data/catalog'
+import { buildRecommendListPath } from '../../../constants/profileMetaTags.js'
 import EmptySearchResultsPage from './EmptySearchResultsPage'
 import SearchPage from './SearchPage'
 import {ChevronRight} from "lucide-react";
@@ -93,6 +94,19 @@ function buildSearchCategory() {
   }
 }
 
+function buildRecommendCategory(title) {
+  return {
+    id: 'recommend',
+    code: 'recommend',
+    label: title || '오늘의 맞춤 추천',
+    navLabel: title || '오늘의 맞춤 추천',
+    description: '',
+    heroTitle: '',
+    heroDescription: '',
+    image: '',
+  }
+}
+
 function ProductGrid({
   category,
   categories,
@@ -107,6 +121,7 @@ function ProductGrid({
   products,
   query,
   sort,
+  listTitle,
 }) {
   const [searchParams] = useSearchParams()
   const bookmarkedIds = useBookmarkedIds()
@@ -120,7 +135,16 @@ function ProductGrid({
   const totalPages = Math.max(1, pageData?.totalPages ?? 1)
   const visibleStart = totalElements === 0 ? 0 : page * pageSize + 1
   const visibleEnd = Math.min(page * pageSize + products.length, totalElements)
-  const title = query ? `'${query}' 검색 결과` : `${category.label} 카테고리`
+  const title = query
+    ? `'${query}' 검색 결과`
+    : ['recommend', 'meta-tags', 'search'].includes(category.code)
+      ? category.label
+      : `${category.label} 카테고리`
+  const categoryListPath = category.code === 'recommend'
+    ? buildRecommendListPath({ title: listTitle || '오늘의 맞춤 추천' })
+    : ['meta-tags', 'search'].includes(category.code)
+      ? '/shop'
+      : `/shop?categoryId=${encodeURIComponent(category.id)}`
 
   return (
     <main className="layout-container pt-10 pb-24">
@@ -133,7 +157,7 @@ function ProductGrid({
               </Link>
               <li aria-hidden="true"><ChevronRight className="size-3.5 shrink-0" strokeWidth={2} /></li>
               <li aria-current="page">
-                <Link to={`/shop?categoryId=${encodeURIComponent(category.id ?? category.id)}`} className="hover:text-ink transition-colors">
+                <Link to={categoryListPath} className="hover:text-ink transition-colors">
                 {category.navLabel}
                 </Link>
                 </li>
@@ -210,7 +234,13 @@ function ProductGrid({
               </p>
               <div className="a11y-grid-products grid grid-cols-4 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
                 {products.map((product) => (
-                  <ProductCard key={product.id} product={product} to={`/shop/${product.id}`} initialBookmarked={bookmarkedIds.has(Number(product.id))} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    to={`/shop/${product.id}`}
+                    initialBookmarked={bookmarkedIds.has(Number(product.id))}
+                    isDislikeView={!query}
+                  />
                 ))}
               </div>
               {products.length === 0 && (
@@ -243,6 +273,7 @@ function ProductListPage() {
   const metaTagIds = searchParams.getAll('metaTagIds').map(Number).filter((id) => Number.isFinite(id) && id > 0)
   const match = searchParams.get('match') === 'all' ? 'all' : 'any'
   const listTitle = searchParams.get('title')?.trim() ?? ''
+  const isRecommendList = searchParams.get('list') === 'recommend'
   const sortParam = searchParams.get('sort')
   const sort = META_TAG_SORT_VALUES.has(sortParam) ? sortParam : DEFAULT_SORT
   const [categories, setCategories] = useState(() => buildFallbackCategories())
@@ -260,12 +291,15 @@ function ProductListPage() {
   const category = useMemo(() => categories.find((item) => item.id === categoryId) ?? normalizeCategory({ id: categoryId, name: '상품' }), [categories, categoryId])
   const categoryProductsQuery = useCategoryProductsQuery({ categoryId, page, size: pageSize, sort, keyword: query })
   const productsQuery = useProductsQuery({ keyword: query, page, size: pageSize, sort })
+  const recommendProductsQuery = useRecommendProductsQuery({ page, size: pageSize, sort })
   const metaTagProductsQuery = useMetaTagProductsQuery({ metaTagIds, match, page, size: pageSize, sort })
   const activeProductsQuery = metaTagIds.length > 0
     ? metaTagProductsQuery
     : categoryId
       ? categoryProductsQuery
-      : productsQuery
+      : isRecommendList
+        ? recommendProductsQuery
+        : productsQuery
 
   useEffect(() => {
     let isMounted = true
@@ -332,9 +366,9 @@ function ProductListPage() {
 
   let content
 
-  if (!categoryId && !query && metaTagIds.length === 0) {
+  if (!categoryId && !query && metaTagIds.length === 0 && !isRecommendList) {
     content = <SearchPage getCategoryPath={getCategoryPath} />
-  } else if (query && metaTagIds.length === 0 && !activeProductsQuery.isLoading && !activeProductsQuery.error && activeProductsQuery.data?.totalElements === 0) {
+  } else if (query && metaTagIds.length === 0 && !isRecommendList && !activeProductsQuery.isLoading && !activeProductsQuery.error && activeProductsQuery.data?.totalElements === 0) {
     content = <EmptySearchResultsPage getCategoryPath={getCategoryPath} query={query} />
   } else {
     content = (
@@ -344,7 +378,9 @@ function ProductListPage() {
             ? buildMetaTagCategory(listTitle)
             : categoryId
               ? category
-              : buildSearchCategory()
+              : isRecommendList
+                ? buildRecommendCategory(listTitle)
+                : buildSearchCategory()
         }
         categories={categories}
         error={activeProductsQuery.error}
@@ -358,6 +394,7 @@ function ProductListPage() {
         products={activeProductsQuery.data?.content ?? []}
         query={query}
         sort={sort}
+        listTitle={listTitle}
       />
     )
   }

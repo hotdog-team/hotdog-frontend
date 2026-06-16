@@ -3,45 +3,48 @@ import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { addCartItem } from '../../api/cartApi.js'
-import { sendBehaviorLog } from '../../api/behaviorLogApi.js'
+import { sendBehaviorLog, clearDislikeHide } from '../../api/behaviorLogApi.js'
 import Button from '../ui/Button.jsx'
 import { addBookmark, removeBookmark } from '../../api/bookmarkApi.js'
 import { useEffect, useRef, useState } from 'react'
 
+import { removeHiddenId, getHiddenIds, addHiddenId, HIDDEN_STORAGE_KEY } from '../../utils/dislikeHiddenStorage.js'
+
 const DISLIKE_UNDO_MS = 10000
-const HIDDEN_STORAGE_KEY = 'dislike:hidden'
-
-function getHiddenIds() {
-  try {
-    const raw = sessionStorage.getItem(HIDDEN_STORAGE_KEY)
-    return new Set(Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : [])
-  } catch {
-    return new Set()
-  }
-}
-
-function addHiddenId(id) {
-  const next = getHiddenIds()
-  next.add(Number(id))
-  sessionStorage.setItem(HIDDEN_STORAGE_KEY, JSON.stringify([...next]))
-}
-
-function removeHiddenId(id) {
-  const next = getHiddenIds()
-  next.delete(Number(id))
-  sessionStorage.setItem(HIDDEN_STORAGE_KEY, JSON.stringify([...next]))
-}
 
 function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange, isDislikeView = true }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [isBookmarked, setIsBookmarked] = useState(initialBookmarked)
-  const [isHidden, setIsHidden] = useState(() => getHiddenIds().has(Number(product.id)))
+  const [isHidden, setIsHidden] = useState(() => (
+    isDislikeView ? getHiddenIds().has(Number(product.id)) : false
+  ))
   const dislikePendingRef = useRef({ cancelled: false })
 
   useEffect(() => {
     setIsBookmarked(initialBookmarked)
   }, [initialBookmarked])
+
+  useEffect(() => {
+    if (!isDislikeView) {
+      setIsHidden(false)
+      return
+    }
+
+    setIsHidden(getHiddenIds().has(Number(product.id)))
+  }, [isDislikeView, product.id])
+
+  useEffect(() => {
+    if (!isDislikeView) return
+
+    const syncHiddenState = (event) => {
+      if (event.key != null && event.key !== HIDDEN_STORAGE_KEY) return
+      setIsHidden(getHiddenIds().has(Number(product.id)))
+    }
+
+    window.addEventListener('storage', syncHiddenState)
+    return () => window.removeEventListener('storage', syncHiddenState)
+  }, [isDislikeView, product.id])
 
   const handleCardClick = () => {
     if (to) {
@@ -92,11 +95,17 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
     }
   }
 
-  const undoDislike = (toastId) => {
+  const undoDislike = async (toastId) => {
     dislikePendingRef.current.cancelled = true
     setIsHidden(false)
     removeHiddenId(product.id)
     toast.dismiss(toastId)
+
+    try {
+      await clearDislikeHide(product.id)
+    } catch (error) {
+      // dislike 취소 실패 처리는 무시하여 알리지 않는다
+    }
   }
 
   const handleDislikeClick = (event) => {
@@ -105,6 +114,22 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
 
     setIsHidden(true)
     addHiddenId(product.id)
+
+    sendBehaviorLog({ productId: product.id, actionType: 'DISLIKE' })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['homeProducts'] })
+        queryClient.invalidateQueries({ queryKey: ['recommendProducts'] })
+        queryClient.invalidateQueries({ queryKey: ['categoryProducts'] })
+        queryClient.invalidateQueries({ queryKey: ['metaTagProducts'] })
+        queryClient.invalidateQueries({ queryKey: ['homePurpose'] })
+        queryClient.invalidateQueries({ queryKey: ['homePersonalized'] })
+      })
+      .catch((error) => {
+      console.error('DISLIKE 기록 실패:', error)
+      setIsHidden(false)
+      removeHiddenId(product.id)
+      toast.error('요청 처리에 실패했습니다. 다시 시도해 주세요.')
+    })
 
     const toastId = toast.info(
       <div className="flex items-center gap-3 text-body-sm">
@@ -120,15 +145,6 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
       {
         autoClose: DISLIKE_UNDO_MS,
         closeOnClick: false,
-        onClose: () => {
-          if (dislikePendingRef.current.cancelled) return
-          sendBehaviorLog({ productId: product.id, actionType: 'DISLIKE' }).catch((error) => {
-            console.error('DISLIKE 기록 실패:', error)
-            setIsHidden(false)
-            removeHiddenId(product.id)
-            toast.error('요청 처리에 실패했습니다. 다시 시도해 주세요.')
-          })
-        },
       },
     )
   }
@@ -138,7 +154,7 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
   const reviewCount = product.reviewCount ?? product.reviews ?? 0
   const filledStars = Math.round(averageRate)
 
-  if (isHidden) {
+  if (isDislikeView && isHidden) {
     return null
   }
 
