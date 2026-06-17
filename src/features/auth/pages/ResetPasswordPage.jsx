@@ -53,7 +53,7 @@ function ResetPasswordPage() {
         className="layout-container-auth flex flex-1 flex-col justify-center py-10 max-sm:py-8"
         aria-labelledby="reset-title"
       >
-        <AuthLogo className="mx-auto mb-8 h-8 max-sm:mb-6" />
+        <AuthLogo className="mx-auto h-12 max-sm:mb-6" />
 
         <div className="mx-auto w-full max-w-md rounded-lg bg-surface px-6 py-8 shadow-card max-sm:px-5 max-sm:py-6">
           <h1

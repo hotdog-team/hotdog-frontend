@@ -13,7 +13,7 @@ function GlobalFooter({
   return (
     <footer className="border-t border-border-soft bg-surface-muted">
       <div className="layout-container-header flex min-h-17 items-center justify-between gap-8 py-5 max-md:flex-col max-md:items-start max-md:gap-4">
-        <p className="m-0 text-xs font-medium uppercase leading-5 tracking-tight text-muted">{copyright}</p>
+        <p className="m-0 text-xs uppercase leading-5 tracking-tight text-muted">{copyright}</p>
 
         <nav className="flex shrink-0 items-center gap-9 whitespace-nowrap text-xs font-medium text-muted max-sm:flex-wrap max-sm:gap-x-5 max-sm:gap-y-2" aria-label="푸터 링크">
           {links.map((link) => (
