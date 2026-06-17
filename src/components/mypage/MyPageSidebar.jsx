@@ -15,8 +15,8 @@ const navLinkClass =
 
 export default function MyPageSidebar() {
   return (
-    <aside className="h-fit rounded-lg border border-border bg-surface p-5 lg:sticky lg:top-24" aria-label="마이페이지 메뉴">
-      <h2 className="mb-4 px-1 text-body font-semibold text-ink">마이페이지</h2>
+    <aside className="h-fit rounded-lg border border-border bg-surface py-8 px-6 lg:sticky lg:top-24" aria-label="마이페이지 메뉴">
+      <h2 className="mb-4 px-1 text-xl font-semibold text-ink">마이페이지</h2>
       <nav className="flex flex-col divide-y divide-border-soft">
         {navItems.map(({ to, label }) => (
           <NavLink

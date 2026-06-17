@@ -10,7 +10,7 @@ export default function GlobalLayout() {
                 본문 바로가기
             </a>
             <GlobalHeader/>
-            <main id="main-content" className="flex-1">
+            <main id="main-content" className="flex flex-1 flex-col">
                 <Outlet />
             </main>
             <GlobalFooter/>

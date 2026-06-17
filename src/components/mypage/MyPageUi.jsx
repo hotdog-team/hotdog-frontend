@@ -2,7 +2,7 @@ export function MyPageHeader({ title, description, actions }) {
   return (
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-border-soft pb-5">
       <div className="min-w-0">
-        <h1 className="text-3xl font-extrabold tracking-tight text-ink">{title}</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-ink">{title}</h1>
         {description && (
           <p className="mt-1.5 text-body-sm leading-relaxed text-muted">{description}</p>
         )}
