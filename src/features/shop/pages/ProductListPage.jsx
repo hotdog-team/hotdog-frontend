@@ -1,35 +1,30 @@
 import { useEffect, useMemo, useState } from 'react'
-import {Link, useSearchParams} from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { fetchCategories } from '../../../api/categoryApi'
 import { Button, Pagination, ProductCard } from '../../../components/index.js'
-import { useCategoryProductsQuery, useMetaTagProductsQuery, useProductsQuery, useRecommendProductsQuery } from '../../../hooks/queries/useProductQuery'
+import {
+  useCategoryProductsQuery,
+  useMetaTagProductsQuery,
+  useProductsQuery,
+  useRecommendProductsQuery,
+} from '../../../hooks/queries/useProductQuery'
 import useBookmarkedIds from '../../../hooks/useBookmarkedIds.js'
+import { useAuthStore } from '../../../store/useAuthStore.js'
 
 import {
   categoryCatalog,
   getCategoryByCode,
 } from '../data/catalog'
 import { buildRecommendListPath } from '../../../constants/profileMetaTags.js'
-import EmptySearchResultsPage from './EmptySearchResultsPage'
-import SearchPage from './SearchPage'
-import {ChevronRight} from "lucide-react";
+import ShopBreadcrumb from '../components/ShopBreadcrumb.jsx'
+import ProductSortBar, { PRODUCT_SORT_OPTIONS } from '../components/ProductSortBar.jsx'
 
 const DEFAULT_PAGE_SIZE = 20
 const DEFAULT_SORT = 'RECOMMEND'
 
 const PAGE_SIZE_OPTIONS = [20, 40, 60, 100]
 
-const SORT_OPTIONS = [
-  { label: '기본', value: 'RECOMMEND' },
-  { label: '최신순', value: 'LATEST' },
-  { label: '판매순', value: 'SALES' },
-  { label: '낮은 가격순', value: 'LOW_PRICE' },
-  { label: '높은 가격순', value: 'HIGH_PRICE' },
-  { label: '인기순', value: 'POPULAR' },
-
-]
-
-const META_TAG_SORT_VALUES = new Set([...SORT_OPTIONS.map((o) => o.value), 'ATTENTION'])
+const META_TAG_SORT_VALUES = new Set([...PRODUCT_SORT_OPTIONS.map((option) => option.value), 'ATTENTION'])
 
 function parsePage(value) {
   const page = Number(value)
@@ -109,7 +104,6 @@ function buildRecommendCategory(title) {
 
 function ProductGrid({
   category,
-  categories,
   error,
   isLoading,
   onRetry,
@@ -125,6 +119,7 @@ function ProductGrid({
 }) {
   const [searchParams] = useSearchParams()
   const bookmarkedIds = useBookmarkedIds()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const getPageHref = (pageOneBased) => {
     const nextSearchParams = new URLSearchParams(searchParams)
     nextSearchParams.set('page', String(pageOneBased - 1))
@@ -133,10 +128,8 @@ function ProductGrid({
 
   const totalElements = pageData?.totalElements ?? 0
   const totalPages = Math.max(1, pageData?.totalPages ?? 1)
-  const visibleStart = totalElements === 0 ? 0 : page * pageSize + 1
-  const visibleEnd = Math.min(page * pageSize + products.length, totalElements)
-  const title = query
-    ? `'${query}' 검색 결과`
+  const heading = query
+    ? null
     : ['recommend', 'meta-tags', 'search'].includes(category.code)
       ? category.label
       : `${category.label} 카테고리`
@@ -147,118 +140,84 @@ function ProductGrid({
       : `/shop?categoryId=${encodeURIComponent(category.id)}`
 
   return (
-    <main className="layout-container pt-10 pb-24">
-      <div className="mb-10 flex items-end justify-between gap-6 max-md:flex-col max-md:items-start">
-        <div>
-          <nav aria-label="현재 위치">
-            <ol className="flex items-center text-caption text-muted">
-              <Link to={'/home'} className="hover:text-ink transition-colors">
-                홈
-              </Link>
-              <li aria-hidden="true"><ChevronRight className="size-3.5 shrink-0" strokeWidth={2} /></li>
-              <li aria-current="page">
-                <Link to={categoryListPath} className="hover:text-ink transition-colors">
-                {category.navLabel}
-                </Link>
-                </li>
-            </ol>
-          </nav>
-          <h1 className="mt-5 text-3xl font-bold">{title}</h1>
-          {category.description && <p className="mt-4 text-body-lg text-foreground">{category.description}</p>}
+    <main className="layout-container pt-8 pb-24">
+      <div className="mb-8">
+        <ShopBreadcrumb
+          items={[
+            { label: '홈', to: '/home' },
+            { label: category.navLabel, to: categoryListPath, isCurrent: true },
+          ]}
+        />
+        <div className="mt-2">
+          <h1 className="text-3xl font-bold">
+            {query ? (
+              <>
+                &apos;{query}&apos; 검색 결과
+                {!isLoading && !error ? ` ${totalElements.toLocaleString()}건` : ''}
+              </>
+            ) : (
+              heading
+            )}
+          </h1>
         </div>
-        <div className="flex flex-wrap items-center gap-4 text-body-sm">
-          <label className="flex items-center gap-3">
-            <span className="text-muted">표시 개수:</span>
-            <select
-              className="h-11 rounded border border-border bg-surface px-4 text-ink"
-              value={pageSize}
-              onChange={(event) => onSizeChange(Number(event.target.value))}
-            >
-              {PAGE_SIZE_OPTIONS.map((option) => (
-                <option value={option} key={option}>{option}개씩 보기</option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-3">
-            <span className="text-muted">정렬 기준:</span>
-            <select
-              className="h-11 rounded border border-border bg-surface px-4 text-ink"
-              value={sort}
-              onChange={(event) => onSortChange(event.target.value)}
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option value={option.value} key={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </label>
-        </div>
+        {category.description && <p className="mt-4 text-body-lg text-foreground">{category.description}</p>}
       </div>
 
-      {category.image && (
-        <section
-          className="mb-14 h-banner overflow-hidden rounded-md bg-ink px-10 pt-hero-inset text-white"
-          style={{
-            backgroundImage: `linear-gradient(90deg, color-mix(in srgb, var(--color-navy) 92%, transparent), color-mix(in srgb, var(--color-navy) 44%, transparent)), url(${category.image})`,
-            backgroundPosition: 'center',
-            backgroundSize: 'cover',
-          }}
-        >
-          <span className="rounded-sm bg-brand px-3 py-2 text-caption font-bold">시즌 이벤트</span>
-          <h2 className="mt-5 text-2xl font-light">{category.heroTitle}</h2>
-          <p className="mt-4 max-w-prose text-body leading-6 text-on-navy-muted">{category.heroDescription}</p>
-        </section>
-      )}
+      <div className="mb-8 border-y border-border-soft py-2">
+        <ProductSortBar
+          sort={sort}
+          onSortChange={onSortChange}
+          pageSize={pageSize}
+          onSizeChange={onSizeChange}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+          showRecommendHelp={isAuthenticated}
+        />
+      </div>
 
-      <div className="a11y-grid-sidebar grid gap-10 max-lg:grid-cols-1">
+      <section>
+        {isLoading && (
+          <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-muted">
+            상품을 불러오는 중입니다.
+          </div>
+        )}
 
-        <section>
-          {isLoading && (
-            <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-muted">
-              상품을 불러오는 중입니다.
+        {error && (
+          <div className="rounded border border-error-border bg-surface px-6 py-10 text-center text-error">
+            <p>상품 목록을 불러오지 못했습니다.</p>
+            <Button className="mt-4" type="button" variant="secondary" size="sm" onClick={onRetry}>
+              다시 시도
+            </Button>
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <>
+            <div className="a11y-grid-products grid grid-cols-5 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  to={`/shop/${product.id}`}
+                  initialBookmarked={bookmarkedIds.has(Number(product.id))}
+                  isDislikeView={!query}
+                />
+              ))}
             </div>
-          )}
-
-          {error && (
-            <div className="rounded border border-error-border bg-surface px-6 py-10 text-center text-error">
-              <p>상품 목록을 불러오지 못했습니다.</p>
-              <Button className="mt-4" type="button" variant="secondary" size="sm" onClick={onRetry}>
-                다시 시도
-              </Button>
-            </div>
-          )}
-
-          {!isLoading && !error && (
-            <>
-              <p className="mb-6 text-body-sm font-semibold text-foreground">
-                총 {totalElements}개 상품 중 {visibleStart}-{visibleEnd}개 표시
-              </p>
-              <div className="a11y-grid-products grid grid-cols-4 gap-7 max-xl:grid-cols-2 max-sm:grid-cols-1">
-                {products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    to={`/shop/${product.id}`}
-                    initialBookmarked={bookmarkedIds.has(Number(product.id))}
-                    isDislikeView={!query}
-                  />
-                ))}
+            {products.length === 0 && (
+              <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-muted">
+                선택한 조건과 일치하는 상품이 없습니다.
               </div>
-              {products.length === 0 && (
-                <div className="rounded border border-border-soft bg-surface px-6 py-10 text-center text-muted">
-                  선택한 조건과 일치하는 상품이 없습니다.
-                </div>
-              )}
-              <Pagination
-                className="mt-16"
-                page={page + 1}
-                totalPages={totalPages}
-                getPageHref={getPageHref}
-                ariaLabel="상품 페이지"
-              />
-            </>
-          )}
-        </section>
-      </div>
+            )}
+            <Pagination
+              className="mt-16"
+              page={page + 1}
+              totalPages={totalPages}
+              getPageHref={getPageHref}
+              ariaLabel="상품 페이지"
+            />
+          </>
+        )}
+      </section>
     </main>
   )
 }
@@ -293,11 +252,13 @@ function ProductListPage() {
   const productsQuery = useProductsQuery({ keyword: query, page, size: pageSize, sort })
   const recommendProductsQuery = useRecommendProductsQuery({ page, size: pageSize, sort })
   const metaTagProductsQuery = useMetaTagProductsQuery({ metaTagIds, match, page, size: pageSize, sort })
+  const isBareShopLanding = !categoryId && !query && metaTagIds.length === 0
+  const shouldUseRecommendQuery = isRecommendList || isBareShopLanding
   const activeProductsQuery = metaTagIds.length > 0
     ? metaTagProductsQuery
     : categoryId
       ? categoryProductsQuery
-      : isRecommendList
+      : shouldUseRecommendQuery
         ? recommendProductsQuery
         : productsQuery
 
@@ -351,55 +312,31 @@ function ProductListPage() {
     updateListParams({ size: nextSize, page: 0 })
   }
 
-  const getCategoryPath = (categoryCode) => {
-    const fallbackCategory = getCategoryByCode(categoryCode)
-    const nextCategory = categories.find((item) => (
-      item.id === categoryCode ||
-      item.code === categoryCode ||
-      item.label === fallbackCategory?.label ||
-      item.navLabel === fallbackCategory?.navLabel
-    ))
-    const nextCategoryId = nextCategory?.id ?? categoryCode
-
-    return `/shop?categoryId=${encodeURIComponent(nextCategoryId)}&sort=${DEFAULT_SORT}&size=${DEFAULT_PAGE_SIZE}&page=0`
-  }
-
-  let content
-
-  if (!categoryId && !query && metaTagIds.length === 0 && !isRecommendList) {
-    content = <SearchPage getCategoryPath={getCategoryPath} />
-  } else if (query && metaTagIds.length === 0 && !isRecommendList && !activeProductsQuery.isLoading && !activeProductsQuery.error && activeProductsQuery.data?.totalElements === 0) {
-    content = <EmptySearchResultsPage getCategoryPath={getCategoryPath} query={query} />
-  } else {
-    content = (
-      <ProductGrid
-        category={
-          metaTagIds.length > 0
-            ? buildMetaTagCategory(listTitle)
-            : categoryId
-              ? category
-              : isRecommendList
-                ? buildRecommendCategory(listTitle)
-                : buildSearchCategory()
-        }
-        categories={categories}
-        error={activeProductsQuery.error}
-        isLoading={activeProductsQuery.isLoading}
-        onRetry={activeProductsQuery.refetch}
-        onSizeChange={handleSizeChange}
-        onSortChange={handleSortChange}
-        page={page}
-        pageData={activeProductsQuery.data}
-        pageSize={pageSize}
-        products={activeProductsQuery.data?.content ?? []}
-        query={query}
-        sort={sort}
-        listTitle={listTitle}
-      />
-    )
-  }
-
-  return content
+  return (
+    <ProductGrid
+      category={
+        metaTagIds.length > 0
+          ? buildMetaTagCategory(listTitle)
+          : categoryId
+            ? category
+            : shouldUseRecommendQuery
+              ? buildRecommendCategory(listTitle)
+              : buildSearchCategory()
+      }
+      error={activeProductsQuery.error}
+      isLoading={activeProductsQuery.isLoading}
+      onRetry={activeProductsQuery.refetch}
+      onSizeChange={handleSizeChange}
+      onSortChange={handleSortChange}
+      page={page}
+      pageData={activeProductsQuery.data}
+      pageSize={pageSize}
+      products={activeProductsQuery.data?.content ?? []}
+      query={query}
+      sort={sort}
+      listTitle={listTitle}
+    />
+  )
 }
 
 export default ProductListPage

@@ -38,7 +38,7 @@ export default function AdminHeader() {
           to="/admin/dashboard"
           aria-label="관리자 홈으로 가기"
         >
-          <img className="h-8 w-auto object-contain" src={dtoLogo} aria-hidden="true" alt="" />
+          <img className="h-8.5 w-auto object-contain" src={dtoLogo} aria-hidden="true" alt="" />
           <span className="rounded-sm bg-surface-muted px-2 py-1 text-caption font-semibold text-ink">관리자</span>
         </Link>
 

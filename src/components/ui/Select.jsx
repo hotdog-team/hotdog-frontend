@@ -1,12 +1,13 @@
 import { useId, useMemo } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { formControlFocusClass, formControlFocusMutedClass } from './formControlFocus.js'
 
 const selectVariants = {
   variant: {
     default:
-      'rounded border border-border bg-surface text-ink outline-none focus:border-brand focus:ring-3 focus:ring-brand/15',
+      `rounded border border-border bg-surface text-ink ${formControlFocusClass}`,
     muted:
-      'rounded-sm border border-transparent bg-surface-muted text-ink outline-none focus:border-brand focus:bg-surface focus:ring-3 focus:ring-brand/15',
+      `rounded-sm border border-transparent bg-surface-muted text-ink ${formControlFocusMutedClass}`,
   },
   size: {
     sm: 'min-h-9 px-4 py-2 text-sm font-medium',

@@ -1,25 +1,39 @@
-import { EyeOff, Heart, ShoppingCart, Star } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Ellipsis, Heart, ShoppingCart, Star } from 'lucide-react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { addCartItem } from '../../api/cartApi.js'
 import { sendBehaviorLog, clearDislikeHide } from '../../api/behaviorLogApi.js'
-import Button from '../ui/Button.jsx'
 import { addBookmark, removeBookmark } from '../../api/bookmarkApi.js'
 import { useEffect, useRef, useState } from 'react'
 
 import { removeHiddenId, getHiddenIds, addHiddenId, HIDDEN_STORAGE_KEY } from '../../utils/dislikeHiddenStorage.js'
+import { useAuthStore } from '../../store/useAuthStore.js'
+import { redirectToLogin } from '../../utils/requireLogin.js'
 
 const DISLIKE_UNDO_MS = 10000
 
-function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange, isDislikeView = true }) {
+function ProductCard({
+  product,
+  to,
+  initialBookmarked = false,
+  onBookmarkChange,
+  isDislikeView = true,
+  showCategory = true,
+  showBookmark = true,
+  showCartButton = true,
+}) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const queryClient = useQueryClient()
   const [isBookmarked, setIsBookmarked] = useState(initialBookmarked)
   const [isHidden, setIsHidden] = useState(() => (
     isDislikeView ? getHiddenIds().has(Number(product.id)) : false
   ))
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const dislikePendingRef = useRef({ cancelled: false })
+  const menuRef = useRef(null)
 
   useEffect(() => {
     setIsBookmarked(initialBookmarked)
@@ -46,7 +60,28 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
     return () => window.removeEventListener('storage', syncHiddenState)
   }, [isDislikeView, product.id])
 
+  useEffect(() => {
+    if (!isMenuOpen) return
+
+    const handlePointerDown = (event) => {
+      if (menuRef.current?.contains(event.target)) return
+      setIsMenuOpen(false)
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setIsMenuOpen(false)
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isMenuOpen])
+
   const handleCardClick = () => {
+    setIsMenuOpen(false)
     if (to) {
       navigate(to)
     }
@@ -61,6 +96,10 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
 
   const handleWishlistClick = async (event) => {
     event.stopPropagation()
+    if (!isAuthenticated) {
+      redirectToLogin(navigate, location)
+      return
+    }
     try {
       if (isBookmarked) {
         await removeBookmark(Number(product.id))
@@ -86,6 +125,10 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
 
   const handleAddToCartClick = async (event) => {
     event.stopPropagation()
+    if (!isAuthenticated) {
+      redirectToLogin(navigate, { pathname: '/cart' })
+      return
+    }
     try {
       await addCartItem(Number(product.id), 1)
       toast.success(`${product.name}을(를) 장바구니에 담았습니다.`)
@@ -110,6 +153,7 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
 
   const handleDislikeClick = (event) => {
     event.stopPropagation()
+    setIsMenuOpen(false)
     dislikePendingRef.current = { cancelled: false }
 
     setIsHidden(true)
@@ -152,7 +196,9 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
   const cardLinkLabel = to ? `${product.name} 상세 보기` : undefined
   const averageRate = product.averageRate ?? product.rating ?? 0
   const reviewCount = product.reviewCount ?? product.reviews ?? 0
-  const filledStars = Math.round(averageRate)
+  const hasRating = averageRate > 0
+  const discountRate = Number(product.discountRate ?? 0)
+  const categoryLabel = product.categoryName ?? product.category ?? '상품'
 
   if (isDislikeView && isHidden) {
     return null
@@ -160,87 +206,127 @@ function ProductCard({ product, to, initialBookmarked = false, onBookmarkChange,
 
   return (
     <article
-      className={`group overflow-hidden rounded-md border border-border-soft bg-surface shadow-card ${to ? 'cursor-pointer motion-safe-transition hover:shadow-card-hover' : ''}`}
+      className={to ? 'cursor-pointer motion-safe-transition' : undefined}
       role={to ? 'link' : undefined}
       tabIndex={to ? 0 : undefined}
       aria-label={cardLinkLabel}
       onClick={handleCardClick}
       onKeyDown={handleCardKeyDown}
     >
-      <div className="relative aspect-product overflow-hidden bg-surface-muted">
-        {product.image?.trim() ? (
-          <img
-            className="h-full w-full object-cover"
-            src={product.image}
-            alt={product.name}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-caption text-muted">
-            이미지 없음
-          </div>
-        )}
-
-        {isDislikeView &&
-            (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-start bg-linear-to-t from-black/55 to-transparent px-3 pb-3 pt-8 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          <button
-            type="button"
-            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full bg-surface/95 px-3 py-1.5 text-caption font-medium text-ink shadow-sm motion-safe-transition hover:bg-surface"
-            onClick={handleDislikeClick}
-          >
-            <EyeOff className="size-3.5" strokeWidth={2.2} aria-hidden="true" />
-            당분간 보지 않기
-          </button>
+      <div className="relative aspect-product bg-surface-muted">
+        <div className="absolute inset-0 overflow-hidden">
+          {product.image?.trim() ? (
+            <img
+              className="h-full w-full object-cover"
+              src={product.image}
+              alt={product.name}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-caption text-muted">
+              이미지 없음
+            </div>
+          )}
         </div>
-            )
-        }
-        <button
-          className="absolute top-2 right-2 inline-flex size-8 items-center justify-center rounded-full border border-border-soft bg-surface/95 text-ink motion-safe-transition hover:bg-surface-muted"
-          type="button"
-          aria-label={`${product.name} 찜하기`}
-          onClick={handleWishlistClick}
-        >
-          <Heart
-            className={`size-5 transition-colors ${isBookmarked ? 'fill-brand text-brand' : ''}`}
-            strokeWidth={2.2}
-            aria-hidden="true"
-          />
-        </button>
+
+        {showBookmark && (
+          <button
+            className="absolute bottom-2 right-2 z-10 inline-flex size-10 items-center justify-center motion-safe-transition"
+            type="button"
+            aria-label={`${product.name} 찜하기`}
+            onClick={handleWishlistClick}
+          >
+            <Heart
+              className={`size-6 drop-shadow-icon-stroke transition-colors ${
+                isBookmarked ? 'fill-brand text-brand' : 'fill-none text-white'
+              }`}
+              strokeWidth={2.2}
+              aria-hidden="true"
+            />
+          </button>
+        )}
       </div>
 
-      <div className="px-5 pt-5 pb-4">
-        <h3 className="line-clamp-2 text-body font-medium text-ink">{product.name}</h3>
-        <div className="mt-1 flex items-center gap-1 text-caption font-semibold text-ink">
-          <span className="flex gap-0.5" aria-hidden="true">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                className={`size-3 ${star <= filledStars ? 'fill-rating text-rating' : 'fill-border text-border-soft'}`}
-                strokeWidth={0}
-              />
-            ))}
-          </span>
+      <div className="pt-0.5 pb-4">
+        {(showCategory || isDislikeView) && (
+        <div className="flex items-center justify-between gap-2">
+          {showCategory && (
+            <p className="min-w-0 truncate text-caption font-medium text-muted">{categoryLabel}</p>
+          )}
+          {isDislikeView && (
+            <div ref={menuRef} className="relative shrink-0">
+              <button
+                type="button"
+                className={`inline-flex size-8 items-center justify-center rounded-full motion-safe-transition hover:bg-surface-muted ${
+                  isMenuOpen ? 'bg-surface-muted' : ''
+                }`}
+                aria-label={`${product.name} 더보기`}
+                aria-haspopup="menu"
+                aria-expanded={isMenuOpen}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setIsMenuOpen((open) => !open)
+                }}
+              >
+                <Ellipsis
+                  className="size-4 text-muted"
+                  strokeWidth={2.2}
+                  aria-hidden="true"
+                />
+              </button>
+
+              {isMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute top-full right-0 z-20 mt-1 min-w-32 overflow-hidden rounded-lg border border-border-soft bg-surface py-1 shadow-card-hover"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="w-full px-4 py-2.5 text-left text-body-sm font-medium text-ink motion-safe-transition hover:bg-surface-muted"
+                    onClick={handleDislikeClick}
+                  >
+                    당분간 보지 않기
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        )}
+
+        <h3 className="line-clamp-2 text-body font-medium text-muted tracking-tight">{product.name}</h3>
+        <div className="mt-1 flex h-7 items-center justify-between gap-2">
+          <p className="flex min-w-0 items-baseline gap-1 text-body-lg font-bold text-ink">
+            {discountRate > 0 && (
+              <span className="text-[0.9em] text-brand">{discountRate}%</span>
+            )}
+            <span className="inline-flex items-baseline">
+              <span>{product.salePrice?.toLocaleString()}</span>
+              <span className="text-body font-medium">원</span>
+            </span>
+          </p>
+          {showCartButton && (
+          <button
+            type="button"
+            className="inline-flex h-7 shrink-0 items-center justify-center rounded-full border border-border bg-surface px-3 text-ink motion-safe-transition hover:border-ink hover:bg-surface-muted"
+            aria-label={`${product.name} 장바구니 담기`}
+            onClick={handleAddToCartClick}
+          >
+            <ShoppingCart className="size-4" strokeWidth={2.3} aria-hidden="true" />
+          </button>
+          )}
+        </div>
+        <div className="mt-1 flex items-center gap-1 text-caption font-medium text-ink">
+          <Star
+            className={`size-3 shrink-0 ${hasRating ? 'fill-rating text-rating' : 'fill-border text-border-soft'}`}
+            strokeWidth={0}
+            aria-hidden="true"
+          />
           <span className="sr-only">별점 {averageRate.toFixed(1)}점, 리뷰 {reviewCount}개</span>
           <span aria-hidden="true">{averageRate.toFixed(1)}</span>
-          <span className="text-muted" aria-hidden="true">({reviewCount}개)</span>
+          <span className="text-muted" aria-hidden="true">({reviewCount})</span>
         </div>
-        <p className="mt-1 text-body-md font-semibold text-ink">
-          {product.salePrice?.toLocaleString()}원{' '}
-          <span className="line-through font-light text-muted text-body-sm" aria-hidden="true">
-            {product.originPrice?.toLocaleString()}원
-          </span>
-        </p>
-        <Button
-          className="mt-4 rounded-sm"
-          type="button"
-          variant="primary"
-          size="sm"
-          fullWidth
-          onClick={handleAddToCartClick}
-        >
-          <ShoppingCart className="size-4" strokeWidth={2.3} aria-hidden="true" />
-          장바구니 담기
-        </Button>
       </div>
     </article>
   )

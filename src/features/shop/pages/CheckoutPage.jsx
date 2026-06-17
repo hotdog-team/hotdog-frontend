@@ -1,105 +1,164 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
     getCheckoutFromCart,
     getCheckoutDirect,
 } from '../../../api/checkoutApi'
 import { getAddresses } from '../../../api/addressApi'
 import { createOrder } from '../../../api/orderApi'
-import AddressModal from '../components/AddressModal'
+import CheckoutAddressPickerModal from '../components/CheckoutAddressPickerModal'
+import OrderProgressSteps from '../components/OrderProgressSteps'
 import CashPaymentModal from '../../payment/components/CashPaymentModal'
 import { loadTossPayments } from '@tosspayments/payment-sdk'
+import { SHIPPING_MEMO_OPTIONS } from '../constants/shippingMemoOptions.js'
+import { resolveDeliveryFee } from '../utils/resolveDeliveryFee.js'
+import OrderCheckoutFooter from '../components/OrderCheckoutFooter.jsx'
+import { Button, Select, PageLoadingBox, PageErrorBox, formControlFocusClass } from '../../../components/index.js'
+
+const EMPTY_CART_ITEM_IDS = []
+
+function enrichCheckoutItems(data, fallbackImageUrl) {
+    if (!data?.items?.length || !fallbackImageUrl) {
+        return data
+    }
+
+    return {
+        ...data,
+        items: data.items.map((item) => ({
+            ...item,
+            imageUrl: item.imageUrl ?? item.image ?? fallbackImageUrl,
+        })),
+    }
+}
 
 export default function CheckoutPage() {
     const location = useLocation()
     const navigate = useNavigate()
 
+    const routeState = location.state ?? {}
     const {
         type,
         productId,
         quantity,
-        cartItemIds = [],
-    } = location.state ?? {}
+    } = routeState
+    const cartItemIds = routeState.cartItemIds ?? EMPTY_CART_ITEM_IDS
+    const cartItemIdsKey = cartItemIds.join(',')
 
     const [checkoutData, setCheckoutData] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [fetchFailed, setFetchFailed] = useState(false)
 
     const [addresses, setAddresses] = useState([])
     const [address, setAddress] = useState(null)
 
     const [paymentMethod, setPaymentMethod] = useState('CARD')
-    const [requestMessage, setRequestMessage] = useState('')
+    const [shippingMemo, setShippingMemo] = useState('')
+    const [customMemo, setCustomMemo] = useState('')
 
-    const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+    const [isAddressPickerOpen, setIsAddressPickerOpen] = useState(false)
     const [isCashModalOpen, setIsCashModalOpen] = useState(false)
+
+    const refreshAddresses = async () => {
+        const addressData = await getAddresses()
+        setAddresses(addressData)
+        return addressData
+    }
 
     useEffect(() => {
         const isDirect = type === 'direct' && productId
-        const isCart = Array.isArray(cartItemIds) && cartItemIds.length > 0 || type === 'cart'
+        const isCart = (Array.isArray(cartItemIds) && cartItemIds.length > 0) || type === 'cart'
+
+        if (!isDirect && !isCart) {
+            setLoading(false)
+            alert('주문 정보가 없습니다.')
+            navigate(-1)
+            return undefined
+        }
+
+        let cancelled = false
+        setLoading(true)
+        setFetchFailed(false)
 
         const fetchCheckout = async () => {
             try {
-                let data;
-                if (isDirect) { data = await getCheckoutDirect(productId, quantity); }
-                else if (isCart) { data = await getCheckoutFromCart(cartItemIds); }
-                else { alert('주문 정보가 없습니다.'); return navigate('/home'); }
+                let data
+                if (isDirect) {
+                    data = await getCheckoutDirect(productId, quantity)
+                    data = enrichCheckoutItems(data, routeState.imageUrl)
+                } else {
+                    data = await getCheckoutFromCart(cartItemIds)
+                }
 
-                console.log('주문서 조회 결과:', data)
+                if (cancelled) return
+
                 setCheckoutData(data)
 
-                const addressData = await getAddresses()
-                setAddresses(addressData)
+                const addressData = await refreshAddresses()
+                if (cancelled) return
 
                 const defaultAddress =
                     addressData.find((item) => item.isDefault) || addressData[0]
 
                 setAddress(defaultAddress)
             } catch (error) {
+                if (cancelled) return
                 console.error(error)
+                setFetchFailed(true)
                 alert('주문서 조회에 실패했습니다.')
+                navigate(-1)
             } finally {
-                setLoading(false)
+                if (!cancelled) {
+                    setLoading(false)
+                }
             }
         }
 
-        if (isDirect || isCart) {
-            fetchCheckout()
-        } else {
-            setLoading(false)
-        }
-    }, [type, productId, quantity, navigate])
+        fetchCheckout()
 
-    if (loading) {
+        return () => {
+            cancelled = true
+        }
+    }, [type, productId, quantity, cartItemIdsKey, navigate])
+
+    if (loading || fetchFailed) {
         return (
             <main className="layout-container py-12">
-                <p className="text-body text-muted">
-                    주문 정보를 불러오는 중입니다.
-                </p>
+                <PageLoadingBox label="주문 정보를 불러오는 중입니다." />
             </main>
         )
     }
 
-    const orderItems = checkoutData?.items || []
+    if (!checkoutData) {
+        return (
+            <main className="layout-container py-12">
+                <PageErrorBox title="주문 정보를 불러올 수 없습니다." />
+            </main>
+        )
+    }
+
+    const orderItems = checkoutData.items || []
 
     const { originalTotalAmount, totalDiscountAmount } = orderItems.reduce((acc, item) => {
-        const price = Number(item.price ?? item.unitPrice ?? item.salePrice ?? 0);
-        const qty = Number(item.quantity ?? 1);
-        const discountRate = Number(item.discountRate ?? 0);
-
-        const itemDiscount = Math.floor(price * (discountRate / 100));
+        const price = Number(item.unitPrice ?? item.price ?? item.salePrice ?? 0)
+        const qty = Number(item.quantity ?? 1)
+        const discountRate = Number(item.discountRate ?? 0)
+        const itemDiscount = Math.floor(price * (discountRate / 100))
 
         return {
             originalTotalAmount: acc.originalTotalAmount + (price * qty),
-            totalDiscountAmount: acc.totalDiscountAmount + (itemDiscount * qty)
-        };
-    }, { originalTotalAmount: 0, totalDiscountAmount: 0 });
+            totalDiscountAmount: acc.totalDiscountAmount + (itemDiscount * qty),
+        }
+    }, { originalTotalAmount: 0, totalDiscountAmount: 0 })
 
-    const finalTotalAmount = originalTotalAmount - totalDiscountAmount;
+    const deliveryFee = resolveDeliveryFee(orderItems)
+    const productTotalAmount = originalTotalAmount - totalDiscountAmount
+    const finalTotalAmount = productTotalAmount + deliveryFee
+    const requestMessage = shippingMemo === 'custom' ? customMemo : shippingMemo
 
     const handlePayment = async () => {
         if (!address) {
-            alert("배송지를 선택해주세요.");
-            return;
+            alert('배송지를 선택해주세요.')
+            return
         }
 
         try {
@@ -107,7 +166,7 @@ export default function CheckoutPage() {
                 cartItemIds,
                 orderItems: checkoutData.items.map((item) => ({
                     productId: item.productId,
-                    source: item.source || "INTERNAL",
+                    source: item.source || 'INTERNAL',
                     quantity: Number(item.quantity ?? 1),
                 })),
                 receiverName: address.receiverName,
@@ -115,17 +174,17 @@ export default function CheckoutPage() {
                 deliveryAddress: `(${address.zipCode}) ${address.baseAddress} ${address.detailAddress}`,
                 requestMessage,
                 totalAmount: finalTotalAmount,
-                deliveryFee: 0,
+                deliveryFee,
                 paymentMethod,
-            };
+            }
 
-            const orderId = await createOrder(orderRequest);
-            navigate(`/mypage/orders/${orderId}`);
+            const orderId = await createOrder(orderRequest)
+            navigate(`/mypage/orders/${orderId}`, { state: { fromCheckout: true } })
         } catch (error) {
-            console.error("주문 생성 실패:", error);
-            alert("주문 생성에 실패했습니다.");
+            console.error('주문 생성 실패:', error)
+            alert('주문 생성에 실패했습니다.')
         }
-    };
+    }
 
     const handleTossPayment = async () => {
         if (!address) {
@@ -145,15 +204,14 @@ export default function CheckoutPage() {
                 deliveryAddress: `(${address.zipCode}) ${address.baseAddress} ${address.detailAddress}`,
                 requestMessage,
                 totalAmount: finalTotalAmount,
-                deliveryFee: 0,
+                deliveryFee,
                 paymentMethod: 'CARD',
             }
 
-            // 주문 먼저 생성
             const orderId = await createOrder(orderRequest)
 
             const tossPayments = await loadTossPayments(
-                import.meta.env.VITE_TOSS_CLIENT_KEY
+                import.meta.env.VITE_TOSS_CLIENT_KEY,
             )
 
             await tossPayments.requestPayment('카드', {
@@ -175,11 +233,13 @@ export default function CheckoutPage() {
 
     const handleClickPayment = () => {
         if (!address) {
-            return alert('배송지를 선택해주세요.');
+            alert('배송지를 선택해주세요.')
+            return
         }
 
         if (finalTotalAmount <= 0) {
-            return handlePayment();
+            handlePayment()
+            return
         }
 
         if (paymentMethod === 'CASH') {
@@ -197,16 +257,13 @@ export default function CheckoutPage() {
 
     return (
         <>
-            {isAddressModalOpen && (
-                <AddressModal
-                    onClose={() => setIsAddressModalOpen(false)}
-                    onSuccess={async () => {
-                        const addressData = await getAddresses()
-                        setAddresses(addressData)
-                        const defaultAddress = addressData.find((item) => item.isDefault) || addressData[0]
-                        setAddress(defaultAddress)
-                        setIsAddressModalOpen(false)
-                    }}
+            {isAddressPickerOpen && (
+                <CheckoutAddressPickerModal
+                    addresses={addresses}
+                    selectedAddress={address}
+                    onClose={() => setIsAddressPickerOpen(false)}
+                    onSelect={setAddress}
+                    onAddressesChange={refreshAddresses}
                 />
             )}
 
@@ -219,145 +276,171 @@ export default function CheckoutPage() {
             )}
 
             <main className="layout-container py-12">
-                <h1 className="text-3xl font-bold text-ink">주문서</h1>
-                <p className="mt-3 text-body-sm text-muted">
-                    주문 상품과 배송 정보를 확인해주세요.
-                </p>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-ink">주문서</h1>
+                        <p className="mt-3 text-body-sm text-muted">
+                            주문 상품과 배송 정보를 확인해주세요.
+                        </p>
+                    </div>
+                    <OrderProgressSteps currentStep="checkout" />
+                </div>
 
-                <div className="mt-8 grid grid-cols-[1fr_18rem] gap-8">
+                <div className="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_18rem]">
                     <section className="space-y-6">
                         <div className="rounded-md border border-border bg-surface p-6 shadow-card">
                             <h2 className="text-xl font-bold text-ink">
                                 주문 상품
                             </h2>
 
-                            <div className="mt-5 border-t border-border pt-5">
+                            <div className="mt-5 space-y-3">
                                 {orderItems.map((item) => {
-                                    const price = Number(item.price ?? item.unitPrice ?? item.salePrice ?? 0);
-                                    const qty = Number(item.quantity ?? 1);
-                                    const discountRate = Number(item.discountRate ?? 0);
+                                    const price = Number(item.unitPrice ?? item.price ?? item.salePrice ?? 0)
+                                    const qty = Number(item.quantity ?? 1)
+                                    const discountRate = Number(item.discountRate ?? 0)
+                                    const discountAmount = Math.floor(price * (discountRate / 100))
+                                    const discountedPrice = price - discountAmount
+                                    const itemSubtotal = discountedPrice * qty
+                                    const imageUrl = item.imageUrl ?? item.image
+                                    const itemKey = `${item.productId}-${item.cartId ?? 'direct'}`
+                                    const productPath = item.productId ? `/shop/${item.productId}` : null
+                                    const itemClassName = 'flex items-start gap-4 rounded-md bg-surface-muted p-4 motion-safe-transition hover:opacity-90'
 
-                                    const discountAmount = Math.floor(price * (discountRate / 100));
-                                    const discountedPrice = price - discountAmount;
-                                    const itemSubtotal = discountedPrice * qty;
-
-                                    return (
-                                        <div
-                                            key={item.productId}
-                                            className="grid grid-cols-[1fr_8rem] items-start gap-4 border-b border-border py-4 last:border-b-0"
-                                        >
-                                            <div>
-                                                <p className="font-bold text-ink">{item.productName}</p>
-                                                <p className="mt-1 text-body-sm text-muted">수량 {qty}개</p>
-                                            </div>
-
-                                            <div className="text-right flex flex-col justify-center">
-                                                {discountRate > 0 ? (
-                                                    <>
-                                                        <span className="text-caption text-muted line-through">
-                                                            {(price * qty).toLocaleString()}원
-                                                        </span>
-                                                        <span className="font-bold text-ink">
-                                                            {itemSubtotal.toLocaleString()}원
-                                                        </span>
-                                                    </>
+                                    const itemContent = (
+                                      <>
+                                            <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-surface">
+                                                {imageUrl?.trim() ? (
+                                                    <img
+                                                        className="h-full w-full object-cover"
+                                                        src={imageUrl}
+                                                        alt={item.productName}
+                                                    />
                                                 ) : (
-                                                    <span className="font-bold text-ink">
-                                                        {(price * qty).toLocaleString()}원
-                                                    </span>
+                                                    <div className="flex h-full w-full items-center justify-center text-caption text-muted">
+                                                        이미지 없음
+                                                    </div>
                                                 )}
                                             </div>
+
+                                            <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-ink">{item.productName}</p>
+                                                    <p className="mt-1 text-body-sm text-muted">수량 {qty}개</p>
+                                                </div>
+
+                                                <div className="shrink-0 text-right">
+                                                    {discountRate > 0 ? (
+                                                        <>
+                                                            <span className="block text-caption text-muted line-through">
+                                                                {(price * qty).toLocaleString()}원
+                                                            </span>
+                                                            <span className="text-ink">
+                                                                {itemSubtotal.toLocaleString()}원
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-ink">
+                                                            {(price * qty).toLocaleString()}원
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                      </>
+                                    )
+
+                                    if (productPath) {
+                                        return (
+                                            <Link
+                                                key={itemKey}
+                                                to={productPath}
+                                                className={`${itemClassName} focus-ring focus-ring-inset`}
+                                                aria-label={`${item.productName} 상세 보기`}
+                                            >
+                                                {itemContent}
+                                            </Link>
+                                        )
+                                    }
+
+                                    return (
+                                        <div key={itemKey} className={itemClassName}>
+                                            {itemContent}
                                         </div>
                                     )
                                 })}
                             </div>
                         </div>
 
-                        <div className="rounded-md border border-border bg-surface p-6 shadow-card">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-xl font-bold text-ink">
-                                    배송지 정보
-                                </h2>
+                        <div className="overflow-hidden rounded-md border border-border bg-surface shadow-card">
+                            <div className="p-5">
+                                {address ? (
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="min-w-0">
+                                            <p className="text-body font-bold text-ink">
+                                                {address.receiverName}
+                                                {address.addressName ? (
+                                                    <span className="ml-1 font-medium text-muted">
+                                                        ({address.addressName})
+                                                    </span>
+                                                ) : null}
+                                            </p>
+                                            <p className="mt-1 text-body-sm text-muted">
+                                                {address.receiverPhone}
+                                            </p>
+                                            <p className="mt-2 text-body-sm leading-relaxed text-ink">
+                                                ({address.zipCode}) {address.baseAddress} {address.detailAddress}
+                                            </p>
+                                        </div>
 
-                                <button
-                                    type="button"
-                                    className="text-body-sm font-bold text-brand"
-                                    onClick={() => setIsAddressModalOpen(true)}
-                                >
-                                    배송지 추가
-                                </button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="shrink-0"
+                                            onClick={() => setIsAddressPickerOpen(true)}
+                                        >
+                                            변경
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between gap-4">
+                                        <p className="text-body-sm text-muted">
+                                            등록된 배송지가 없습니다.
+                                        </p>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setIsAddressPickerOpen(true)}
+                                        >
+                                            배송지 추가
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
 
-                            {addresses.length === 0 && (
-                                <p className="mt-5 text-body-sm text-muted">
-                                    등록된 배송지가 없습니다.
-                                </p>
-                            )}
+                            <div className="border-t border-border px-5 py-4">
+                                <Select
+                                    id="shipping-memo"
+                                    label="배송 메모"
+                                    labelVisuallyHidden
+                                    size="sm"
+                                    options={SHIPPING_MEMO_OPTIONS.map((option) => ({
+                                        value: option.value,
+                                        label: option.label,
+                                    }))}
+                                    value={shippingMemo}
+                                    onChange={(event) => setShippingMemo(event.target.value)}
+                                />
 
-                            <select
-                                value={address?.addressId || ''}
-                                onChange={(e) => {
-                                    const selectedAddress = addresses.find(
-                                        (item) =>
-                                            item.addressId ===
-                                            Number(e.target.value),
-                                    )
-
-                                    setAddress(selectedAddress)
-                                }}
-                                className="mt-5 w-full rounded-md border border-border px-4 py-3 text-body-sm"
-                            >
-                                {addresses.map((item) => (
-                                    <option
-                                        key={item.addressId}
-                                        value={item.addressId}
-                                    >
-                                        {item.receiverName} / {item.baseAddress}
-                                    </option>
-                                ))}
-                            </select>
-
-                            <div className="mt-3 space-y-3">
-                                <input
-                                    value={address?.receiverName || ''}
-                                    readOnly
-                                    className="w-full rounded-md border border-border px-4 py-3 text-body-sm"
-                                />
-                                <input
-                                    value={address?.receiverPhone || ''}
-                                    readOnly
-                                    className="w-full rounded-md border border-border px-4 py-3 text-body-sm"
-                                />
-                                <input
-                                    value={
-                                        address
-                                            ? `(${address.zipCode}) ${address.baseAddress}`
-                                            : ''
-                                    }
-                                    readOnly
-                                    className="w-full rounded-md border border-border px-4 py-3 text-body-sm"
-                                />
-                                <input
-                                    value={address?.detailAddress || ''}
-                                    readOnly
-                                    className="w-full rounded-md border border-border px-4 py-3 text-body-sm"
-                                />
+                                {shippingMemo === 'custom' && (
+                                    <textarea
+                                        value={customMemo}
+                                        onChange={(event) => setCustomMemo(event.target.value)}
+                                        className={`mt-3 min-h-24 w-full rounded-md border border-border px-4 py-3 text-body-sm ${formControlFocusClass}`}
+                                        placeholder="배송 요청사항을 입력해주세요."
+                                    />
+                                )}
                             </div>
-                        </div>
-
-                        <div className="rounded-md border border-border bg-surface p-6 shadow-card">
-                            <h2 className="text-xl font-bold text-ink">
-                                배송 요청사항
-                            </h2>
-
-                            <textarea
-                                value={requestMessage}
-                                onChange={(e) =>
-                                    setRequestMessage(e.target.value)
-                                }
-                                className="mt-5 min-h-28 w-full rounded-md border border-border px-4 py-3 text-body-sm"
-                                placeholder="배송 요청사항을 입력해주세요."
-                            />
                         </div>
 
                         <div className="rounded-md border border-border bg-surface p-6 shadow-card">
@@ -372,9 +455,7 @@ export default function CheckoutPage() {
                                         name="paymentMethod"
                                         value="CARD"
                                         checked={paymentMethod === 'CARD'}
-                                        onChange={(e) =>
-                                            setPaymentMethod(e.target.value)
-                                        }
+                                        onChange={(event) => setPaymentMethod(event.target.value)}
                                     />
                                     카드 결제
                                 </label>
@@ -385,9 +466,7 @@ export default function CheckoutPage() {
                                         name="paymentMethod"
                                         value="CASH"
                                         checked={paymentMethod === 'CASH'}
-                                        onChange={(e) =>
-                                            setPaymentMethod(e.target.value)
-                                        }
+                                        onChange={(event) => setPaymentMethod(event.target.value)}
                                     />
                                     무통장 입금
                                 </label>
@@ -399,51 +478,44 @@ export default function CheckoutPage() {
                         </div>
                     </section>
 
-                    <aside className="h-fit rounded-md border border-border bg-surface p-6 shadow-card">
+                    <div className="w-full lg:sticky lg:top-8 lg:z-10 lg:self-start">
+                    <aside className="h-fit w-full rounded-md border border-border bg-surface p-6 shadow-card">
                         <h2 className="text-xl font-bold text-ink">
                             결제 금액
                         </h2>
 
                         <div className="mt-6 space-y-4 text-body-sm">
-                            <div className="flex justify-between text-muted">
+                            <div className="flex justify-between">
                                 <span>상품 금액</span>
-                                <strong className="text-ink">
+                                <span className="text-ink">
                                     {originalTotalAmount.toLocaleString()}원
-                                </strong>
+                                </span>
                             </div>
 
-                            <div className="flex justify-between text-muted">
-                                <span>배송비</span>
-                                <strong className="text-ink">무료</strong>
+                            <div className="flex justify-between">
+                                <span>총 배송비</span>
+                                <span className="text-ink">
+                                    {deliveryFee === 0 ? '무료' : `${deliveryFee.toLocaleString()}원`}
+                                </span>
                             </div>
 
-                            <div className="flex justify-between text-muted">
-                                <span>임직원 할인</span>
-                                <strong className="text-danger">
-                                    -{totalDiscountAmount.toLocaleString()}원
-                                </strong>
-                            </div>
-
-                            <div className="mt-6 border-t border-border pt-5">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-body-lg font-bold text-ink">
-                                        최종 결제 금액
+                            {totalDiscountAmount > 0 && (
+                                <div className="flex justify-between">
+                                    <span>할인</span>
+                                    <span>
+                                        -{totalDiscountAmount.toLocaleString()}원
                                     </span>
-                                    <strong className="text-2xl font-bold text-ink">
-                                        {finalTotalAmount.toLocaleString()}원
-                                    </strong>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={handleClickPayment}
-                            className="mt-6 w-full rounded-md bg-brand py-4 text-body font-bold text-white hover:opacity-90"
-                        >
-                            결제하기
-                        </button>
+                        <OrderCheckoutFooter
+                            amount={finalTotalAmount}
+                            actionLabel="결제하기"
+                            onAction={handleClickPayment}
+                        />
                     </aside>
+                    </div>
                 </div>
             </main>
         </>

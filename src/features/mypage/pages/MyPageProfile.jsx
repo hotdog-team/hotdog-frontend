@@ -1,9 +1,22 @@
 import { useState, useEffect } from 'react'
 import { Circle, CircleAlert, CircleCheck } from 'lucide-react'
 import { toast } from 'react-toastify'
-import { Button, InputField, Input, Checkbox, PasswordToggleButton, RadioChipGroup, CheckboxChipGroup } from '../../../components/index.js'
+import {
+  Button,
+  InputField,
+  Input,
+  Checkbox,
+  PasswordToggleButton,
+  RadioChipGroup,
+  CheckboxChipGroup,
+} from '../../../components/index.js'
+import {
+  MyPageHeader,
+  MyPagePanel,
+  MyPageSectionTitle,
+  MyPageLoading,
+} from '../../../components/mypage/MyPageUi.jsx'
 import axiosInstance from '../../../api/axiosInstance.js'
-import { useNavigate } from 'react-router-dom'
 import {
   AGE_OPTIONS,
   JOB_OPTIONS,
@@ -13,7 +26,6 @@ import {
   splitProfileTagIds,
 } from '../../../constants/profileMetaTags.js'
 
-// 비밀번호 유효성 검사 규칙
 const passwordRules = [
   { label: '8자 이상 16자 이하', validate: (value) => value.length >= 8 && value.length <= 16 },
   { label: '영문 소문자 포함', validate: (value) => /[a-z]/.test(value) },
@@ -22,24 +34,20 @@ const passwordRules = [
   { label: '특수문자 포함', validate: (value) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value) },
 ]
 
-// 유효성 UI 컴포넌트
 function PasswordRequirementItem({ isActive, isValid, label }) {
   const Icon = !isActive ? Circle : isValid ? CircleCheck : CircleAlert
   const statusClass = !isActive ? 'text-muted' : isValid ? 'text-success' : 'text-error'
 
   return (
-    <li className={`flex items-center gap-2.5 ${statusClass}`}>
-      <Icon className="size-4 shrink-0" strokeWidth={2.4} aria-hidden="true" />
+    <li className={`flex items-center gap-2 text-body-sm ${statusClass}`}>
+      <Icon className="size-3.5 shrink-0" strokeWidth={2.4} aria-hidden="true" />
       <span>{label}</span>
     </li>
   )
 }
 
 function MyPageProfile() {
-  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
-
-  // 프로필 상태
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -52,18 +60,13 @@ function MyPageProfile() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
   const [selectedPurposeId, setSelectedPurposeId] = useState(-1)
   const [selectedMerchandisingIds, setSelectedMerchandisingIds] = useState([])
-
-  // 비밀번호 변경 상태
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-
-  // 비밀번호 노출 토글 상태
   const [isCurrentVisible, setIsCurrentVisible] = useState(false)
   const [isNewVisible, setIsNewVisible] = useState(false)
   const [isConfirmVisible, setIsConfirmVisible] = useState(false)
 
-  // 비밀번호 입력 여부 및 유효성 상태 계산
   const hasNewPassword = newPassword.length > 0
   const isConfirmValid = confirmPassword.length > 0 && newPassword === confirmPassword
 
@@ -87,10 +90,9 @@ function MyPageProfile() {
         setSelectedCategoryIds(categoryIds)
         setSelectedPurposeId(purposeId ?? -1)
         setSelectedMerchandisingIds(merchandisingIds)
-
-        setIsLoading(false)
-      } catch (err) {
+      } catch {
         toast.error('회원 정보를 불러오는 데 실패했습니다.')
+      } finally {
         setIsLoading(false)
       }
     }
@@ -108,9 +110,9 @@ function MyPageProfile() {
   }, [])
 
   const handleOpenPostcode = () => {
-    if (window.daum && window.daum.Postcode) {
+    if (window.daum?.Postcode) {
       new window.daum.Postcode({
-        oncomplete: function (data) {
+        oncomplete(data) {
           setZipcode(data.zonecode)
           setBaseAddress(data.roadAddress || data.jibunAddress)
           toast.info('우편번호가 입력되었습니다.')
@@ -119,9 +121,8 @@ function MyPageProfile() {
     }
   }
 
-  // 통합 저장 핸들러 (프로필 + 비밀번호)
-  const handleUpdateAll = async (e) => {
-    e.preventDefault()
+  const handleUpdateAll = async (event) => {
+    event.preventDefault()
 
     const isPasswordChangeIntent = currentPassword || newPassword || confirmPassword
 
@@ -138,27 +139,23 @@ function MyPageProfile() {
       }
     }
 
-    const updateData = {
-      name,
-      phone,
-      zipCode: zipcode,
-      baseAddress,
-      detailAddress,
-      ageRange,
-      jobType,
-      profileTagIds: buildProfileTagIds(
-        selectedCategoryIds.filter((id) => id !== null && id !== -1),
-        selectedPurposeId !== -1 ? selectedPurposeId : null,
-        selectedMerchandisingIds.filter((id) => id !== null && id !== -1),
-      ),
-      isJobRecommendEnabled: isJobRecommendEnabled,
-    }
-
     try {
-      // 1. 프로필 업데이트 요청
-      await axiosInstance.patch('/api/members/me', updateData)
+      await axiosInstance.patch('/api/members/me', {
+        name,
+        phone,
+        zipCode: zipcode,
+        baseAddress,
+        detailAddress,
+        ageRange,
+        jobType,
+        profileTagIds: buildProfileTagIds(
+          selectedCategoryIds.filter((id) => id !== null && id !== -1),
+          selectedPurposeId !== -1 ? selectedPurposeId : null,
+          selectedMerchandisingIds.filter((id) => id !== null && id !== -1),
+        ),
+        isJobRecommendEnabled,
+      })
 
-      // 2. 비밀번호 업데이트 요청 (입력된 경우만)
       if (isPasswordChangeIntent) {
         await axiosInstance.patch('/api/members/me/password', {
           currentPassword,
@@ -169,55 +166,50 @@ function MyPageProfile() {
         setConfirmPassword('')
       }
 
-      toast.success(isPasswordChangeIntent ? '프로필과 비밀번호가 성공적으로 변경되었습니다.' : '프로필 정보가 성공적으로 저장되었습니다.')
-    } catch (err) {
+      toast.success(
+        isPasswordChangeIntent
+          ? '프로필과 비밀번호가 저장되었습니다.'
+          : '프로필 정보가 저장되었습니다.',
+      )
+    } catch {
       toast.error('정보 수정 중 오류가 발생했습니다.')
     }
   }
 
   const handleWithdraw = async () => {
-    if (window.confirm('정말 탈퇴하시겠습니까? 탈퇴 처리 즉시 세션이 만료되며 강제 로그아웃됩니다.')) {
-      try {
-        await axiosInstance.delete('/api/members/me')
-        toast.warn('회원 탈퇴가 완료되었습니다. 로그인 페이지로 이동합니다.')
-        localStorage.clear()
-        window.location.href = '/'
-      } catch (err) {
-        toast.error('탈퇴 처리 중 오류가 발생했습니다.')
-      }
+    if (!window.confirm('정말 탈퇴하시겠습니까? 탈퇴 후에는 로그인할 수 없습니다.')) {
+      return
+    }
+
+    try {
+      await axiosInstance.delete('/api/members/me')
+      toast.warn('회원 탈퇴가 완료되었습니다.')
+      localStorage.clear()
+      window.location.href = '/login'
+    } catch {
+      toast.error('탈퇴 처리 중 오류가 발생했습니다.')
     }
   }
 
   if (isLoading) {
-    return <div className="flex h-full items-center justify-center font-bold text-ink">로딩 중...</div>
+    return <MyPageLoading label="회원 정보를 불러오는 중입니다." />
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="mb-10 flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-extrabold text-ink tracking-tight">내 정보 수정</h2>
-        </div>
-        <Button
-          type="button"
-          variant="secondary"
-          size="md"
-          onClick={() => navigate('/mypage/orders')}
-          className="font-bold shrink-0"
-        >
-          주문 내역 보기
-        </Button>
-      </div>
+    <>
+      <MyPageHeader
+        title="내 정보 수정"
+        description="기본 정보, 비밀번호, 맞춤 추천 설정을 관리합니다."
+      />
 
-      <div className="rounded-xl border border-border bg-surface p-10 shadow-sm">
-        <h3 className="mb-8 text-xl font-bold text-ink border-b border-border-soft pb-4">프로필 및 보안 정보</h3>
-
-        <form className="space-y-6" onSubmit={handleUpdateAll}>
-          <div className="grid gap-6">
+      <form className="grid gap-6" onSubmit={handleUpdateAll}>
+        <MyPagePanel>
+          <MyPageSectionTitle title="기본 정보" />
+          <div className="grid gap-5">
             <InputField
               id="profile-name"
-              label="성함 (변경 불가)"
-              size="xl"
+              label="이름"
+              size="md"
               value={name}
               readOnly
               disabled
@@ -225,61 +217,131 @@ function MyPageProfile() {
             />
             <InputField
               id="profile-email"
-              label="회사 이메일 주소 (변경 불가)"
-              size="xl"
+              label="이메일"
+              size="md"
               type="email"
               value={email}
               readOnly
               disabled
               inputVariant="muted"
             />
-          </div>
-
-          <div className="rounded-lg bg-surface-muted p-6 border border-border-soft space-y-6">
-            <h4 className="text-sm font-bold text-ink">비밀번호 변경 (선택사항)</h4>
-            <div className="grid gap-6">
-              <InputField id="current-password" label="현재 비밀번호" size="xl" type={isCurrentVisible ? 'text' : 'password'} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="현재 비밀번호" trailing={<PasswordToggleButton visible={isCurrentVisible} onToggle={() => setIsCurrentVisible(!isCurrentVisible)} />} />
-              <InputField id="new-password" label="새 비밀번호" size="xl" type={isNewVisible ? 'text' : 'password'} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="새 비밀번호" trailing={<PasswordToggleButton visible={isNewVisible} onToggle={() => setIsNewVisible(!isNewVisible)} labelPrefix="새 비밀번호" />} />
-              <InputField id="confirm-password" label="새 비밀번호 확인" size="xl" type={isConfirmVisible ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="새 비밀번호 다시 입력" trailing={<PasswordToggleButton visible={isConfirmVisible} onToggle={() => setIsConfirmVisible(!isConfirmVisible)} labelPrefix="비밀번호 확인" />} />
-            </div>
-            <ul className="grid gap-2 text-sm pt-2" aria-hidden="true">
-              {passwordRules.map((rule) => <PasswordRequirementItem key={rule.label} isActive={hasNewPassword} isValid={rule.validate(newPassword)} label={rule.label} />)}
-              <PasswordRequirementItem isActive={confirmPassword.length > 0} isValid={isConfirmValid} label="비밀번호 확인 일치" />
-            </ul>
-          </div>
-
-            <div className="grid gap-6">
-              <InputField id="profile-phone" label="연락처" size="xl" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-
-              <div className="grid gap-2.5">
-                <label htmlFor="profile-age" className="text-sm font-extrabold tracking-label text-ink uppercase">연령대</label>
-                <select
-                  id="profile-age"
-                  value={ageRange}
-                  onChange={(e) => setAgeRange(e.target.value)}
-                  className="flex h-12 w-full items-center rounded-lg border border-border bg-surface px-4 text-ink focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
-                >
-                  <option value="" disabled>연령대를 선택해 주세요</option>
-                  <option value="20대">20대</option>
-                  <option value="30대">30대</option>
-                  <option value="40대">40대</option>
-                  <option value="50대 이상">50대 이상</option>
-                </select>
+            <InputField
+              id="profile-phone"
+              label="연락처"
+              size="md"
+              type="tel"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              placeholder="연락처를 입력하세요"
+            />
+            <div className="grid gap-2">
+              <span className="text-body font-semibold text-ink">우편번호</span>
+              <div className="flex gap-2">
+                <Input
+                  id="profile-zipcode"
+                  type="text"
+                  placeholder="우편번호"
+                  value={zipcode}
+                  size="md"
+                  variant="muted"
+                  readOnly
+                  aria-label="우편번호"
+                />
+                <Button type="button" variant="outline" size="md" onClick={handleOpenPostcode} className="shrink-0">
+                  주소 찾기
+                </Button>
               </div>
-
-              <div className="grid gap-2.5">
-                <label className="text-sm font-extrabold tracking-label text-ink uppercase">우편번호</label>
-                <div className="flex gap-3">
-                  <Input id="profile-zipcode" type="text" placeholder="우편번호" value={zipcode} size="xl" variant="muted" readOnly />
-                  <Button type="button" variant="secondary" size="md" onClick={handleOpenPostcode} className="shrink-0 font-bold">주소 찾기</Button>
-                </div>
-              </div>
-              <InputField id="profile-base-address" label="기본 주소" size="xl" value={baseAddress} readOnly inputVariant="muted" />
-              <InputField id="profile-detail-address" label="상세 주소" size="xl" placeholder="상세 주소를 입력해 주세요." value={detailAddress} onChange={(e) => setDetailAddress(e.target.value)} />
             </div>
+            <InputField
+              id="profile-base-address"
+              label="기본 주소"
+              size="md"
+              value={baseAddress}
+              readOnly
+              inputVariant="muted"
+            />
+            <InputField
+              id="profile-detail-address"
+              label="상세 주소"
+              size="md"
+              placeholder="상세 주소를 입력해 주세요"
+              value={detailAddress}
+              onChange={(event) => setDetailAddress(event.target.value)}
+            />
+          </div>
+        </MyPagePanel>
 
-          <div className="rounded-lg bg-surface-muted p-6 border border-border-soft space-y-6">
-            <h4 className="text-sm font-bold text-ink">취향 및 직종 설정</h4>
+        <MyPagePanel>
+          <MyPageSectionTitle title="비밀번호 변경" description="변경할 때만 입력하세요." />
+          <div className="grid gap-5">
+            <InputField
+              id="current-password"
+              label="현재 비밀번호"
+              size="md"
+              type={isCurrentVisible ? 'text' : 'password'}
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              autoComplete="current-password"
+              trailing={
+                <PasswordToggleButton
+                  visible={isCurrentVisible}
+                  onToggle={() => setIsCurrentVisible((current) => !current)}
+                />
+              }
+            />
+            <InputField
+              id="new-password"
+              label="새 비밀번호"
+              size="md"
+              type={isNewVisible ? 'text' : 'password'}
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              autoComplete="new-password"
+              trailing={
+                <PasswordToggleButton
+                  visible={isNewVisible}
+                  onToggle={() => setIsNewVisible((current) => !current)}
+                  labelPrefix="새 비밀번호"
+                />
+              }
+            />
+            <InputField
+              id="confirm-password"
+              label="새 비밀번호 확인"
+              size="md"
+              type={isConfirmVisible ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              autoComplete="new-password"
+              trailing={
+                <PasswordToggleButton
+                  visible={isConfirmVisible}
+                  onToggle={() => setIsConfirmVisible((current) => !current)}
+                  labelPrefix="비밀번호 확인"
+                />
+              }
+            />
+          </div>
+          <ul className="mt-4 grid gap-1.5" aria-hidden="true">
+            {passwordRules.map((rule) => (
+              <PasswordRequirementItem
+                key={rule.label}
+                isActive={hasNewPassword}
+                isValid={rule.validate(newPassword)}
+                label={rule.label}
+              />
+            ))}
+            <PasswordRequirementItem
+              isActive={confirmPassword.length > 0}
+              isValid={isConfirmValid}
+              label="비밀번호 확인 일치"
+            />
+          </ul>
+        </MyPagePanel>
+
+        <MyPagePanel>
+          <MyPageSectionTitle title="맞춤 추천 정보" description="취향에 맞는 상품 추천에 활용됩니다." />
+          <div className="grid gap-6 [&>fieldset]:mt-2 [&>fieldset:first-of-type]:mt-0">
             <RadioChipGroup
               id="profile-age"
               name="ageRange"
@@ -287,7 +349,6 @@ function MyPageProfile() {
               options={AGE_OPTIONS}
               value={ageRange}
               onValueChange={setAgeRange}
-              optional
             />
             <RadioChipGroup
               id="profile-job"
@@ -299,8 +360,8 @@ function MyPageProfile() {
             />
             <CheckboxChipGroup
               id="profile-categories"
-              label="관심 카테고리 (중복 선택 가능)"
-              optional
+              label="관심 카테고리"
+              labelDescription="중복 선택 가능"
               options={META_TAGS.CATEGORIES.map((tag) => ({
                 value: tag.id,
                 label: tag.name,
@@ -311,16 +372,15 @@ function MyPageProfile() {
             <RadioChipGroup
               id="profile-purpose"
               name="purposeId"
-              label="주 이용 목적"
-              optional
+              label="주로 사용하는 목적"
               options={PURPOSE_RADIO_OPTIONS}
               value={selectedPurposeId ?? ''}
               onValueChange={setSelectedPurposeId}
             />
             <CheckboxChipGroup
               id="profile-merchandising"
-              label="선호 상품 성향 (중복 선택 가능)"
-              optional
+              label="선호하는 상품 유형"
+              labelDescription="중복 선택 가능"
               options={META_TAGS.MERCHANDISING.map((tag) => ({
                 value: tag.id,
                 label: tag.name,
@@ -329,26 +389,29 @@ function MyPageProfile() {
               onChange={setSelectedMerchandisingIds}
             />
           </div>
-
-          <div className="border-t border-border-soft pt-6">
-            <Checkbox id="profile-recommend" variant="brand" size="md" checked={isJobRecommendEnabled} onChange={(e) => setIsJobRecommendEnabled(e.target.checked)} label={<><span className="font-bold text-brand">직종 맞춤 상품 추천</span>을 받습니다.</>} />
+          <div className="mt-6 border-t border-border-soft pt-5">
+            <Checkbox
+              id="profile-recommend"
+              variant="brand"
+              size="md"
+              checked={isJobRecommendEnabled}
+              onChange={(event) => setIsJobRecommendEnabled(event.target.checked)}
+              label="직종에 맞는 맞춤 상품 추천을 받겠습니다."
+            />
           </div>
+        </MyPagePanel>
 
-          <div className="mt-8 flex flex-row items-center justify-between border-t border-border-soft pt-8">
-            <Button
-              type="button"
-              variant="danger"
-              size="sm"
-              onClick={handleWithdraw}
-              className="underline hover:bg-transparent"
-            >
-            D-TO 서비스 탈퇴
-            </Button>
-            <Button type="submit" variant="primary" size="lg" className="w-48 font-bold">프로필 저장</Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex flex-col-reverse gap-3 border-t border-border-soft pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <Button type="button" variant="danger" size="sm" onClick={handleWithdraw}>
+            회원 탈퇴
+          </Button>
+          <Button type="submit" variant="primary" size="md" className="sm:min-w-40">
+            저장하기
+          </Button>
+        </div>
+      </form>
+    </>
   )
 }
-export default MyPageProfile;
+
+export default MyPageProfile

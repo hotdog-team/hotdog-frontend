@@ -3,22 +3,24 @@ import SocialLoginButton from './SocialLoginButton.jsx'
 
 const providers = ['naver', 'kakao', 'google']
 
-export default function SocialLoginGroup({ onSocialLogin = startSocialLogin }) {
+export default function SocialLoginGroup({ onSocialLogin = startSocialLogin, className = '' }) {
   return (
-    <>
-      <div className="my-10 grid grid-cols-divider items-center gap-8 max-sm:my-8 max-sm:gap-4">
-        <span className="h-px bg-border" aria-hidden="true" />
-        <p className="m-0 text-body-sm font-extrabold uppercase text-ink max-sm:whitespace-nowrap max-sm:text-caption">
-          다른 계정으로 계속하기
+    <div className={className} role="group" aria-label="소셜 로그인">
+      <div className="grid grid-cols-divider items-center gap-4 mb-5" aria-hidden="true">
+        <span className="h-px bg-border" />
+        <p className="my-0 text-body-sm font-medium text-muted">
+          또는
         </p>
-        <span className="h-px bg-border" aria-hidden="true" />
+        <span className="h-px bg-border" />
       </div>
 
-      <div className="grid w-full justify-items-center gap-5">
+      <ul className="mt-4 grid w-full list-none gap-3 p-0">
         {providers.map((provider) => (
-          <SocialLoginButton key={provider} provider={provider} onClick={onSocialLogin} />
+          <li key={provider}>
+            <SocialLoginButton provider={provider} onClick={onSocialLogin} />
+          </li>
         ))}
-      </div>
-    </>
+      </ul>
+    </div>
   )
 }

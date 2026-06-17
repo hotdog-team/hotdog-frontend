@@ -20,7 +20,13 @@ export const useAuthStore = create((set) => ({
     },
 
     //localStorage에서 accessToken과 refreshToken을 제거한다
-    setUser: (userData) => set({ user: userData }),
+    setUser: (userData) => {
+        const storedUser = localStorage.getItem('user')
+        const parsed = storedUser ? JSON.parse(storedUser) : {}
+        const merged = { ...parsed, ...userData }
+        localStorage.setItem('user', JSON.stringify(merged))
+        set({ user: merged })
+    },
 
     logout: () => {
         localStorage.removeItem('accessToken');

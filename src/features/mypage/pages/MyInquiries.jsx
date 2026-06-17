@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
-import { ChevronDown, ChevronUp, Inbox, XCircle } from 'lucide-react'
+import { ChevronDown, ChevronUp, Inbox } from 'lucide-react'
 import { toast } from 'react-toastify'
-import { Button, Pagination } from '../../../components/index.js'
+import { Button, Pagination, Checkbox, InputField, ModalShell, formControlFocusClass } from '../../../components/index.js'
+import { MyPageHeader, MyPageEmptyState, MyPageLoading, MyPagePanel } from '../../../components/mypage/MyPageUi.jsx'
 import axiosInstance from '../../../api/axiosInstance.js'
 
 export default function MyInquiries() {
@@ -102,55 +103,51 @@ export default function MyInquiries() {
   const isAllSelected = inquiries.length > 0 && selectedIds.length === inquiries.length;
 
   if (isLoading) {
-    return <div className="flex h-full items-center justify-center font-bold text-ink">로딩 중...</div>
+    return <MyPageLoading label="문의 내역을 불러오는 중입니다." />
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-extrabold text-ink tracking-tight">1:1 문의 내역</h2>
-          <p className="mt-2 text-sm text-muted">고객님이 제출하신 문의 사항과 답변 상태를 확인할 수 있습니다.</p>
-        </div>
-        <Button variant="primary" size="md" onClick={() => setIsModalOpen(true)}>
-          새 문의 작성
-        </Button>
-      </div>
+    <>
+      <MyPageHeader
+        title="문의 내역"
+        description="1:1 문의와 답변 상태를 확인할 수 있습니다."
+        actions={(
+          <Button variant="primary" size="md" onClick={() => setIsModalOpen(true)}>
+            새 문의 작성
+          </Button>
+        )}
+      />
 
       {inquiries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-surface py-20 shadow-sm">
-          <Inbox className="mb-4 size-12 text-muted" strokeWidth={1.5} />
-          <p className="text-lg font-bold text-ink">작성하신 문의 내역이 없습니다.</p>
-        </div>
+        <MyPageEmptyState icon={Inbox} title="작성한 문의가 없습니다." />
       ) : (
         <>
-          <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden mb-10">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border-soft bg-surface-muted/50">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 cursor-pointer accent-brand"
-                  checked={isAllSelected}
-                  onChange={handleSelectAll}
-                />
-                <span className="text-sm font-bold text-ink">전체 선택</span>
-              </label>
+          <MyPagePanel className="overflow-hidden p-0">
+            <div className="flex items-center justify-between border-b border-border-soft bg-surface-muted/50 px-6 py-4">
+              <Checkbox
+                id="inquiry-select-all"
+                variant="brand"
+                size="md"
+                checked={isAllSelected}
+                onChange={(e) => handleSelectAll(e)}
+                label={<span className="text-body-sm font-bold">전체 선택</span>}
+              />
 
               <div className="flex items-center gap-2">
                 {selectedIds.length > 0 && (
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
-                    className="border-error text-error hover:bg-error/10 transition-colors h-8 text-xs"
+                    className="text-error hover:bg-error/5"
                     onClick={handleDeleteSelected}
                   >
                     선택 삭제 ({selectedIds.length})
                   </Button>
                 )}
                 <Button
-                  variant="secondary"
+                  variant="outline"
                   size="sm"
-                  className="border-error text-error hover:bg-error/10 transition-colors h-8 text-xs"
+                  className="text-error hover:bg-error/5"
                   onClick={handleDeleteAll}
                 >
                   전체 삭제
@@ -164,27 +161,26 @@ export default function MyInquiries() {
                   className="flex cursor-pointer items-center justify-between p-6 hover:bg-surface-muted transition-colors"
                   onClick={() => toggleExpand(qna.id)}
                 >
-                  <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex min-w-0 items-center gap-4">
                     <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 cursor-pointer accent-brand"
+                      <Checkbox
+                        id={`inquiry-${qna.id}`}
+                        variant="brand"
+                        size="md"
                         checked={selectedIds.includes(qna.id)}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          handleSelect(qna.id);
-                        }}
+                        onChange={() => handleSelect(qna.id)}
+                        aria-label={`${qna.title} 선택`}
                       />
                     </div>
 
-                    <span className={`rounded-full px-3 py-1 text-xs font-extrabold shrink-0 ${
-                      qna.status === 'ANSWERED' ? 'bg-brand/10 text-brand' : 'bg-border-soft text-muted'
+                    <span className={`shrink-0 rounded-md px-3 py-1.5 text-body-sm font-semibold ${
+                      qna.status === 'ANSWERED' ? 'bg-brand/10 text-brand' : 'bg-surface-muted text-muted'
                     }`}>
                       {qna.status === 'ANSWERED' ? '답변완료' : '답변대기'}
                     </span>
                     <div className="min-w-0">
-                      <h3 className="text-md font-bold text-ink truncate">{qna.title}</h3>
-                      <p className="mt-1 text-xs text-muted">
+                      <h3 className="truncate text-body font-bold text-ink">{qna.title}</h3>
+                      <p className="mt-1 text-body-sm text-muted">
                         {qna.createdAt ? new Date(qna.createdAt).toLocaleDateString() : ''}
                       </p>
                     </div>
@@ -198,25 +194,23 @@ export default function MyInquiries() {
                 </div>
 
                 {expandedId === qna.id && (
-                  <div className="bg-surface-muted p-6 border-t border-border-soft space-y-4 animate-fadeIn">
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
-                        <p className="text-xs font-extrabold uppercase tracking-label text-muted mb-1.5">Q. 질문 내용</p>
-                        <p className="text-ink whitespace-pre-wrap text-sm leading-relaxed">{qna.content}</p>
-                      </div>
+                  <div className="animate-fadeIn space-y-4 border-t border-border-soft bg-surface-muted p-6">
+                    <div>
+                      <p className="mb-1.5 text-caption font-bold uppercase tracking-label text-muted">Q. 질문 내용</p>
+                      <p className="whitespace-pre-wrap text-body-sm leading-relaxed text-ink">{qna.content}</p>
                     </div>
 
                     {qna.status === 'ANSWERED' && (
-                      <div className="rounded-lg bg-surface p-4 border border-border-soft shadow-inner">
-                        <p className="text-xs font-extrabold uppercase tracking-label text-brand mb-1.5">A. 관리자 답변</p>
-                        <p className="text-ink whitespace-pre-wrap text-sm leading-relaxed">{qna.answer}</p>
+                      <div className="rounded-md border border-border bg-surface p-4 shadow-card">
+                        <p className="mb-1.5 text-caption font-bold uppercase tracking-label text-brand">A. 관리자 답변</p>
+                        <p className="whitespace-pre-wrap text-body-sm leading-relaxed text-ink">{qna.answer}</p>
                       </div>
                     )}
                   </div>
                 )}
               </div>
             ))}
-          </div>
+          </MyPagePanel>
 
           <Pagination
             page={currentPage}
@@ -227,31 +221,46 @@ export default function MyInquiries() {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm p-4">
-          <form onSubmit={handleCreateInquiry} className="bg-surface p-6 rounded-xl w-full max-w-lg shadow-xl border border-border">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-ink">새 문의 작성</h2>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="text-muted hover:text-error"><XCircle size={24}/></button>
-            </div>
-            <input
-              required className="w-full p-3 border border-border rounded-md mb-3 outline-none focus:border-brand"
-              placeholder="제목을 입력하세요"
+        <ModalShell
+          title="새 문의 작성"
+          onClose={() => setIsModalOpen(false)}
+          maxWidth="max-w-lg"
+          bodyClassName="p-6"
+        >
+          <form onSubmit={handleCreateInquiry} className="space-y-4">
+            <InputField
+              id="inquiry-title"
+              label="제목"
+              required
               value={newInquiry.title}
-              onChange={e => setNewInquiry({...newInquiry, title: e.target.value})}
+              onChange={(e) => setNewInquiry({ ...newInquiry, title: e.target.value })}
+              placeholder="제목을 입력하세요"
             />
-            <textarea
-              required className="w-full p-3 border border-border rounded-md h-32 mb-6 outline-none focus:border-brand resize-none"
-              placeholder="문의 내용을 입력하세요"
-              value={newInquiry.content}
-              onChange={e => setNewInquiry({...newInquiry, content: e.target.value})}
-            />
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>취소</Button>
-              <Button type="submit">접수하기</Button>
+            <div className="grid gap-1">
+              <label htmlFor="inquiry-content" className="text-body font-semibold text-ink">
+                문의 내용 *
+              </label>
+              <textarea
+                id="inquiry-content"
+                required
+                className={`h-32 w-full resize-none rounded-md border border-border p-3 text-body-sm ${formControlFocusClass}`}
+                placeholder="문의 내용을 입력하세요"
+                value={newInquiry.content}
+                onChange={(e) => setNewInquiry({ ...newInquiry, content: e.target.value })}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-border-soft pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                취소
+              </Button>
+              <Button type="submit" variant="primary">
+                접수하기
+              </Button>
             </div>
           </form>
-        </div>
+        </ModalShell>
       )}
-    </div>
+    </>
   )
 }

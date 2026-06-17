@@ -14,16 +14,19 @@ import ResetPasswordPage from './features/auth/pages/ResetPasswordPage.jsx'
 import ResetPasswordConfirmPage from './features/auth/pages/ResetPasswordConfirmPage.jsx'
 import ProductDetailPage from './features/shop/pages/ProductDetailPage.jsx'
 import ProductListPage from './features/shop/pages/ProductListPage.jsx'
+import RecentlyViewedPage from './features/shop/pages/RecentlyViewedPage.jsx'
 import CartPage from './features/shop/pages/CartPage'
 import CheckoutPage from "./features/shop/pages/CheckoutPage.jsx";
 import SignUpPage from './features/auth/pages/SignUpPage.jsx'
+import SignUpProfilePage from './features/auth/pages/SignUpProfilePage.jsx'
 import { useAuthStore } from './store/useAuthStore';
 import SocialSuccessPage from './features/auth/pages/SocialSuccessPage.jsx';
 import RequireAuth from './features/auth/RequireAuth.jsx';
+import RequireAdmin from './features/auth/RequireAdmin.jsx';
 import GlobalLayout from './layout/GlobalLayout.jsx';
+import OrderFlowLayout from './layout/OrderFlowLayout.jsx';
 import MyPageLayout from './layout/MyPageLayout.jsx';
 import MyPageProfile from './features/mypage/pages/MyPageProfile.jsx';
-import MyPageCart from './features/mypage/pages/MyPageCart.jsx'
 import AddressManagement from './features/mypage/pages/AddressManagement.jsx'
 import AdminLayout from './layout/AdminLayout.jsx'
 import AdminPlaceholderPage from './features/admin/pages/AdminPlaceholderPage.jsx'
@@ -66,25 +69,32 @@ function App() {
     <>
       <ScrollToTop />
       <Routes>
-        <Route path="/" element={<LoginEntry />} />
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/login" element={<LoginEntry />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/reset-password/complete" element={<ResetPasswordCompletePage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordConfirmPage />} />
         <Route path="/social-success" element={<SocialSuccessPage />} />
         <Route element={<RequireAuth />}>
-          <Route element={<GlobalLayout />}>
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/shop" element={<ProductListPage />} />
-            <Route path="/shop/:productId" element={<ProductDetailPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/orders/checkout" element={<CheckoutPage />} />
+          <Route path="/signup/profile" element={<SignUpProfilePage />} />
+        </Route>
+        <Route element={<GlobalLayout />}>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/shop" element={<ProductListPage />} />
+          <Route path="/shop/:productId" element={<ProductDetailPage />} />
+          <Route path="/recent-products" element={<RecentlyViewedPage />} />
+          <Route element={<RequireAuth />}>
+            <Route element={<OrderFlowLayout />}>
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/orders/checkout" element={<CheckoutPage />} />
+              <Route
+                path="/mypage/orders/:orderId"
+                element={<OrderDetailPage />}
+              />
+            </Route>
             <Route path="/payment/success" element={<PaymentSuccessPage />} />
             <Route path="/payment/fail" element={<PaymentFailPage />} />
-            <Route
-              path="/mypage/orders/:orderId"
-              element={<OrderDetailPage />}
-            />
             <Route path="/mypage" element={<MyPageLayout />}>
               <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<MyPageProfile />} />
@@ -92,12 +102,14 @@ function App() {
               <Route path="orders" element={<MyOrders />} />
               <Route path="bookmarks" element={<MyBookmarks />} />
               <Route path="inquiries" element={<MyInquiries />} />
-              <Route path="cart" element={<MyPageCart />} />
               <Route path="addresses" element={<AddressManagement />} />
               <Route path="reviews" element={<MyReviews />} />
             </Route>
           </Route>
-          <Route path="/admin" element={<AdminLayout />}>
+        </Route>
+        <Route element={<RequireAuth />}>
+          <Route element={<RequireAdmin />}>
+            <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="categories" element={<CategoryManagement />} />
@@ -112,9 +124,10 @@ function App() {
             <Route path="orders" element={<OrderManagement />} />
 
             <Route path="reviews" element={<AdminReviewManagement />} />
+            </Route>
           </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
       <ToastContainer
         position="top-right"

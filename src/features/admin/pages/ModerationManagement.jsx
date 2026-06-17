@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Gavel, MessageSquare, Trash2, Check } from 'lucide-react'
 import { toast } from 'react-toastify'
-import { Button } from '../../../components/index.js'
+import { Button, formControlFocusClass } from '../../../components/index.js'
 import axiosInstance from '../../../api/axiosInstance.js'
 
 export default function ModerationManagement() {
@@ -109,7 +109,7 @@ export default function ModerationManagement() {
                   placeholder="답변 내용을 입력하세요..."
                   value={replyContent[qna.id] || ''}
                   onChange={(e) => handleReplyChange(qna.id, e.target.value)}
-                  className="flex-1 p-3 border border-border-soft rounded-md focus:outline-none focus:border-brand"
+                  className={`flex-1 rounded-md border border-border-soft p-3 ${formControlFocusClass}`}
                 />
                 <Button onClick={() => handleSubmitReply(qna.id)} variant="primary" size="md" className="flex items-center gap-2 shrink-0">
                   <Check size={18} /> 답변 등록

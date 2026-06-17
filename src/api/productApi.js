@@ -1,9 +1,26 @@
 import { apiFetch } from './apiClient.js'
 
+function appendListFilterParams(searchParams, { minPrice, maxPrice } = {}) {
+  if (minPrice != null && minPrice !== '') {
+    searchParams.set('minPrice', String(minPrice))
+  }
+  if (maxPrice != null && maxPrice !== '') {
+    searchParams.set('maxPrice', String(maxPrice))
+  }
+}
+
 /**
  * 카테고리 상품 목록 조회 URL 생성
  */
-function buildCategoryProductsPath({ categoryId, page = 0, size = 20, sort = 'RECOMMEND', keyword = '' }) {
+function buildCategoryProductsPath({
+  categoryId,
+  page = 0,
+  size = 20,
+  sort = 'RECOMMEND',
+  keyword = '',
+  minPrice,
+  maxPrice,
+}) {
   const searchParams = new URLSearchParams({
     page: String(page),
     size: String(size),
@@ -14,18 +31,30 @@ function buildCategoryProductsPath({ categoryId, page = 0, size = 20, sort = 'RE
     searchParams.set('keyword', keyword)
   }
 
+  appendListFilterParams(searchParams, { minPrice, maxPrice })
+
   return `/api/categories/${encodeURIComponent(categoryId)}/products?${searchParams.toString()}`
 }
+
 /**
  * 상품 목록 조회 URL 생성
  */
-function buildProductsPath({ keyword = '', page = 0, size = 20, sort = 'RECOMMEND' }) {
+function buildProductsPath({
+  keyword = '',
+  page = 0,
+  size = 20,
+  sort = 'RECOMMEND',
+  minPrice,
+  maxPrice,
+}) {
   const searchParams = new URLSearchParams({
     keyword,
     page: String(page),
     size: String(size),
     sort,
   })
+
+  appendListFilterParams(searchParams, { minPrice, maxPrice })
 
   return `/api/products?${searchParams.toString()}`
 }
@@ -65,6 +94,7 @@ function normalizeProduct(product) {
     status: product.status ?? '',
   };
 }
+
 /**
  * 상품 목록 응답 형식 변환
  */
@@ -83,28 +113,46 @@ function normalizePageResponse(responseBody, fallbackSize) {
     size: Number(responseBody?.size ?? fallbackSize),
   }
 }
+
 /**
  * 카테고리별 상품 목록 조회
  */
-export async function fetchCategoryProducts({ categoryId, page = 0, size = 20, sort = 'RECOMMEND', keyword = '' }) {
+export async function fetchCategoryProducts({
+  categoryId,
+  page = 0,
+  size = 20,
+  sort = 'RECOMMEND',
+  keyword = '',
+  minPrice,
+  maxPrice,
+}) {
   if (!categoryId || isNaN(Number(categoryId))) {
     return normalizePageResponse({ content: [], totalElements: 0, totalPages: 0, number: page, size }, size)
   }
 
   const responseBody = await apiFetch(
-    buildCategoryProductsPath({ categoryId, page, size, sort, keyword }),
+    buildCategoryProductsPath({ categoryId, page, size, sort, keyword, minPrice, maxPrice }),
   )
 
   return normalizePageResponse(responseBody, size)
 }
+
 /**
  * 상품 검색 및 상품 목록 조회 (keyword 없으면 전체 조회)
  */
-export async function fetchProducts({ keyword = '', page = 0, size = 20, sort = 'RECOMMEND' }) {
-  const responseBody = await apiFetch(buildProductsPath({ keyword, page, size, sort }))
+export async function fetchProducts({
+  keyword = '',
+  page = 0,
+  size = 20,
+  sort = 'RECOMMEND',
+  minPrice,
+  maxPrice,
+}) {
+  const responseBody = await apiFetch(buildProductsPath({ keyword, page, size, sort, minPrice, maxPrice }))
 
   return normalizePageResponse(responseBody, size)
 }
+
 /**
  * 상품 상세 정보 조회
  */
@@ -113,6 +161,7 @@ export async function fetchProductDetail(productId) {
 
   return normalizeProduct(responseBody);
 }
+
 /**
  * 메타태그 기반 상품 목록 조회
  */
@@ -130,6 +179,7 @@ export async function fetchProductsByMetaTags({ metaTagIds = [], match = 'any', 
 
   return normalizePageResponse(responseBody, size)
 }
+
 /**
  * 관련 상품 조회
  */

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
-import { Star, XCircle } from 'lucide-react'
+import { Star } from 'lucide-react'
 import { toast } from 'react-toastify'
-import { Button, Pagination } from '../../../components/index.js'
+import { Pagination, PageLoadingBox, PageEmptyBox } from '../../../components/index.js'
 import { resolveImageUrl } from '../../../api/imageApi.js'
 import { getProductReviews, updateReview, deleteReview } from '../../../api/reviewApi.js'
+import { resolveReviewImageUrl } from '../../../utils/reviewImage.js'
 import { useAuthStore } from '../../../store/useAuthStore.js'
+import ReviewFormModal from '../../../components/review/ReviewFormModal.jsx'
 
 const PAGE_SIZE = 5
 
@@ -24,34 +26,6 @@ function StarDisplay({ rating, size = 'sm' }) {
   )
 }
 
-function StarSelector({ value, onChange }) {
-  const [hovered, setHovered] = useState(0)
-  return (
-    <div className="flex gap-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          onClick={() => onChange(star)}
-          onMouseEnter={() => setHovered(star)}
-          onMouseLeave={() => setHovered(0)}
-          aria-label={`${star}점`}
-        >
-          <Star
-            className={`size-7 transition-colors ${
-              star <= (hovered || value)
-                ? 'fill-rating text-rating'
-                : 'fill-border text-border-soft hover:fill-brand/40'
-            }`}
-            strokeWidth={0}
-          />
-        </button>
-      ))}
-      <span className="ml-2 self-center text-body-sm text-muted">{value}점</span>
-    </div>
-  )
-}
-
 export default function ProductReviewSection({ productId, averageRate, reviewCount }) {
   const user = useAuthStore((state) => state.user)
   const location = useLocation()
@@ -64,7 +38,7 @@ export default function ProductReviewSection({ productId, averageRate, reviewCou
   const [isLoading, setIsLoading] = useState(true)
 
   const [editingReview, setEditingReview] = useState(null)
-  const [editForm, setEditForm] = useState({ rating: 5, content: '' })
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
 
   const fetchReviews = async () => {
     setIsLoading(true)
@@ -83,28 +57,36 @@ export default function ProductReviewSection({ productId, averageRate, reviewCou
     if (productId) fetchReviews()
   }, [productId, currentPage])
 
-  const openEditModal = (review) => {
-    setEditingReview(review)
-    setEditForm({ rating: review.rating, content: review.content })
-  }
+  const handleReviewSubmit = async ({ rating, content, file, imageUrl }) => {
+    if (!editingReview?.reviewId) return
 
-  const closeEditModal = () => {
-    setEditingReview(null)
-  }
-
-  const handleUpdate = async (e) => {
-    e.preventDefault()
-    if (!editForm.content.trim()) {
-      toast.error('리뷰 내용을 입력해주세요.')
-      return
-    }
+    setIsSubmittingReview(true)
     try {
-      await updateReview(editingReview.reviewId, editForm)
+      let uploadedImageUrl = null
+      if (file) {
+        uploadedImageUrl = await resolveReviewImageUrl({ file, imageUrl: null })
+      } else if (imageUrl) {
+        uploadedImageUrl = imageUrl
+      }
+
+      await updateReview(editingReview.reviewId, {
+        rating,
+        content,
+        imageUrl: uploadedImageUrl,
+      })
+
       toast.success('리뷰가 수정되었습니다.')
-      closeEditModal()
+      setEditingReview(null)
       fetchReviews()
-    } catch {
-      toast.error('리뷰 수정에 실패했습니다.')
+    } catch (error) {
+      const isUploadError = file && String(error?.config?.url ?? '').includes('/api/images/upload')
+      toast.error(
+        isUploadError
+          ? '이미지 업로드에 실패했습니다. JPG/PNG 파일인지 확인해 주세요.'
+          : '리뷰 수정에 실패했습니다.',
+      )
+    } finally {
+      setIsSubmittingReview(false)
     }
   }
 
@@ -142,12 +124,12 @@ export default function ProductReviewSection({ productId, averageRate, reviewCou
       </div>
 
       {isLoading ? (
-        <p className="py-10 text-center text-muted">리뷰를 불러오는 중입니다.</p>
+        <PageLoadingBox label="리뷰를 불러오는 중입니다." />
       ) : reviews.length === 0 ? (
-        <div className="rounded-md border border-border bg-surface py-16 text-center">
-          <p className="text-body font-medium text-ink">아직 작성된 리뷰가 없습니다.</p>
-          <p className="mt-2 text-body-sm text-muted">이 제품의 첫 리뷰 작성자가 되어주세요.</p>
-        </div>
+        <PageEmptyBox
+          title="아직 작성된 리뷰가 없습니다."
+          description="이 제품의 첫 리뷰 작성자가 되어주세요."
+        />
       ) : (
         <>
           <div className="divide-y divide-border rounded-md border border-border bg-surface">
@@ -178,7 +160,7 @@ export default function ProductReviewSection({ productId, averageRate, reviewCou
                         <button
                           type="button"
                           className="text-caption text-muted hover:text-ink"
-                          onClick={() => openEditModal(review)}
+                          onClick={() => setEditingReview(review)}
                         >
                           수정
                         </button>
@@ -193,7 +175,7 @@ export default function ProductReviewSection({ productId, averageRate, reviewCou
                     )}
                   </div>
 
-                  <p className="mt-3 text-body-sm leading-relaxed text-foreground whitespace-pre-wrap pl-12">
+                  <p className="mt-3 whitespace-pre-wrap pl-12 text-body-sm leading-relaxed text-foreground">
                     {review.content}
                   </p>
                   {review.imageUrl && (
@@ -219,47 +201,21 @@ export default function ProductReviewSection({ productId, averageRate, reviewCou
       )}
 
       {editingReview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg border border-border-soft bg-surface p-6 shadow-xl">
-            <div className="mb-5 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-ink">리뷰 수정</h3>
-              <button type="button" onClick={closeEditModal} className="text-muted hover:text-error">
-                <XCircle size={22} />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdate} className="space-y-4">
-              <div>
-                <label className="mb-2 block text-body-sm font-semibold text-ink">별점</label>
-                <StarSelector
-                  value={editForm.rating}
-                  onChange={(v) => setEditForm((prev) => ({ ...prev, rating: v }))}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-body-sm font-semibold text-ink">리뷰 내용</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={editForm.content}
-                  onChange={(e) => setEditForm((prev) => ({ ...prev, content: e.target.value }))}
-                  className="w-full resize-none rounded-md border border-border-soft bg-white p-3 text-body-sm outline-none focus:border-brand"
-                  placeholder="상품에 대한 솔직한 후기를 남겨주세요."
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 border-t border-border-soft pt-4">
-                <Button type="button" variant="outline" size="sm" onClick={closeEditModal}>
-                  취소
-                </Button>
-                <Button type="submit" variant="primary" size="sm">
-                  수정 완료
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <ReviewFormModal
+          mode="edit"
+          product={{
+            name: editingReview.productName,
+            imageUrl: editingReview.productImageUrl,
+          }}
+          initialValues={{
+            rating: editingReview.rating,
+            content: editingReview.content,
+            imageUrl: editingReview.imageUrl,
+          }}
+          onClose={() => setEditingReview(null)}
+          onSubmit={handleReviewSubmit}
+          isSubmitting={isSubmittingReview}
+        />
       )}
     </section>
   )

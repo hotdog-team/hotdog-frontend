@@ -2,20 +2,20 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-const navControlClass =
-  'inline-flex size-10 shrink-0 items-center justify-center rounded border border-border bg-surface text-muted transition-colors hover:border-ink hover:text-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ink/20'
+const BLOCK_SIZE = 10
 
-const navControlDisabledClass = `${navControlClass} pointer-events-none opacity-40`
+const navControlClass =
+  'inline-flex size-9 shrink-0 items-center justify-center rounded bg-transparent text-muted transition-colors hover:bg-surface-muted hover:text-ink focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ink/20'
 
 const pageLinkBase =
-  'inline-flex size-10 shrink-0 items-center justify-center rounded border text-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-3'
+  'inline-flex size-9 shrink-0 items-center justify-center rounded text-body-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-3'
 
 const pageLinkClass = (isActive) =>
   [
     pageLinkBase,
     isActive
       ? 'pagination-page--active text-white focus-visible:ring-ink/20'
-      : 'border-border bg-surface text-ink hover:border-brand focus-visible:ring-brand/20',
+      : 'bg-transparent text-ink hover:bg-surface-muted focus-visible:ring-brand/20',
   ].join(' ')
 
 function toPositiveInt(value, fallback) {
@@ -26,40 +26,22 @@ function toPositiveInt(value, fallback) {
   return Math.floor(parsed)
 }
 
-/** 1-based page numbers and optional ellipsis tokens */
-function buildPageItems(page, totalPages, siblingCount) {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, index) => index + 1)
-  }
-
-  const items = []
-  const left = Math.max(2, page - siblingCount)
-  const right = Math.min(totalPages - 1, page + siblingCount)
-
-  items.push(1)
-  if (left > 2) {
-    items.push('ellipsis')
-  }
-
-  for (let current = left; current <= right; current += 1) {
-    items.push(current)
-  }
-
-  if (right < totalPages - 1) {
-    items.push('ellipsis')
-  }
-
-  items.push(totalPages)
-  return items
+function getBlockStart(page) {
+  return Math.floor((page - 1) / BLOCK_SIZE) * BLOCK_SIZE + 1
 }
 
-function NavControl({ to, disabled, label, children }) {
-  if (disabled) {
-    return (
-      <span className={navControlDisabledClass} aria-disabled="true" aria-label={label}>
-        {children}
-      </span>
-    )
+/** 현재 10페이지 블록만 표시 (1–10, 11–20, …) */
+function buildBlockPageItems(page, totalPages) {
+  const blockStart = getBlockStart(page)
+  const blockEnd = Math.min(blockStart + BLOCK_SIZE - 1, totalPages)
+  const count = blockEnd - blockStart + 1
+
+  return Array.from({ length: count }, (_, index) => blockStart + index)
+}
+
+function NavControl({ to, hidden, label, children }) {
+  if (hidden) {
+    return null
   }
 
   return (
@@ -89,7 +71,6 @@ export default function Pagination({
   page = 1,
   totalPages = 1,
   getPageHref,
-  siblingCount = 1,
   ariaLabel = '페이지',
   className = '',
 }) {
@@ -97,52 +78,48 @@ export default function Pagination({
   const currentPage = Math.min(toPositiveInt(page, 1), normalizedTotalPages)
 
   const pageItems = useMemo(
-    () => buildPageItems(currentPage, normalizedTotalPages, siblingCount),
-    [currentPage, normalizedTotalPages, siblingCount],
+    () => buildBlockPageItems(currentPage, normalizedTotalPages),
+    [currentPage, normalizedTotalPages],
   )
 
   if (normalizedTotalPages <= 1 || typeof getPageHref !== 'function') {
     return null
   }
 
-  const prevHref = getPageHref(currentPage - 1)
-  const nextHref = getPageHref(currentPage + 1)
+  const blockStart = getBlockStart(currentPage)
+  const blockEnd = Math.min(blockStart + BLOCK_SIZE - 1, normalizedTotalPages)
+  const hasPrevBlock = blockStart > 1
+  const hasNextBlock = normalizedTotalPages > BLOCK_SIZE && blockEnd < normalizedTotalPages
 
   return (
     <nav
-      className={`flex flex-wrap items-center justify-center gap-3 ${className}`.trim()}
+      className={`flex flex-wrap items-center justify-center gap-2 ${className}`.trim()}
       aria-label={ariaLabel}
     >
       <NavControl
-        to={prevHref}
-        disabled={currentPage <= 1}
-        label="이전 페이지"
+        to={getPageHref(blockStart - 1)}
+        hidden={!hasPrevBlock}
+        label="이전 페이지 목록"
       >
-        <ChevronLeft className="size-5" strokeWidth={2.25} aria-hidden="true" />
+        <ChevronLeft className="size-4" strokeWidth={2.25} aria-hidden="true" />
       </NavControl>
 
-      {pageItems.map((item, index) =>
-        item === 'ellipsis' ? (
-          <span className="px-1 text-muted" key={`ellipsis-${index}`} aria-hidden="true">
-            …
-          </span>
-        ) : (
-          <PageItem
-            key={item}
-            pageNumber={item}
-            isActive={item === currentPage}
-            href={getPageHref(item)}
-            ariaLabel={`${item} 페이지`}
-          />
-        ),
-      )}
+      {pageItems.map((item) => (
+        <PageItem
+          key={item}
+          pageNumber={item}
+          isActive={item === currentPage}
+          href={getPageHref(item)}
+          ariaLabel={`${item} 페이지`}
+        />
+      ))}
 
       <NavControl
-        to={nextHref}
-        disabled={currentPage >= normalizedTotalPages}
-        label="다음 페이지"
+        to={getPageHref(blockEnd + 1)}
+        hidden={!hasNextBlock}
+        label="다음 페이지 목록"
       >
-        <ChevronRight className="size-5" strokeWidth={2.25} aria-hidden="true" />
+        <ChevronRight className="size-4" strokeWidth={2.25} aria-hidden="true" />
       </NavControl>
     </nav>
   )

@@ -1,11 +1,12 @@
-import { Edit2, Star, XCircle } from 'lucide-react'
+import { ChevronDown, Edit2, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { Button, Pagination, Select } from '../../../components/index.js'
+import { Button, Pagination, Select, ModalShell, PageLoadingBox, PageEmptyBox, formControlFocusClass } from '../../../components/index.js'
+import { MyPageHeader, MyPagePanel } from '../../../components/mypage/MyPageUi.jsx'
 import ReviewFormModal from '../../../components/review/ReviewFormModal.jsx'
 import axiosInstance from '../../../api/axiosInstance.js'
-import { createReview, getReviewByOrderItem, updateReview } from '../../../api/reviewApi.js'
+import { createReview, updateReview } from '../../../api/reviewApi.js'
 import { resolveImageUrl } from '../../../api/imageApi.js'
 import { resolveReviewImageUrl } from '../../../utils/reviewImage.js'
 import { addCartItem, addCartItems } from '../../../api/cartApi'
@@ -33,23 +34,36 @@ const ORDER_STATUS_LABEL = {
 }
 
 const ORDER_STATUS_CLASS = {
-  PENDING: 'bg-gray-100 text-gray-600',
-  PROCESSING: 'bg-yellow-100 text-yellow-700',
-  COMPLETED: 'bg-blue-100 text-blue-700',
-  BEFORE_SHIPMENT: 'bg-orange-100 text-orange-700',
-  IN_TRANSIT: 'bg-sky-100 text-sky-700',
-  DELIVERED: 'bg-green-100 text-green-700',
-  PARTIAL_CANCELLED: 'bg-red-100 text-red-600',
-  CANCELLED: 'bg-gray-200 text-gray-500',
-  RETURN_REQUESTED: 'bg-purple-100 text-purple-700',
-  RETURN_COMPLETED: 'bg-gray-200 text-gray-500',
-  PARTIAL_RETURN_REQUESTED: 'bg-purple-100 text-purple-700',
-  PARTIAL_RETURN_COMPLETED: 'bg-gray-200 text-gray-500',
+  PENDING: 'bg-surface-muted text-muted',
+  PROCESSING: 'bg-surface-muted text-ink',
+  COMPLETED: 'bg-brand/10 text-brand',
+  BEFORE_SHIPMENT: 'bg-surface-muted text-ink',
+  IN_TRANSIT: 'bg-surface-muted text-ink',
+  DELIVERED: 'bg-brand/10 text-brand',
+  PARTIAL_CANCELLED: 'bg-surface-muted text-muted',
+  CANCELLED: 'bg-surface-muted text-muted',
+  RETURN_REQUESTED: 'bg-surface-muted text-ink',
+  RETURN_COMPLETED: 'bg-surface-muted text-muted',
+  PARTIAL_RETURN_REQUESTED: 'bg-surface-muted text-ink',
+  PARTIAL_RETURN_COMPLETED: 'bg-surface-muted text-muted',
 }
 
-const CANCELLED_STATUSES = ['CANCELLED']
-const RETURN_STATUSES = ['RETURN_REQUESTED', 'RETURN_COMPLETED', 'PARTIAL_RETURN_REQUESTED', 'PARTIAL_RETURN_COMPLETED']
-const ORDER_ITEM_PREVIEW_LIMIT = 3
+
+function OrderStatusBadge({ status }) {
+  return (
+    <span
+      className={`inline-flex rounded-md px-3 py-1.5 text-body-sm font-semibold ${getOrderStatusClass(status)}`}
+    >
+      {getOrderStatusLabel(status)}
+    </span>
+  )
+}
+
+function getItemSubtotal(item) {
+  const unitPrice = Number(item.priceAtOrder ?? item.price ?? 0)
+  const quantity = Number(item.quantity ?? 1)
+  return unitPrice * quantity
+}
 
 function getOrderStatusLabel(status) {
   return ORDER_STATUS_LABEL[status] || status || '-'
@@ -87,110 +101,83 @@ function ReviewViewModal({ context, review, isLoading, onClose, onEdit }) {
     : ''
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/55 px-4 py-8" role="dialog" aria-modal="true">
-      <div className="max-h-modal w-full max-w-lg overflow-y-auto rounded-md bg-surface p-8 text-ink shadow-2xl">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <h2 className="text-2xl font-bold">내 리뷰</h2>
-            {formattedDate && <p className="mt-1 text-caption text-muted">작성일 {formattedDate}</p>}
+    <ModalShell title="내 리뷰" titleId="review-view-modal-title" onClose={onClose} maxWidth="max-w-lg">
+      {formattedDate && <p className="mb-4 text-body-sm text-muted">작성일 {formattedDate}</p>}
+
+      <Button variant="outline" size="sm" onClick={onEdit} className="mb-4 flex items-center gap-1">
+        <Edit2 className="size-3.5" aria-hidden="true" />
+        수정
+      </Button>
+
+      {isLoading ? (
+        <PageLoadingBox label="리뷰를 불러오는 중입니다." />
+      ) : review ? (
+        <div className="space-y-6">
+          <div className="flex items-center gap-4 border-b border-border-soft py-4">
+            <img
+              className="size-20 shrink-0 rounded-md object-cover"
+              src={resolveImageUrl(context.imageUrl) || 'https://via.placeholder.com/100'}
+              alt={context.productName}
+            />
+            <div className="min-w-0">
+              <p className="font-semibold text-ink">{context.productName}</p>
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="내 리뷰 닫기"
-            title="닫기"
-            className="shrink-0 text-muted transition-colors hover:text-error"
-          >
-            <XCircle size={24} aria-hidden="true" />
-          </button>
-        </div>
-        <div className="flex justify-start mt-2">
-          <Button variant="outline" size="sm" onClick={onEdit} className="flex items-center gap-1">
-            <Edit2 className="size-3.5" /> 수정
-          </Button>
-        </div>
-        {isLoading ? (
-          <p className="mt-10 text-center text-muted">리뷰를 불러오는 중입니다...</p>
-        ) : review ? (
-          <div className="mt-2 space-y-6">
-            <div className="flex items-center gap-4 py-4 border-b border-gray-200">
-              <img
-                className="size-20 shrink-0 rounded-md object-cover"
-                src={resolveImageUrl(context.imageUrl) || 'https://via.placeholder.com/100'}
-                alt={context.productName}
-              />
-              <div className="min-w-0">
-                <p className="font-semibold text-ink">{context.productName}</p>
-              </div>
-            </div>
-
-            <div className="border-b border-gray-200 pb-4">
-              <p className="text-body font-medium text-ink">별점</p>
-              <div className="mt-2 flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`size-5 ${star <= review.rating ? 'fill-rating text-rating' : 'fill-border text-border-soft'}`}
-                    strokeWidth={0}
-                  />
-                ))}
-                <span className="ml-2 text-body-sm font-semibold text-ink">{review.rating}점</span>
-              </div>
-            </div>
-
-            <div className="border-b border-gray-200 pb-4">
-              <p className="text-body font-medium text-ink">리뷰 내용</p>
-              <p className="mt-2 whitespace-pre-wrap text-body-sm leading-relaxed text-foreground">
-                {review.content}
-              </p>
-            </div>
-
-            {review.imageUrl && (
-              <div>
-                <p className="text-body font-medium text-ink">첨부 이미지</p>
-                <img
-                  src={resolveImageUrl(review.imageUrl)}
-                  alt="리뷰 첨부 이미지"
-                  className="mt-2 max-h-56 max-w-full rounded-md border border-border object-cover"
+          <div className="border-b border-border-soft pb-4">
+            <p className="text-body font-medium text-ink">별점</p>
+            <div className="mt-2 flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`size-5 ${star <= review.rating ? 'fill-rating text-rating' : 'fill-border text-border-soft'}`}
+                  strokeWidth={0}
                 />
-              </div>
-            )}
+              ))}
+              <span className="ml-2 text-body-sm font-semibold text-ink">{review.rating}점</span>
+            </div>
           </div>
-        ) : null}
-      </div>
-    </div>
+
+          <div className="border-b border-border-soft pb-4">
+            <p className="text-body font-medium text-ink">리뷰 내용</p>
+            <p className="mt-2 whitespace-pre-wrap text-body-sm leading-relaxed text-foreground">
+              {review.content}
+            </p>
+          </div>
+
+          {review.imageUrl && (
+            <div>
+              <p className="text-body font-medium text-ink">첨부 이미지</p>
+              <img
+                src={resolveImageUrl(review.imageUrl)}
+                alt="리뷰 첨부 이미지"
+                className="mt-2 max-h-48 max-w-xs rounded-md border border-border object-cover"
+              />
+            </div>
+          )}
+        </div>
+      ) : null}
+    </ModalShell>
   )
 }
 
 function TrackingModal({ order, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/55 px-4 py-8" role="dialog" aria-modal="true">
-      <div className="w-full max-w-md rounded-md bg-surface p-8 text-ink shadow-2xl">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <h2 className="text-2xl font-medium">배송 조회</h2>
-            <p className="mt-3 text-body-sm text-foreground">주문번호 #{order.orderId}</p>
-          </div>
+    <ModalShell title="배송 조회" onClose={onClose} maxWidth="max-w-md">
+      <p className="text-body-sm text-muted">주문번호 #{order.orderId}</p>
 
-          <Button variant="outline" size="sm" onClick={onClose}>
-            닫기
-          </Button>
-        </div>
+      <div className="mt-6 rounded-md border border-border bg-surface-muted p-5">
+        <p className="text-caption text-muted">운송장 번호</p>
 
-        <div className="mt-8 rounded-md border border-border bg-surface-muted p-5">
-          <p className="text-caption text-foreground">운송장 번호</p>
-
-          {order.trackingNumber ? (
-            <p className="mt-2 text-xl font-bold text-ink">{order.trackingNumber}</p>
-          ) : (
-            <p className="mt-2 text-body-sm font-medium text-foreground">
-              아직 운송장 번호가 등록되지 않았습니다.
-            </p>
-          )}
-        </div>
+        {order.trackingNumber ? (
+          <p className="mt-2 text-xl font-bold text-ink">{order.trackingNumber}</p>
+        ) : (
+          <p className="mt-2 text-body-sm font-medium text-muted">
+            아직 운송장 번호가 등록되지 않았습니다.
+          </p>
+        )}
       </div>
-    </div>
+    </ModalShell>
   )
 }
 
@@ -237,22 +224,11 @@ function ReturnRequestModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/55 px-4 py-8" role="dialog" aria-modal="true">
-      <form className="w-full max-w-xl rounded-md bg-surface p-8 text-ink shadow-2xl" onSubmit={handleSubmit}>
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <h2 className="text-2xl font-medium">반품 신청</h2>
-            <p className="mt-3 text-body-sm text-foreground">
-              반품 정보를 확인하고 사유를 입력해 주세요.
-            </p>
-          </div>
+    <ModalShell title="반품 신청" onClose={onClose} maxWidth="max-w-xl" bodyClassName="p-6">
+      <form onSubmit={handleSubmit}>
+        <p className="text-body-sm text-muted">반품 정보를 확인하고 사유를 입력해 주세요.</p>
 
-          <Button variant="outline" size="sm" onClick={onClose}>
-            닫기
-          </Button>
-        </div>
-
-        <div className="mt-8 grid gap-4 rounded-md border border-border bg-surface-muted p-5 text-body-sm">
+        <div className="mt-6 grid gap-4 rounded-md border border-border bg-surface-muted p-5 text-body-sm">
           <p>
             <span className="text-foreground">주문번호</span>
             <br />
@@ -298,7 +274,7 @@ function ReturnRequestModal({
 
         <textarea
           id="return-detail-reason"
-          className="mt-3 h-36 w-full resize-none border border-border p-4 text-body outline-none focus:border-brand focus:ring-3 focus:ring-brand/15"
+          className={`mt-3 h-36 w-full resize-none border border-border p-4 text-body ${formControlFocusClass}`}
           placeholder="상세 사유를 입력해 주세요."
           value={detailReason}
           onChange={(event) => setDetailReason(event.target.value)}
@@ -310,7 +286,7 @@ function ReturnRequestModal({
           </p>
         )}
 
-        <div className="mt-8 flex justify-end gap-3 border-t border-border pt-6">
+        <div className="mt-8 flex justify-end gap-3 border-t border-border-soft pt-6">
           <Button type="button" variant="outline" size="md" onClick={onClose}>
             취소
           </Button>
@@ -320,7 +296,7 @@ function ReturnRequestModal({
           </Button>
         </div>
       </form>
-    </div>
+    </ModalShell>
   )
 }
 
@@ -346,24 +322,15 @@ function CancelRequestModal({
     : item.quantity || 1
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/55 px-4 py-8" role="dialog" aria-modal="true">
-      <div className="w-full max-w-xl rounded-md bg-surface p-8 text-ink shadow-2xl">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <h2 className="text-2xl font-medium">
-              {isAllCancel ? '전체 주문 취소' : '주문 취소'}
-            </h2>
-            <p className="mt-3 text-body-sm text-foreground">
-              취소할 주문 정보를 확인해 주세요.
-            </p>
-          </div>
+    <ModalShell
+      title={isAllCancel ? '전체 주문 취소' : '주문 취소'}
+      onClose={onClose}
+      maxWidth="max-w-xl"
+      bodyClassName="p-6"
+    >
+      <p className="text-body-sm text-muted">취소할 주문 정보를 확인해 주세요.</p>
 
-          <Button variant="outline" size="sm" onClick={onClose}>
-            닫기
-          </Button>
-        </div>
-
-        <div className="mt-8 grid gap-4 rounded-md border border-border bg-surface-muted p-5 text-body-sm">
+      <div className="mt-6 grid gap-4 rounded-md border border-border bg-surface-muted p-5 text-body-sm">
           <p>
             <span className="text-foreground">주문번호</span>
             <br />
@@ -389,22 +356,21 @@ function CancelRequestModal({
           </p>
         </div>
 
-        <div className="mt-8 flex justify-end gap-3 border-t border-border pt-6">
-          <Button type="button" variant="outline" size="md" onClick={onClose}>
-            취소
-          </Button>
+      <div className="mt-8 flex justify-end gap-3 border-t border-border-soft pt-6">
+        <Button type="button" variant="outline" size="md" onClick={onClose}>
+          취소
+        </Button>
 
-          <Button
-            type="button"
-            variant="primary"
-            size="md"
-            onClick={() => onSubmit(order, item)}
-          >
-            주문 취소
-          </Button>
-        </div>
+        <Button
+          type="button"
+          variant="primary"
+          size="md"
+          onClick={() => onSubmit(order, item)}
+        >
+          주문 취소
+        </Button>
       </div>
-    </div>
+    </ModalShell>
   )
 }
 
@@ -459,6 +425,15 @@ function getValidTotalPrice(order) {
   return productTotal + (order.deliveryFee || 0)
 }
 
+function getOrderThumbnail(order) {
+  const items = order.orderItems || []
+  if (items.length > 0) {
+    const first = items[0]
+    return first.imageUrl || first.thumbnailImage || order.imageUrl
+  }
+  return order.imageUrl
+}
+
 function OrderCard({
   order,
   onReviewClick,
@@ -471,15 +446,10 @@ function OrderCard({
   onRepurchaseItem,
   onRepurchaseAll,
 }) {
-  const [isItemsExpanded, setIsItemsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
 
-  const isDelivered = order.orderStatus === 'DELIVERED'
-  const isInTransit = order.orderStatus === 'IN_TRANSIT'
-  const isCancelled = CANCELLED_STATUSES.includes(order.orderStatus)
-  const isReturnStatus = RETURN_STATUSES.includes(order.orderStatus)
   const formattedDate = new Date(order.orderDate).toLocaleDateString('ko-KR')
-  const statusText = getOrderStatusLabel(order.orderStatus)
-  const statusClass = getOrderStatusClass(order.orderStatus)
+  const totalAmount = getValidTotalPrice(order)
   const canCancel = ['PENDING', 'PROCESSING', 'COMPLETED', 'PARTIAL_CANCELLED'].includes(order.orderStatus)
   const canCancelAll = ['PENDING', 'PROCESSING', 'COMPLETED', 'PARTIAL_CANCELLED'].includes(order.orderStatus)
   const canTrack = ['BEFORE_SHIPMENT', 'IN_TRANSIT'].includes(order.orderStatus)
@@ -502,198 +472,233 @@ function OrderCard({
   const orderItems = order.orderItems?.length
     ? order.orderItems
     : [{ productName: order.productName, imageUrl: order.imageUrl, quantity: 1 }]
-  const hasMoreItems = orderItems.length > ORDER_ITEM_PREVIEW_LIMIT
-  const visibleItems = isItemsExpanded || !hasMoreItems
-    ? orderItems
-    : orderItems.slice(0, ORDER_ITEM_PREVIEW_LIMIT)
-  const hiddenItemCount = orderItems.length - ORDER_ITEM_PREVIEW_LIMIT
+  const thumbnailUrl = getOrderThumbnail(order)
 
   return (
-    <article
-      className="cursor-pointer rounded-md border border-border bg-surface shadow-card"
-      onClick={() => onDetailClick(order.orderId)}
-    >
-      <header className="grid grid-cols-3 items-center gap-5 border-b border-border px-8 py-5">
-        <div>
-          <p className="text-caption text-foreground">주문일</p>
-          <p className="text-xl font-bold">{formattedDate}</p>
+    <article className="overflow-hidden rounded-md border border-border bg-surface shadow-card">
+      <button
+        type="button"
+        className="flex w-full items-center gap-4 p-5 text-left motion-safe-transition hover:bg-surface-muted/60"
+        onClick={() => setIsExpanded((prev) => !prev)}
+        aria-expanded={isExpanded}
+      >
+        <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-surface-muted sm:size-20">
+          {thumbnailUrl ? (
+            <img
+              className="h-full w-full object-cover"
+              src={thumbnailUrl}
+              alt=""
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-caption text-muted">
+              이미지 없음
+            </div>
+          )}
         </div>
 
-        <div className="text-center">
-          <p className="text-caption text-foreground">총 결제 금액</p>
-          <p className="text-xl font-bold">
-            {getValidTotalPrice(order).toLocaleString()}원
+        <div className="min-w-0 flex-1">
+          <p className="text-body font-medium text-ink">
+            주문번호 <span className="font-bold">#{order.orderId}</span>
+            <span className="text-muted"> · {formattedDate}</span>
+          </p>
+          <p className="mt-2 line-clamp-1 text-body-sm text-muted">
+            {getOrderProductSummary(order).productName}
           </p>
         </div>
 
-        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-          {canCancelAll && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onCancelClick(order)}
-            >
-              전체 주문취소
-            </Button>
-          )}
-
-          {canReturnAll && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onReturnClick(order, null)}
-            >
-              전체 반품
-            </Button>
-          )}
-
-          {canRepurchaseAll && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => onRepurchaseAll(order)}
-            >
-              전체 재구매
-            </Button>
-          )}
-        </div>
-      </header>
-
-
-      <div className="grid grid-cols-split gap-6 px-8 py-7 max-md:grid-cols-1">
-        <div className="space-y-5">
-          {visibleItems.map((item, index) => (
-            <div
-              key={item.orderItemId ?? `${order.orderId}-${index}`}
-              className="flex items-center gap-6 border-b border-border-soft pb-5 last:border-b-0 last:pb-0"
-            >
-              <img
-                className="size-thumb shrink-0 rounded object-cover"
-                src={item.imageUrl || 'https://via.placeholder.com/100'}
-                alt={item.productName}
-              />
-
-              <div className="min-w-0 flex-1">
-                <h3 className="line-clamp-2 text-body-lg font-bold">{item.productName}</h3>
-                {item.quantity > 1 && (
-                  <p className="mt-1 text-body-sm text-muted">수량 {item.quantity}개</p>
-                )}
-                <p className="mt-1 text-body font-bold text-brand">{(item.priceAtOrder * item.quantity).toLocaleString()}원</p>
-                {item.status === 'CANCELLED' && (
-                  <p className="mt-2 text-body-sm font-semibold text-muted">주문 취소 완료</p>
-                )}
-                {item.status ===
-                  'RETURN_REQUESTED' && (
-                    <p className="mt-2 text-body-sm font-semibold text-purple-700">
-                      반품 신청 완료
-                    </p>
-                  )}
-                {item.status ===
-                  'RETURN_COMPLETED' && (
-                    <p className="mt-2 text-body-sm font-semibold text-muted">
-                      반품 완료
-                    </p>
-                  )}
-              </div>
-
-              <div
-                className="mt-4 flex flex-wrap gap-2"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {canCancel && item.status === 'ORDERED' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onCancelItemClick(order, item)}
-                  >
-                    주문 취소
-                  </Button>
-                )}
-
-                {canTrack && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => onTrackingClick(order)}
-                  >
-                    배송 조회
-                  </Button>
-                )}
-
-                {canReturnOrReview &&
-                  item.status === 'ORDERED' &&
-                  canWriteReview(order, item) && (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => onReviewClick(buildReviewContext(order, item))}
-                    >
-                      리뷰 작성
-                    </Button>
-                  )}
-
-                {canReturnOrReview &&
-                  item.status === 'ORDERED' &&
-                  item.hasReview && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => onViewReviewClick(buildReviewContext(order, item))}
-                    >
-                      내 리뷰 보기
-                    </Button>
-                  )}
-
-                {canReturnOrReview &&
-                  item.status === 'ORDERED' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onReturnClick(order, item)}
-                    >
-                      반품 신청
-                    </Button>
-                  )}
-
-                {canReturnOrReview &&
-                  item.status === 'ORDERED' &&
-                  item.productId && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onRepurchaseItem(item)}
-                    >
-                      재구매
-                    </Button>
-                  )}
-              </div>
-            </div>
-          ))}
-
-          {hasMoreItems && (
-            <button
-              type="button"
-              className="text-body-sm font-semibold text-brand hover:underline"
-              onClick={(e) => {
-                e.stopPropagation()
-                setIsItemsExpanded((prev) => !prev)
-              }}
-            >
-              {isItemsExpanded
-                ? '상품 목록 접기'
-                : `외 ${hiddenItemCount}건 더보기`}
-            </button>
-          )}
+        <div className="hidden shrink-0 sm:block">
+          <OrderStatusBadge status={order.orderStatus} />
         </div>
 
-      </div>
+        <div className="shrink-0 text-right">
+          <p className="inline-flex items-baseline text-body-lg font-bold text-ink">
+            <span>{totalAmount.toLocaleString()}</span>
+            <span className="text-body font-medium">원</span>
+          </p>
+          <p className="mt-1 text-body-sm text-muted sm:hidden">
+            {getOrderStatusLabel(order.orderStatus)}
+          </p>
+        </div>
+
+        <ChevronDown
+          className={`size-5 shrink-0 text-muted motion-safe-transition ${isExpanded ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+        />
+      </button>
+
+      {isExpanded && (
+        <div className="border-t border-border px-5 pb-5 pt-4">
+          <div className="mb-4 hidden sm:flex sm:justify-start">
+            <OrderStatusBadge status={order.orderStatus} />
+          </div>
+
+          <div className="space-y-3">
+            {orderItems.map((item, index) => {
+              const imageUrl = item.imageUrl || item.thumbnailImage
+              const itemSubtotal = getItemSubtotal(item)
+              const isItemCancelled = item.status === 'CANCELLED'
+              const productPath = item.productId ? `/shop/${item.productId}` : null
+
+              const productInfo = (
+                <>
+                  <div className="relative size-20 shrink-0 overflow-hidden rounded-md bg-surface">
+                    {imageUrl ? (
+                      <img
+                        className="h-full w-full object-cover"
+                        src={imageUrl}
+                        alt=""
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-caption text-muted">
+                        이미지 없음
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="font-bold text-ink">{item.productName}</p>
+                    <p className="mt-1 text-body-sm text-muted">
+                      수량 {item.quantity || 1}개
+                    </p>
+                    {item.status === 'CANCELLED' && (
+                      <p className="mt-2 text-body-sm font-medium text-muted">주문 취소 완료</p>
+                    )}
+                    {item.status === 'RETURN_REQUESTED' && (
+                      <p className="mt-2 text-body-sm font-medium text-muted">반품 신청 완료</p>
+                    )}
+                    {item.status === 'RETURN_COMPLETED' && (
+                      <p className="mt-2 text-body-sm font-medium text-muted">반품 완료</p>
+                    )}
+                  </div>
+                </>
+              )
+
+              return (
+                <div
+                  key={item.orderItemId ?? `${order.orderId}-${index}`}
+                  className={`flex items-start gap-4 rounded-md bg-surface-muted p-4 ${isItemCancelled ? 'opacity-60' : ''}`}
+                >
+                  <div className="flex min-w-0 flex-1 flex-col gap-3">
+                    <div className="flex items-start justify-between gap-4">
+                      {productPath ? (
+                        <Link
+                          to={productPath}
+                          className="flex min-w-0 flex-1 items-start gap-4 motion-safe-transition hover:opacity-90"
+                        >
+                          {productInfo}
+                        </Link>
+                      ) : (
+                        <div className="flex min-w-0 flex-1 items-start gap-4">
+                          {productInfo}
+                        </div>
+                      )}
+
+                      <div className="shrink-0 text-right">
+                        <span className={`text-ink ${isItemCancelled ? 'line-through' : ''}`}>
+                          {itemSubtotal.toLocaleString()}원
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {canCancel && item.status === 'ORDERED' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onCancelItemClick(order, item)}
+                        >
+                          주문 취소
+                        </Button>
+                      )}
+
+                      {canTrack && index === 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onTrackingClick(order)}
+                        >
+                          배송 조회
+                        </Button>
+                      )}
+
+                      {canReturnOrReview && item.status === 'ORDERED' && canWriteReview(order, item) && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => onReviewClick(buildReviewContext(order, item))}
+                        >
+                          리뷰 작성
+                        </Button>
+                      )}
+
+                      {canReturnOrReview && item.status === 'ORDERED' && item.hasReview && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onViewReviewClick(buildReviewContext(order, item))}
+                        >
+                          내 리뷰 보기
+                        </Button>
+                      )}
+
+                      {canReturnOrReview && item.status === 'ORDERED' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onReturnClick(order, item)}
+                        >
+                          반품 신청
+                        </Button>
+                      )}
+
+                      {canReturnOrReview && item.status === 'ORDERED' && item.productId && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onRepurchaseItem(item)}
+                        >
+                          재구매
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-4">
+            <Button variant="outline" size="sm" onClick={() => onDetailClick(order.orderId)}>
+              주문 상세
+            </Button>
+
+            {canCancelAll && (
+              <Button variant="outline" size="sm" onClick={() => onCancelClick(order)}>
+                전체 주문취소
+              </Button>
+            )}
+
+            {canReturnAll && (
+              <Button variant="outline" size="sm" onClick={() => onReturnClick(order, null)}>
+                전체 반품
+              </Button>
+            )}
+
+            {canRepurchaseAll && (
+              <Button variant="primary" size="sm" onClick={() => onRepurchaseAll(order)}>
+                전체 재구매
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </article>
   )
 }
 
 function MyOrders() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [orders, setOrders] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -705,10 +710,35 @@ function MyOrders() {
   const [selectedTrackingOrder, setSelectedTrackingOrder] = useState(null)
   const [selectedReturnOrder, setSelectedReturnOrder] = useState(null)
   const [totalPages, setTotalPages] = useState(1)
-  const [statusGroup, setStatusGroup] = useState('ALL')
-  const [months, setMonths] = useState(null)
 
   const page = Number(searchParams.get('page')) || 1
+  const statusGroup = searchParams.get('statusGroup') || 'ALL'
+  const monthsParam = searchParams.get('months')
+  const months = monthsParam ? Number(monthsParam) : null
+
+  const updateFilters = ({ nextStatusGroup, nextMonths, nextPage = 1 }) => {
+    const params = new URLSearchParams(searchParams)
+
+    params.set('page', String(nextPage))
+
+    if (nextStatusGroup !== undefined) {
+      if (!nextStatusGroup || nextStatusGroup === 'ALL') {
+        params.delete('statusGroup')
+      } else {
+        params.set('statusGroup', nextStatusGroup)
+      }
+    }
+
+    if (nextMonths !== undefined) {
+      if (nextMonths === null) {
+        params.delete('months')
+      } else {
+        params.set('months', String(nextMonths))
+      }
+    }
+
+    setSearchParams(params)
+  }
 
   const handleDetailClick = (orderId) => {
     navigate(`/mypage/orders/${orderId}`)
@@ -806,25 +836,21 @@ function MyOrders() {
   }
 
   const handleSearch = () => {
-    navigate('/mypage/orders?page=1')
-    fetchOrders({ targetPage: 1 })
+    if (page !== 1) {
+      updateFilters({ nextPage: 1 })
+      return
+    }
+
+    fetchOrders({ targetPage: 1, nextStatusGroup: statusGroup, nextMonths: months })
   }
 
   const handleReset = () => {
-    setStatusGroup('ALL')
-    setMonths(null)
-
-    navigate('/mypage/orders?page=1')
-    fetchOrders({
-      targetPage: 1,
-      nextStatusGroup: 'ALL',
-      nextMonths: null,
-    })
+    setSearchParams(new URLSearchParams({ page: '1' }))
   }
 
   useEffect(() => {
-    fetchOrders()
-  }, [page])
+    fetchOrders({ targetPage: page, nextStatusGroup: statusGroup, nextMonths: months })
+  }, [page, statusGroup, months])
 
   const handleCancelOrder = async (order) => {
     if (
@@ -1031,29 +1057,33 @@ function MyOrders() {
 
   return (
     <>
-      <h1 className="text-3xl font-extrabold">주문/배송 내역</h1>
-      <p className="mt-2 text-md text-muted">내 구매 내역/배송 상태를 확인합니다.</p>
+      <MyPageHeader
+        title="주문/배송 내역"
+        description="주문 상태와 배송 진행을 확인할 수 있습니다."
+      />
 
-      <div className="mt-8 rounded-md border border-border bg-surface p-6">
-        <div className="flex flex-wrap items-end gap-6">
-          <div>
-            <label className="mb-2 block text-body-sm font-medium text-ink" htmlFor="order-status-filter">
-              주문 상태
-            </label>
-
-            <select
-              id="order-status-filter"
-              value={statusGroup}
-              onChange={(event) => setStatusGroup(event.target.value)}
-              className="h-10 min-w-36 rounded border border-border bg-surface px-3 text-body-sm outline-none focus:border-brand focus:ring-3 focus:ring-brand/15"
-            >
-              <option value="ALL">전체</option>
-              <option value="PENDING">입금대기</option>
-              <option value="SHIPPING">배송중</option>
-              <option value="DELIVERED">배송완료</option>
-              <option value="CANCEL_RETURN">취소/반품</option>
-            </select>
-          </div>
+      <MyPagePanel className="mt-0">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div className="flex flex-wrap items-end gap-6">
+          <Select
+            id="order-status-filter"
+            label="주문 상태"
+            size="sm"
+            className="min-w-36"
+            options={[
+              { value: 'ALL', label: '전체' },
+              { value: 'PENDING', label: '결제 대기' },
+              { value: 'SHIPPING', label: '배송중' },
+              { value: 'DELIVERED', label: '배송완료' },
+              { value: 'CANCEL_RETURN', label: '취소/반품' },
+            ]}
+            value={statusGroup}
+            onChange={(event) => updateFilters({
+              nextStatusGroup: event.target.value,
+              nextMonths: months,
+              nextPage: 1,
+            })}
+          />
 
           <div>
             <p className="mb-2 text-body-sm font-medium text-ink">조회 기간</p>
@@ -1071,12 +1101,17 @@ function MyOrders() {
                   type="button"
                   variant={months === period.value ? 'primary' : 'outline'}
                   size="sm"
-                  onClick={() => setMonths(period.value)}
+                  onClick={() => updateFilters({
+                    nextMonths: period.value,
+                    nextStatusGroup: statusGroup,
+                    nextPage: 1,
+                  })}
                 >
                   {period.label}
                 </Button>
               ))}
             </div>
+          </div>
           </div>
 
           <div className="flex gap-2">
@@ -1089,13 +1124,13 @@ function MyOrders() {
             </Button>
           </div>
         </div>
-      </div>
+      </MyPagePanel>
 
-      <section className="mt-8 grid gap-6">
+      <section className="mt-6 grid gap-4">
         {isLoading ? (
-          <p>로딩 중...</p>
+          <PageLoadingBox label="주문 내역을 불러오는 중입니다." />
         ) : orders.length === 0 ? (
-          <p className="py-10 text-center text-foreground">주문 내역이 없습니다.</p>
+          <PageEmptyBox title="주문 내역이 없습니다." />
         ) : (
           orders.map((order) => (
             <OrderCard
@@ -1134,7 +1169,11 @@ function MyOrders() {
             className="mt-4"
             page={page}
             totalPages={totalPages}
-            getPageHref={(p) => `/mypage/orders?page=${p}`}
+            getPageHref={(p) => {
+              const params = new URLSearchParams(searchParams)
+              params.set('page', String(p))
+              return `/mypage/orders?${params.toString()}`
+            }}
             ariaLabel="주문 페이지"
           />
         )}
