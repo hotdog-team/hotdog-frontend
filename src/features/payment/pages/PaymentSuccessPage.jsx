@@ -38,6 +38,7 @@ export default function PaymentSuccessPage() {
 
                 navigate(`/mypage/orders/${orderId}`, {
                     replace: true,
+                    state: { fromCheckout: true },
                 })
             } catch (error) {
                 console.error('결제 승인 실패:', error)
@@ -46,6 +47,7 @@ export default function PaymentSuccessPage() {
 
                 navigate(`/mypage/orders/${orderId}`, {
                     replace: true,
+                    state: { fromCheckout: true },
                 })
             }
         }

@@ -1,11 +1,13 @@
+import { formControlFocusClass, formControlFocusMutedClass } from './formControlFocus.js'
+
 const inputVariants = {
     variant: {
         default:
-            'rounded border border-border bg-surface text-ink outline-none placeholder:text-muted focus:border-brand focus:ring-3 focus:ring-brand/15',
+            `rounded border border-border bg-surface text-ink placeholder:text-muted ${formControlFocusClass}`,
         muted:
-            'rounded-sm border border-transparent bg-surface-muted text-ink outline-none placeholder:text-muted focus:border-brand focus:bg-surface focus:ring-3 focus:ring-brand/15',
+            `rounded-sm border border-transparent bg-surface-muted text-ink placeholder:text-muted ${formControlFocusMutedClass}`,
         filled:
-            'rounded-none border-0 bg-surface-muted text-ink outline-none placeholder:text-muted focus:bg-surface focus:ring-3 focus:ring-brand/20',
+            `rounded-none border-0 bg-surface-muted text-ink placeholder:text-muted focus:bg-surface focus:ring-3 focus:ring-brand/20 form-control-focus outline-none transition-colors`,
     },
     size: {
         sm: 'h-9 px-4 text-sm font-medium',

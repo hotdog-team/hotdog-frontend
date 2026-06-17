@@ -4,6 +4,7 @@ import {
   choiceChipFieldClass,
   choiceChipGroupClass,
   choiceChipGroupLabelClass,
+  choiceChipGroupLabelHintClass,
   normalizeChipOptions,
   valuesMatch,
 } from './choiceChipUtils.js'
@@ -12,6 +13,7 @@ export default function RadioChipGroup({
   id: idProp,
   name: nameProp,
   label,
+  labelDescription,
   options = [],
   value,
   onChange,
@@ -20,6 +22,7 @@ export default function RadioChipGroup({
   optional = false,
   disabled = false,
   className = '',
+  labelClassName = '',
   describedBy,
 }) {
   const generatedId = useId()
@@ -49,10 +52,13 @@ export default function RadioChipGroup({
       aria-describedby={describedBy}
     >
       {label && (
-        <legend id={`${groupId}-legend`} className={choiceChipGroupLabelClass}>
+        <legend
+          id={`${groupId}-legend`}
+          className={[choiceChipGroupLabelClass, labelClassName].filter(Boolean).join(' ')}
+        >
           {label}
-          {optional && (
-            <span className="ml-1 font-semibold normal-case text-muted"> (선택)</span>
+          {labelDescription && (
+            <span className={choiceChipGroupLabelHintClass}> {labelDescription}</span>
           )}
           {required && (
             <span className="text-error" aria-hidden="true">

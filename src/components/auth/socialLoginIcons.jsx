@@ -8,7 +8,7 @@ function NaverIcon() {
 
 function KakaoIcon() {
   return (
-    <svg className="size-7 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="currentColor">
+    <svg className="size-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="currentColor">
       <path d="M12 3C7.03 3 3 6.58 3 11c0 2.39 1.18 4.52 3.02 5.95L5 21l4.45-2.22c.82.12 1.66.18 2.55.18 4.97 0 9-3.58 9-8s-4.03-8-9-8z" />
     </svg>
   )
@@ -16,7 +16,7 @@ function KakaoIcon() {
 
 function GoogleIcon() {
   return (
-    <svg className="size-6 shrink-0" viewBox="0 0 20 20" aria-hidden="true">
+    <svg className="size-5 shrink-0" viewBox="0 0 20 20" aria-hidden="true">
       <path
         fill="#4285F4"
         d="M19.6 10.23c0-.71-.06-1.4-.18-2.05H10v3.87h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.9-1.75 2.98-4.33 2.98-7.35Z"
@@ -59,7 +59,7 @@ export const socialLoginIcons = {
 }
 
 export const socialLoginStyles = {
-  naver: 'rounded-lg bg-naver text-white hover:bg-naver-hover',
-  kakao: 'rounded-lg bg-kakao text-kakao-ink hover:bg-kakao-hover',
-  google: 'rounded-xl bg-surface text-google-ink hover:bg-surface-muted shadow-social',
+  naver: 'rounded-md bg-naver text-white hover:bg-naver-hover',
+  kakao: 'rounded-md bg-kakao text-kakao-ink hover:bg-kakao-hover',
+  google: 'rounded-md border-2 border-neutral-400 bg-surface text-ink hover:bg-surface-muted',
 }

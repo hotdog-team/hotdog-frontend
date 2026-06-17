@@ -42,7 +42,7 @@ export default function SocialSuccessPage() {
       navigate('/home', { replace: true });
     } else {
       alert('인증 토큰을 찾을 수 없습니다. 다시 로그인해 주세요.');
-      navigate('/', { replace: true });
+      navigate('/login', { replace: true });
     }
   }, [searchParams, navigate]);
 

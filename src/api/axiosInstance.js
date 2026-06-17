@@ -36,7 +36,7 @@ axiosInstance.interceptors.response.use(
       localStorage.clear();
       sessionStorage.clear();
 
-      window.location.href = '/';
+      window.location.href = '/login';
     }
 
     return Promise.reject(error);

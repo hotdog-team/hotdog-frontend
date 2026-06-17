@@ -1,6 +1,6 @@
-import { Camera, Star, XCircle } from 'lucide-react'
+import { Camera, Star } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '../index.js'
+import { Button, ModalShell, formControlFocusClass } from '../index.js'
 import { resolveImageUrl } from '../../api/imageApi.js'
 
 const blockedWords = ['씨발', '시발', '씨발년', '씨발놈', '쌍놈', '개새끼', '새끼', '존나', '좆', '씹', '병신', '지랄', '염병', '미친년', '미친놈', '호로', '호로새끼', '잡년', '화냥년', '육시랄', 'ㅆㅂ', 'ㅅㅂ', 'ㅂㅅ', 'ㅈㄴ', 'ㅈㄱㄴ', '시벌', '새키', '새끼야', '쌔끼', '존나게', '조온나', '좃', '죵나', '씨바', '씨방', '시바알', '씨벌', '18년', '18놈', '시8', '씨8', '개슥기', '개색기', '개섀끼', '맘충', '틀딱', '한남', '김치녀', '정공', '면상', '대가리', '주둥이', '주작', '꼴통', '먹튀', '사기꾼', '꺼져', '닥쳐', '껒여', '정신병자']
@@ -153,34 +153,15 @@ export default function ReviewFormModal({
     : null
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/55 px-4 py-8"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="review-modal-title"
+    <ModalShell
+      title={isCreate ? '리뷰 작성' : '리뷰 수정'}
+      titleId="review-modal-title"
+      onClose={onClose}
+      maxWidth="max-w-xl"
+      bodyClassName="p-0"
     >
-      <form
-        className="max-h-modal w-full max-w-xl overflow-y-auto rounded-md bg-surface p-6 text-ink shadow-2xl"
-        onSubmit={handleSubmit}
-      >
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <h2 id="review-modal-title" className="text-2xl font-bold">
-              {isCreate ? '리뷰 작성' : '리뷰 수정'}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={`${isCreate ? '리뷰 작성' : '리뷰 수정'} 닫기`}
-            title="닫기"
-            className="shrink-0 text-muted transition-colors hover:text-error"
-          >
-            <XCircle size={24} aria-hidden="true" />
-          </button>
-        </div>
-
-        <div className="mt-6 flex flex-col gap-6">
+      <form className="text-ink" onSubmit={handleSubmit}>
+        <div className="space-y-6 p-6">
           {product && (
             <section
               className="rounded-md border border-border p-5"
@@ -206,7 +187,10 @@ export default function ReviewFormModal({
 
                   <div className="mt-2 space-y-1 text-body-sm text-foreground">
                     {product.orderId && (
-                      <p>주문번호: <span className="font-semibold text-ink">#{product.orderId}</span></p>
+                      <p>
+                        주문번호:{' '}
+                        <span className="font-semibold text-ink">#{product.orderId}</span>
+                      </p>
                     )}
                     {formattedDate && <p>구매일: {formattedDate}</p>}
                   </div>
@@ -215,19 +199,19 @@ export default function ReviewFormModal({
             </section>
           )}
 
-          <section className="border border-border p-5 rounded-md">
-            <p className="text-lg font-bold">전체 평점</p>
+          <section className="rounded-md border border-border p-5">
+            <p className="text-body-lg font-bold">전체 평점</p>
             <div className="mt-4">
               <StarSelector value={rating} onChange={setRating} />
             </div>
 
-            <label className="mt-8 block text-lg font-bold" htmlFor="review-content">
+            <label className="mt-8 block text-body-lg font-bold" htmlFor="review-content">
               상세 후기
             </label>
             <textarea
               id="review-content"
-              className="mt-4 h-panel w-full resize-none border bg-gray-100 border-border p-6 text-body outline-none focus:border-brand focus:ring-3 focus:ring-brand/15"
-              placeholder="상품에 대한 솔직한 후기를 남겨주세요. (최소 20자 이상)"
+              className={`mt-4 h-panel w-full resize-none rounded-md border border-border bg-surface-muted p-6 text-body ${formControlFocusClass}`}
+              placeholder="상품에 대한 솔직한 후기를 남겨주세요. (최소 5자 이상)"
               value={content}
               onChange={(event) => {
                 setContent(event.target.value)
@@ -235,11 +219,11 @@ export default function ReviewFormModal({
               }}
             />
 
-            <label className="mt-8 block text-lg font-bold" htmlFor="review-photo">
+            <label className="mt-8 block text-body-lg font-bold" htmlFor="review-photo">
               사진 첨부
             </label>
             <div
-              className={`relative mt-4 grid h-panel cursor-pointer place-items-center overflow-hidden border-2 border-dashed text-center outline-none transition-colors ${isDragActive ? 'border-brand bg-brand-soft' : 'border-border bg-surface hover:border-ink'}`}
+              className={`relative mt-4 grid h-panel cursor-pointer place-items-center overflow-hidden rounded-md border-2 border-dashed text-center outline-none transition-colors ${isDragActive ? 'border-brand bg-brand-soft' : 'border-border bg-surface hover:border-ink'}`}
               role="button"
               tabIndex={0}
               onClick={(event) => {
@@ -322,15 +306,15 @@ export default function ReviewFormModal({
                 {validationMessage}
               </p>
             )}
-
-            <div className="mt-8 flex justify-end border-t border-border pt-7">
-              <Button type="submit" variant="primary" size="lg" className="px-16" disabled={isSubmitting}>
-                {isSubmitting ? '처리 중...' : isCreate ? '리뷰 등록하기' : '수정 완료'}
-              </Button>
-            </div>
           </section>
         </div>
+
+        <div className="flex justify-end border-t border-border-soft px-6 py-4">
+          <Button type="submit" variant="primary" size="md" className="min-w-36" disabled={isSubmitting}>
+            {isSubmitting ? '처리 중...' : isCreate ? '리뷰 등록하기' : '수정 완료'}
+          </Button>
+        </div>
       </form>
-    </div>
+    </ModalShell>
   )
 }

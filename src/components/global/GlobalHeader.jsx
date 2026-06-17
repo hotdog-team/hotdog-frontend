@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Heart, Search, ShoppingCart, User } from 'lucide-react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { fetchCategories } from '../../api/categoryApi.js'
 import dtoLogo from '../../assets/d-to-logo.png'
 import { useAuthStore } from '../../store/useAuthStore.js'
 import { useAccessibility } from '../../context/AccessibilityContext.jsx'
-
-import { useQueryClient } from '@tanstack/react-query'
-import axiosInstance from '../../api/axiosInstance.js'
+import SearchSuggestionPanel from '../search/SearchSuggestionPanel.jsx'
+import InputClearButton from '../ui/InputClearButton.jsx'
+import QuantitySelector from '../../features/shop/components/QuantitySelector.jsx'
+import { useSearchNavigation } from '../../hooks/useSearchNavigation.js'
+import { formControlUnderlineClass } from '../ui/formControlFocus.js'
 
 const DEFAULT_CATEGORIES = [
   { label: '건강', to: '/shop?categoryId=health' },
@@ -21,7 +23,7 @@ const focusRingClass =
   'focus-ring rounded-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-surface'
 
 const categoryNavLinkBase =
-  'focus-ring focus-ring-inset inline-flex items-center px-1 pt-2 pb-1 text-base font-medium transition-[color,box-shadow] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink'
+  'focus-ring focus-ring-inset inline-flex items-center px-1 pt-2 pb-1 text-base transition-[color,box-shadow] hover:text-ink hover:font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink'
 
 function getCategoryIdFromPath(path) {
   const queryString = path.includes('?') ? path.slice(path.indexOf('?')) : ''
@@ -51,28 +53,32 @@ function isCategoryNavActive(category, location) {
 function getCategoryNavLinkClass(isActive) {
   return `${categoryNavLinkBase} ${
     isActive
-      ? 'font-semibold text-ink shadow-[inset_0_-2px_0_0_var(--color-brand)]'
-      : 'text-muted'
+      ? 'font-bold text-ink shadow-[inset_0_-2px_0_0_var(--color-brand)]'
+      : 'font-medium text-muted'
   }`
 }
 
+const SEARCH_PANEL_ID = 'global-header-search-panel'
+
 function GlobalHeader({
   categories,
-  searchPlaceholder = '상품을 검색해 보세요',
+  searchPlaceholder = '상품 검색',
   onSearchSubmit,
 }) {
   const location = useLocation()
-  const { pathname, search } = location
   const navigate = useNavigate()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false)
+  const [searchValue, setSearchValue] = useState('')
+  const searchContainerRef = useRef(null)
   const [apiCategories, setApiCategories] = useState(DEFAULT_CATEGORIES)
   const headerCategories = useMemo(() => categories ?? apiCategories, [apiCategories, categories])
   const { settings, setSettings, save } = useAccessibility();
-
-  const queryClient = useQueryClient()
+  const { executeSearch, logAndSaveSearch, userId } = useSearchNavigation()
 
   const logout = useAuthStore((s) => s.logout)
   const user = useAuthStore((s) => s.user)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   useEffect(() => {
     if (categories) {
@@ -110,76 +116,89 @@ function GlobalHeader({
     }
   }, [categories])
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
+  useEffect(() => {
+    setIsUserMenuOpen(false)
+  }, [location.pathname])
 
-    const formData = new FormData(event.currentTarget)
-    const searchValue = formData.get('search')?.toString().trim() ?? ''
+  useEffect(() => {
+    if (!isSearchPanelOpen) {
+      return undefined
+    }
 
-    if (onSearchSubmit) {
-      onSearchSubmit(searchValue)
+    const handlePointerDown = (event) => {
+      if (searchContainerRef.current?.contains(event.target)) {
+        return
+      }
+      setIsSearchPanelOpen(false)
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsSearchPanelOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isSearchPanelOpen])
+
+  const submitSearch = async () => {
+    const nextSearchValue = searchValue.trim()
+
+    if (!nextSearchValue) {
+      window.alert('검색어를 입력해 주세요.')
       return
     }
 
-    if (searchValue) {
-      try {
-        await axiosInstance.post(`/api/search/log?keyword=${encodeURIComponent(searchValue)}`);
-
-        queryClient.invalidateQueries({ queryKey: ['popularSearchKeywords'] });
-
-        const userId = user?.memberId || user?.id || user?.email || 'guest';
-        const storageKey = `d-to-recent-searches-${userId}`;
-        const storedSearches = JSON.parse(window.localStorage.getItem(storageKey) || '[]');
-
-        const nextSearches = [searchValue, ...storedSearches.filter(s => s !== searchValue)].slice(0, 5);
-        window.localStorage.setItem(storageKey, JSON.stringify(nextSearches));
-
-        window.dispatchEvent(new Event('storage'));
-      } catch (error) {
-        console.error('상단바 검색어 로깅 실패:', error);
-      }
-
-      const nextSearchParams = new URLSearchParams()
-      const categoryId = new URLSearchParams(search).get('categoryId')
-
-      if (categoryId) {
-        nextSearchParams.set('categoryId', categoryId)
-      }
-
-      nextSearchParams.set('query', searchValue)
-      nextSearchParams.set('sort', 'RECOMMEND')
-      nextSearchParams.set('page', '0')
-      navigate(`/shop?${nextSearchParams.toString()}`)
+    if (onSearchSubmit) {
+      onSearchSubmit(nextSearchValue)
+      setIsSearchPanelOpen(false)
+      return
     }
+
+    setIsSearchPanelOpen(false)
+    await executeSearch(nextSearchValue)
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    await submitSearch()
   }
 
   const handleSearchFocus = () => {
-    if (pathname !== '/shop') {
-      navigate('/shop')
+    if (!searchValue.trim()) {
+      setIsSearchPanelOpen(true)
     }
+  }
+
+  const handleSearchChange = (event) => {
+    const nextValue = event.target.value
+    setSearchValue(nextValue)
+    setIsSearchPanelOpen(!nextValue.trim())
   }
 
   const handleLogout = () => {
     logout()
-    navigate('/', { replace: true })
+    navigate('/home', { replace: true })
   }
 
-  // 감소 함수 (최솟값 1 제한)
-  const handleDecrease = () => {
-    if (settings.fontSizeStep <= 1) return;
-    const next = { ...settings, fontSizeStep: settings.fontSizeStep - 1 };
-    setSettings(next);
-    save(next).catch(() => {});
-  };
+  const handleFontSizeDecrease = () => {
+    if (settings.fontSizeStep <= 1) return
+    const next = { ...settings, fontSizeStep: settings.fontSizeStep - 1 }
+    setSettings(next)
+    save(next).catch(() => {})
+  }
 
-  // 증가 함수 (최댓값 5 제한)
-  const handleIncrease = () => {
-    if (settings.fontSizeStep >= 5) return;
-    const next = { ...settings, fontSizeStep: settings.fontSizeStep + 1 };
-    setSettings(next);
-    save(next).catch(() => {});
-  };
-
+  const handleFontSizeIncrease = () => {
+    if (settings.fontSizeStep >= 5) return
+    const next = { ...settings, fontSizeStep: settings.fontSizeStep + 1 }
+    setSettings(next)
+    save(next).catch(() => {})
+  }
 
   return (
     <header className="relative z-40 border-b border-border-soft bg-surface">
@@ -189,7 +208,7 @@ function GlobalHeader({
           to="/home"
           aria-label="메인으로 가기"
         >
-          <img className="h-8 w-auto object-contain" src={dtoLogo} aria-hidden="true" alt=""/>
+          <img className="h-8.5 w-auto object-contain" src={dtoLogo} aria-hidden="true" alt=""/>
         </Link>
 
         <nav className="min-w-0 shrink-0 overflow-x-auto py-1" aria-label="상품 카테고리">
@@ -219,120 +238,153 @@ function GlobalHeader({
           <label className="sr-only" htmlFor="global-header-search">
             상품 검색
           </label>
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted"
-              strokeWidth={2.25}
-              aria-hidden="true"
-            />
+          <div ref={searchContainerRef} className="group relative">
             <input
               id="global-header-search"
-              className="h-9 w-full rounded-sm border border-transparent bg-surface-muted pr-4 pl-12 text-sm font-medium text-ink outline-none placeholder:text-muted focus:border-brand focus:bg-surface focus:ring-3 focus:ring-brand/15"
+              className={`h-9 w-full py-0 pl-1 text-sm font-medium text-ink placeholder:text-muted ${searchValue.trim() ? 'pr-18' : 'pr-11'} ${formControlUnderlineClass}`}
               name="search"
               type="search"
               placeholder={searchPlaceholder}
+              value={searchValue}
+              role="combobox"
+              aria-expanded={isSearchPanelOpen}
+              aria-controls={SEARCH_PANEL_ID}
+              aria-autocomplete="list"
+              autoComplete="off"
+              onChange={handleSearchChange}
               onFocus={handleSearchFocus}
               onClick={handleSearchFocus}
             />
+            {searchValue.trim() ? (
+              <InputClearButton
+                className="absolute top-1/2 right-10 -translate-y-1/2"
+                label="검색어 지우기"
+                onClick={() => {
+                  setSearchValue('')
+                  setIsSearchPanelOpen(true)
+                }}
+              />
+            ) : null}
+            <button
+              type="submit"
+              className={`absolute top-1/2 right-1 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-sm text-muted group-focus-within:text-brand hover:bg-surface-muted hover:text-brand ${focusRingClass}`}
+              aria-label="검색"
+            >
+              <Search className="size-5" strokeWidth={2.75} aria-hidden="true" />
+            </button>
+            {isSearchPanelOpen && !searchValue.trim() && (
+              <SearchSuggestionPanel
+                id={SEARCH_PANEL_ID}
+                userId={userId}
+                onKeywordNavigate={logAndSaveSearch}
+                onClose={() => setIsSearchPanelOpen(false)}
+              />
+            )}
           </div>
         </form>
 
         <nav className="flex shrink-0 items-center gap-6 text-ink max-sm:gap-4" aria-label="사용자 메뉴">
-          <Link
-            className={`inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted ${focusRingClass}`}
-            to="/mypage/bookmarks"
-            aria-label="찜 목록"
-          >
-            <Heart className="size-5" strokeWidth={2.4} aria-hidden="true" />
-          </Link>
-          <Link
-            className={`inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted ${focusRingClass}`}
-            to="/cart"
-            aria-label="장바구니"
-          >
-            <ShoppingCart className="size-5" strokeWidth={2.4} aria-hidden="true" />
-          </Link>
-          <div className="relative">
-            <button
-              className={`inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted ${focusRingClass}`}
-              type="button"
-              aria-label="유저 메뉴"
-              aria-controls="global-header-user-menu"
-              aria-expanded={isUserMenuOpen}
-              aria-haspopup="menu"
-              onClick={() => setIsUserMenuOpen((current) => !current)}
-            >
-              <User className="size-5" strokeWidth={2.4} aria-hidden="true" />
-            </button>
-
-            {isUserMenuOpen && (
-              <div
-                id="global-header-user-menu"
-                className="absolute top-full right-0 z-50 mt-3 w-60 rounded-md border border-border-soft bg-surface py-2 text-left text-ink shadow-card-hover"
-                role="menu"
-                aria-label="유저 메뉴"
+          {isAuthenticated ? (
+            <>
+              <Link
+                className={`inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted ${focusRingClass}`}
+                to="/mypage/bookmarks"
+                aria-label="찜 목록"
               >
-                <div className="border-b border-border-soft px-4 py-3">
-                  <p className="m-0 text-caption font-bold text-muted">이메일</p>
-                  <p className="m-0 mt-1 truncate text-body-sm font-semibold text-ink">
-                    {user?.email || '이메일 정보 없음'}
-                  </p>
-                </div>
-                <div className="border-b border-border-soft px-4 py-3">
-                  <p className="m-0 text-caption font-bold text-muted">글자 크기 조절</p>
-                  <div className="a11y-font-stepper mt-2" role="group" aria-label="글자 크기 조절">
-                    <button
-                      type="button"
-                      onClick={handleDecrease}
-                      disabled={settings.fontSizeStep <= 1}
-                      aria-label="글자 크기 줄이기"
-                      className={`a11y-font-stepper__btn ${focusRingClass}`}
-                    >
-                      −
-                    </button>
-                    <span className="a11y-font-stepper__value" aria-live="polite" aria-atomic="true" aria-label={`글자 크기 ${settings.fontSizeStep}단계`}>
-                      {settings.fontSizeStep > 0 ? settings.fontSizeStep : 1}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleIncrease}
-                      disabled={settings.fontSizeStep >= 5}
-                      aria-label="글자 크기 키우기"
-                      className={`a11y-font-stepper__btn ${focusRingClass}`}
-                    >
-                      +
-                    </button>
+                <Heart className="size-5" strokeWidth={2.4} aria-hidden="true" />
+              </Link>
+              <Link
+                className={`inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted ${focusRingClass}`}
+                to="/cart"
+                aria-label="장바구니"
+              >
+                <ShoppingCart className="size-5" strokeWidth={2.4} aria-hidden="true" />
+              </Link>
+              <div className="relative">
+                <button
+                  className={`inline-flex size-8 items-center justify-center rounded-full hover:bg-surface-muted ${focusRingClass}`}
+                  type="button"
+                  aria-label="유저 메뉴"
+                  aria-controls="global-header-user-menu"
+                  aria-expanded={isUserMenuOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setIsUserMenuOpen((current) => !current)}
+                >
+                  <User className="size-5" strokeWidth={2.4} aria-hidden="true" />
+                </button>
+
+                {isUserMenuOpen && (
+                  <div
+                    id="global-header-user-menu"
+                    className="absolute top-full right-0 z-50 mt-3 w-60 rounded-md border border-border-soft bg-surface py-2 text-left text-ink shadow-card-hover"
+                    role="menu"
+                    aria-label="유저 메뉴"
+                  >
+                    <div className="border-b border-border-soft px-4 py-3">
+                      <p className="m-0 text-caption font-bold text-muted">이메일</p>
+                      <p className="m-0 mt-1 truncate text-body-sm font-semibold text-ink">
+                        {user?.email || '이메일 정보 없음'}
+                      </p>
+                    </div>
+                    <div className="border-b border-border-soft px-4 py-3">
+                      <p className="m-0 text-caption font-bold text-muted">글자 크기 조절</p>
+                      <QuantitySelector
+                        className="mt-2"
+                        quantity={settings.fontSizeStep > 0 ? settings.fontSizeStep : 1}
+                        min={1}
+                        max={5}
+                        ariaLabel="글자 크기 조절"
+                        valueLabel="글자 크기"
+                        onDecrease={handleFontSizeDecrease}
+                        onIncrease={handleFontSizeIncrease}
+                      />
+                    </div>
+                    <div className="py-1">
+                      <Link
+                        to="/mypage/profile"
+                        className="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-muted"
+                        role="menuitem"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        내 프로필
+                      </Link>
+                      <Link
+                        to="/mypage/orders"
+                        className="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-muted"
+                        role="menuitem"
+                        onClick={() => setIsUserMenuOpen(false)}                        
+                      >
+                        내 주문/배송 내역
+                      </Link>
+                      <Link
+                          to="/mypage/settings"
+                          className="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-muted"
+                          role="menuitem"
+                          onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        개인 화면 설정
+                      </Link>
+                      <button
+                        className="block w-full px-4 py-2 text-left text-sm font-bold text-danger hover:bg-danger-soft"
+                        onClick={handleLogout}
+                        type="button"
+                        role="menuitem"
+                      >
+                        로그아웃
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="py-1">
-                  <Link
-                    to="/mypage/profile"
-                    className="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-muted"
-                    role="menuitem"
-                    onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    프로필
-                  </Link>
-                  <Link
-                      to="/mypage/settings"
-                      className="block w-full px-4 py-2 text-left text-sm font-medium hover:bg-surface-muted"
-                      role="menuitem"
-                      onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    개인 화면 설정
-                  </Link>
-                  <button
-                    className="block w-full px-4 py-2 text-left text-sm font-bold text-danger hover:bg-danger-soft"
-                    onClick={handleLogout}
-                    type="button"
-                    role="menuitem"
-                  >
-                    로그아웃
-                  </button>
-                </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className={`rounded-sm px-3 py-1.5 text-sm font-bold text-ink hover:bg-surface-muted ${focusRingClass}`}
+            >
+              로그인
+            </Link>
+          )}
         </nav>
       </div>
     </header>

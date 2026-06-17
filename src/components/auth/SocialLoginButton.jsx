@@ -1,7 +1,7 @@
 import { socialLoginConfig, socialLoginIcons, socialLoginStyles } from './socialLoginIcons.jsx'
 
 const baseClassName =
-  'inline-flex h-14 w-full min-w-11 items-center justify-center gap-4 px-4 text-base font-bold transition-colors'
+  'inline-flex h-11 w-full min-w-11 items-center justify-center gap-2.5 rounded-md px-4 text-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink'
 
 export default function SocialLoginButton({ provider, onClick, className = '' }) {
   const config = socialLoginConfig[provider]

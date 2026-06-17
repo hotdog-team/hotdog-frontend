@@ -1,28 +1,53 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { fetchCategoryProducts, fetchProducts, fetchProductDetail, fetchRelatedProducts, fetchProductsByMetaTags, } from '../../api/productApi';
+import {
+  fetchCategoryProducts,
+  fetchProducts,
+  fetchProductDetail,
+  fetchRelatedProducts,
+  fetchProductsByMetaTags,
+} from '../../api/productApi';
+
+const listFilterKey = ({ minPrice, maxPrice }) => [minPrice ?? null, maxPrice ?? null]
 
 /**
  * 카테고리별 상품 목록 조회
  */
-export function useCategoryProductsQuery({ categoryId, page = 0, size = 20, sort = 'RECOMMEND', keyword = '' }) {
+export function useCategoryProductsQuery({
+  categoryId,
+  page = 0,
+  size = 20,
+  sort = 'RECOMMEND',
+  keyword = '',
+  minPrice,
+  maxPrice,
+}) {
   return useQuery({
-    queryKey: ['categoryProducts', categoryId, page, size, sort, keyword],
-    queryFn: () => fetchCategoryProducts({ categoryId, page, size, sort, keyword }),
+    queryKey: ['categoryProducts', categoryId, page, size, sort, keyword, ...listFilterKey({ minPrice, maxPrice })],
+    queryFn: () => fetchCategoryProducts({ categoryId, page, size, sort, keyword, minPrice, maxPrice }),
     enabled: Boolean(categoryId),
     placeholderData: keepPreviousData,
   })
 }
+
 /**
  * 상품 검색 및 상품 목록 조회
  */
-export function useProductsQuery({ keyword = '', page = 0, size = 20, sort = 'RECOMMEND' }) {
+export function useProductsQuery({
+  keyword = '',
+  page = 0,
+  size = 20,
+  sort = 'RECOMMEND',
+  minPrice,
+  maxPrice,
+}) {
   return useQuery({
-    queryKey: ['products', keyword, page, size, sort],
-    queryFn: () => fetchProducts({ keyword, page, size, sort }),
+    queryKey: ['products', keyword, page, size, sort, ...listFilterKey({ minPrice, maxPrice })],
+    queryFn: () => fetchProducts({ keyword, page, size, sort, minPrice, maxPrice }),
     enabled: Boolean(keyword),
     placeholderData: keepPreviousData,
   })
 }
+
 /**
  * 상품 상세 정보 조회
  */
@@ -33,13 +58,20 @@ export function useProductDetailQuery(productId) {
     enabled: Boolean(productId),
   });
 }
+
 /**
  * 맞춤 추천 상품 목록 조회
  */
-export function useRecommendProductsQuery({ page = 0, size = 20, sort = 'RECOMMEND' } = {}) {
+export function useRecommendProductsQuery({
+  page = 0,
+  size = 20,
+  sort = 'RECOMMEND',
+  minPrice,
+  maxPrice,
+} = {}) {
   return useQuery({
-    queryKey: ['recommendProducts', page, size, sort],
-    queryFn: () => fetchProducts({ page, size, sort }),
+    queryKey: ['recommendProducts', page, size, sort, ...listFilterKey({ minPrice, maxPrice })],
+    queryFn: () => fetchProducts({ page, size, sort, minPrice, maxPrice }),
     placeholderData: keepPreviousData,
   })
 }
@@ -47,14 +79,16 @@ export function useRecommendProductsQuery({ page = 0, size = 20, sort = 'RECOMME
 /**
  * 메인 페이지 상품 목록 조회
  */
-export function useHomeProductsQuery({ page = 0, size = 20, sort = 'RECOMMEND' } = {}) {
+export function useHomeProductsQuery({ page = 0, size = 20, sort = 'RECOMMEND', enabled = true } = {}) {
   return useQuery({
     queryKey: ['homeProducts', page, size, sort],
     queryFn: () => fetchProducts({ page, size, sort }),
+    enabled,
     staleTime: 1000 * 60 * 5,
     placeholderData: keepPreviousData,
   })
 }
+
 /**
  * 메타태그 기반 상품 목록 조회
  */
@@ -66,6 +100,7 @@ export function useMetaTagProductsQuery({ metaTagIds = [], match = 'any', page =
     placeholderData: keepPreviousData,
   })
 }
+
 /**
  * 관련 상품 조회
  */

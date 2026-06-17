@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft, Circle, CircleAlert, CircleCheck, Eye, EyeOff } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo.jsx'
-import { Button } from '../../../components/index.js'
+import { Button, formControlFocusMutedClass } from '../../../components/index.js'
 
 const passwordPattern =
   '(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9])[\\s\\S]{8,16}'
@@ -26,7 +26,7 @@ const passwordRules = [
 ]
 
 const inputClass =
-  'h-18 w-full bg-surface-muted px-8 pr-18 text-xl text-ink outline-none placeholder:text-muted focus:bg-surface focus:ring-3 focus:ring-brand/20 max-sm:h-14 max-sm:px-5 max-sm:pr-14 max-sm:text-base'
+  `h-18 w-full bg-surface-muted px-8 pr-18 text-xl text-ink placeholder:text-muted max-sm:h-14 max-sm:px-5 max-sm:pr-14 max-sm:text-base ${formControlFocusMutedClass}`
 
 function PasswordRequirementItem({ isActive, isValid, label }) {
   const Icon = !isActive ? Circle : isValid ? CircleCheck : CircleAlert

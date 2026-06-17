@@ -3,7 +3,7 @@ import Input from './Input.jsx'
 
 const labelVariants = {
   auth: 'text-sm font-extrabold tracking-label text-ink uppercase',
-  default: 'text-body-sm font-medium text-ink',
+  default: 'text-body font-semibold text-ink',
 }
 
 export default function InputField({

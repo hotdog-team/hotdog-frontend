@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo.jsx'
 import { useAuthStore } from '../../../store/useAuthStore'
 import { toast } from 'react-toastify'
 import {
   Button,
-  Input,
   InputClearButton,
+  InputField,
   PasswordToggleButton,
   SocialLoginGroup,
+  getButtonClassName,
 } from '../../../components/index.js'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -23,143 +24,110 @@ function LoginPage() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
 
   const navigate = useNavigate()
+  const location = useLocation()
   const login = useAuthStore((s) => s.login)
-  const setUser = useAuthStore((s) => s.setUser)
   const isEmailInvalid = email.length > 0 && !isValidEmail(email)
 
   const handleSubmit = async (event) => {
-      event.preventDefault()
-      if (isEmailInvalid) return
+    event.preventDefault()
+    if (isEmailInvalid) return
 
-      try {
-        const response = await login({ email, password })
+    try {
+      await login({ email, password })
 
-        if (response && response.accessToken) {
-           localStorage.setItem('accessToken', response.accessToken)
-
-
-           if (useAuthStore.getState().setUserInfo) {
-             useAuthStore.getState().setUserInfo({
-               email: response.data.email,
-               name: response.data.name,
-               role: response.data.role
-             })
-           }
-        }
-        navigate('/home', { replace: true })
-      } catch (err) {
-        toast.error(err.message ?? '로그인에 실패했습니다.')
-      }
+      const from = location.state?.from
+      const nextPath = from?.pathname ?? '/home'
+      navigate(nextPath, { replace: true, state: from?.state })
+    } catch (err) {
+      toast.error(err.message ?? '로그인에 실패했습니다.')
     }
+  }
 
   return (
     <main className="flex min-h-svh flex-col bg-page text-foreground">
       <section
-        className="layout-container-auth flex flex-1 flex-col pt-12 pb-16 text-center max-sm:pt-10 max-sm:pb-10"
+        className="layout-container-auth flex flex-1 flex-col justify-center py-10 max-sm:py-8"
         aria-labelledby="login-title"
       >
-        <AuthLogo className="mx-auto mb-12 h-9 max-sm:mb-8 max-sm:h-8" />
+        <AuthLogo className="mx-auto h-12 max-sm:mb-6" />
 
-        <h1
-          id="login-title"
-          className="mt-0.5 mb-2 text-4xl leading-tight font-extrabold text-ink max-sm:text-3xl"
-        >
-          다시 오신 것을 환영합니다
-        </h1>
-        <p className="mb-14 text-2xl leading-snug text-foreground max-sm:mb-8 max-sm:text-lg">
-          임직원 전용 혜택을 확인하세요.
-        </p>
+        <div className="mx-auto w-full max-w-md rounded-lg bg-surface px-6 py-8 shadow-card max-sm:px-5 max-sm:py-6">
+          <h1 id="login-title" className="mb-6 text-center text-3xl font-light text-ink max-sm:text-xl">
+            로그인
+          </h1>
 
-        <form
-          className="min-h-205 w-full border border-border bg-surface px-12 py-12 text-left shadow-card max-sm:min-h-0 max-sm:px-5.5 max-sm:pt-8 max-sm:pb-4"
-          aria-describedby="login-form-description"
-          onSubmit={handleSubmit}
-        >
-          <p id="login-form-description" className="sr-only">
-            회사 이메일과 비밀번호는 필수 입력 항목입니다.
-          </p>
+          <form
+            className="grid gap-5 text-left"
+            aria-describedby="login-form-description"
+            onSubmit={handleSubmit}
+            noValidate
+          >
+            <p id="login-form-description" className="sr-only">
+              이메일과 비밀번호를 입력한 뒤 로그인할 수 있습니다.
+            </p>
 
-          <div className="grid gap-2.5">
-            <label className="text-sm font-extrabold uppercase text-ink" htmlFor="login-email">
-              회사 이메일
-            </label>
-            <span className="block relative">
-              <Input
-                id="login-email"
-                type="email"
-                size="xl"
-                placeholder="이름@회사.com"
-                autoComplete="email"
-                className={`${email ? 'pr-14' : ''}`}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                aria-required="true"
-                invalid={isEmailInvalid}
-                aria-describedby={isEmailInvalid ? 'login-form-description login-email-error' : 'login-form-description'}
-              />
-              {email && (
-                <span className="absolute top-1/2 right-4 flex -translate-y-1/2">
-                  <InputClearButton label="회사 이메일 지우기" onClick={() => setEmail('')} />
-                </span>
-              )}
-            </span>
-            {isEmailInvalid && (
-              <p id="login-email-error" className="text-sm font-semibold text-error" role="alert">
-                회사 이메일 형식이 올바르지 않습니다.
-              </p>
-            )}
-          </div>
+            <InputField
+              id="login-email"
+              label="이메일"
+              size="md"
+              type="email"
+              placeholder="이메일을 입력하세요"
+              autoComplete="email"
+              inputMode="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              invalid={isEmailInvalid}
+              error={isEmailInvalid ? '올바른 이메일 형식을 입력해 주세요.' : undefined}
+              describedBy={isEmailInvalid ? 'login-form-description' : 'login-form-description'}
+              trailing={email ? <InputClearButton label="이메일 지우기" onClick={() => setEmail('')} /> : null}
+            />
 
-          <div className="mt-7 grid gap-2.5">
-            <div className="flex items-center justify-between gap-4">
-              <label className="text-sm font-extrabold uppercase text-ink" htmlFor="login-password">
-                비밀번호
-              </label>
-              <Link className="text-sm font-extrabold text-brand normal-case" to="/reset-password">
-                비밀번호 찾기
-              </Link>
-            </div>
-            <span className="block relative">
-              <Input
+            <div>
+              <InputField
                 id="login-password"
+                label="비밀번호"
+                size="md"
                 type={isPasswordVisible ? 'text' : 'password'}
-                size="xl"
-                placeholder="••••••••"
+                placeholder="비밀번호를 입력하세요"
                 autoComplete="current-password"
-                className={`pr-14`}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
-                aria-required="true"
-                aria-describedby="login-form-description"
+                describedBy="login-form-description"
+                trailing={
+                  <PasswordToggleButton
+                    visible={isPasswordVisible}
+                    onToggle={() => setIsPasswordVisible((current) => !current)}
+                  />
+                }
               />
-              <span className="absolute top-1/2 right-4 flex -translate-y-1/2">
-                <PasswordToggleButton
-                  visible={isPasswordVisible}
-                  onToggle={() => setIsPasswordVisible((current) => !current)}
-                />
-              </span>
-            </span>
-          </div>
+              <div className="mt-2 flex justify-end">
+                <Link
+                  className="text-body-sm font-medium text-muted hover:text-ink hover:underline focus-ring rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
+                  to="/reset-password"
+                >
+                  비밀번호 재설정
+                </Link>
+              </div>
+            </div>
 
-          <Button type="submit" variant="primary" size="md" fullWidth className="mt-8">
-            로그인
-          </Button>
+            <div className="grid gap-2">
+              <Button type="submit" variant="primary" size="md" fullWidth>
+                로그인
+              </Button>
 
-          <SocialLoginGroup />
+              <Link
+                to="/signup"
+                className={getButtonClassName({ variant: 'outline', size: 'md', fullWidth: true })}
+              >
+                회원가입
+              </Link>
+            </div>
 
-          <p className="mt-10 text-center text-lg text-foreground max-sm:mt-8 max-sm:text-sm">
-            계정이 없으신가요?{' '}
-            <Link className="font-extrabold text-ink" to="/signup">
-              회원가입
-            </Link>
-          </p>
-        </form>
-
-        <p className="mt-12.5 text-center text-sm font-bold text-muted">
-          인증된 임직원 전용 비공개 스토어
-        </p>
+            <SocialLoginGroup className="mt-1" />
+          </form>
+        </div>
       </section>
     </main>
   )

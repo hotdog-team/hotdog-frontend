@@ -4,12 +4,14 @@ import {
   choiceChipFieldClass,
   choiceChipGroupClass,
   choiceChipGroupLabelClass,
+  choiceChipGroupLabelHintClass,
   normalizeChipOptions,
 } from './choiceChipUtils.js'
 
 export default function CheckboxChipGroup({
   id: idProp,
   label,
+  labelDescription,
   options = [],
   values = [],
   onChange,
@@ -19,6 +21,7 @@ export default function CheckboxChipGroup({
   optional = false,
   disabled = false,
   className = '',
+  labelClassName = '',
   describedBy,
 }) {
   const generatedId = useId()
@@ -66,10 +69,10 @@ export default function CheckboxChipGroup({
       aria-describedby={describedBy}
     >
       {label && (
-        <legend className={choiceChipGroupLabelClass}>
+        <legend className={[choiceChipGroupLabelClass, labelClassName].filter(Boolean).join(' ')}>
           {label}
-          {optional && (
-            <span className="ml-1 font-semibold normal-case text-muted"> (선택)</span>
+          {labelDescription && (
+            <span className={choiceChipGroupLabelHintClass}> {labelDescription}</span>
           )}
         </legend>
       )}

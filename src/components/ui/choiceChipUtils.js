@@ -21,7 +21,10 @@ export function valuesMatch(a, b) {
 }
 
 export const choiceChipGroupLabelClass =
-  'a11y-choice-chip-legend text-sm font-extrabold tracking-label text-ink uppercase'
+  'a11y-choice-chip-legend mb-3 text-body font-semibold text-ink'
+
+export const choiceChipGroupLabelHintClass =
+  'a11y-choice-chip-legend-hint'
 
 export const choiceChipFieldClass = 'a11y-choice-chip-field'
 

@@ -1,16 +1,21 @@
-import { ChevronRight, Heart, Minus, Plus, ShoppingCart, Star, Truck } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
+import { Heart, Star, Truck } from 'lucide-react'
+import ShopBreadcrumb from '../components/ShopBreadcrumb.jsx'
+import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button } from '../../../components/index.js'
-import { useProductDetailQuery, useRelatedProductsQuery, } from '../../../hooks/queries/useProductQuery'
-import { useProductViewLog } from "../../../hooks/useProductViewLog.js";
-import {addBookmark, removeBookmark} from "../../../api/bookmarkApi.js";
-import {toast} from "react-toastify";
-import useBookmarkedIds from "../../../hooks/useBookmarkedIds.js";
-import {addCartItem} from "../../../api/cartApi.js";
-import { useNavigate } from 'react-router-dom';
+import { Button, PageLoadingBox, PageErrorBox } from '../../../components/index.js'
+import { useProductDetailQuery, useRelatedProductsQuery } from '../../../hooks/queries/useProductQuery'
+import { useProductViewLog } from '../../../hooks/useProductViewLog.js'
+import { addBookmark, removeBookmark } from '../../../api/bookmarkApi.js'
+import { toast } from 'react-toastify'
+import useBookmarkedIds from '../../../hooks/useBookmarkedIds.js'
+import { addCartItem } from '../../../api/cartApi.js'
+import { useAuthStore } from '../../../store/useAuthStore.js'
+import { redirectToLogin } from '../../../utils/requireLogin.js'
 import ProductReviewSection from '../components/ProductReviewSection.jsx'
+import QuantitySelector from '../components/QuantitySelector.jsx'
+import { addRecentlyViewedProduct } from '../../../utils/recentlyViewedStorage.js'
+import { ProductCard } from '../../../components/index.js'
 
 
 function ProductDetailPage() {
@@ -21,6 +26,8 @@ function ProductDetailPage() {
   const bookmarkedIds = useBookmarkedIds()
   const [isBookmarked, setIsBookmarked] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
   const [activeTab, setActiveTab] = useState('detail-info')
   const [isTabPinned, setIsTabPinned] = useState(false)
@@ -40,6 +47,14 @@ function ProductDetailPage() {
     isLoading,
     error,
   } = useProductDetailQuery(productId)
+
+  useEffect(() => {
+    if (!product?.id) {
+      return
+    }
+
+    addRecentlyViewedProduct(product)
+  }, [product])
 
   const {
     data: relatedProducts = [],
@@ -88,15 +103,27 @@ function ProductDetailPage() {
   }, [product?.id, isLoading])
 
   if (isLoading) {
-    return <div className="layout-container py-20">상품 정보를 불러오는 중입니다.</div>
+    return (
+      <div className="layout-container py-20">
+        <PageLoadingBox label="상품 정보를 불러오는 중입니다." />
+      </div>
+    )
   }
 
   if (error) {
-    return <div className="layout-container py-20">상품 정보를 불러오지 못했습니다.</div>
+    return (
+      <div className="layout-container py-20">
+        <PageErrorBox title="상품 정보를 불러오지 못했습니다." />
+      </div>
+    )
   }
 
   if (!product) {
-    return <div className="layout-container py-20">상품 정보가 없습니다.</div>
+    return (
+      <div className="layout-container py-20">
+        <PageErrorBox title="상품 정보가 없습니다." />
+      </div>
+    )
   }
 
 
@@ -104,10 +131,18 @@ function ProductDetailPage() {
   const thumbnails = product.thumbnails ?? []
   const averageRate = product.averageRate ?? product.rating ?? 0
   const reviewCount = product.reviewCount ?? product.reviews ?? 0
-  const filledStars = Math.round(averageRate)
+  const discountRate = Number(product.discountRate ?? 0)
+  const salePrice = Number(product.salePrice ?? 0)
+  const originPrice = Number(product.originPrice ?? 0)
+  const lineTotal = salePrice * quantity
+  const hasDiscount = discountRate > 0 && originPrice > salePrice
 
   const handleWishlistClick = async (event) => {
     event.stopPropagation();
+    if (!isAuthenticated) {
+      redirectToLogin(navigate, location)
+      return
+    }
     try {
       if (isBookmarked) {
         await removeBookmark(Number(product.id));
@@ -130,6 +165,12 @@ function ProductDetailPage() {
   }
 
   const handleAddToCartClick = async () => {
+    if (!isAuthenticated) {
+      redirectToLogin(navigate, {
+        pathname: '/cart',
+      })
+      return
+    }
     try {
       await addCartItem(Number(product.id), quantity)
       toast.success(`${product.name} ${quantity}개를 장바구니에 담았습니다.`)
@@ -139,11 +180,24 @@ function ProductDetailPage() {
   }
 
   const handleOrder = () => {
+    if (!isAuthenticated) {
+      redirectToLogin(navigate, {
+        pathname: '/orders/checkout',
+        state: {
+          type: 'direct',
+          productId: Number(product.id),
+          quantity,
+          imageUrl: product.image ?? product.imageUrl ?? '',
+        },
+      })
+      return
+    }
     navigate('/orders/checkout', {
       state: {
         type: 'direct',
         productId: Number(product.id),
         quantity,
+        imageUrl: product.image ?? product.imageUrl ?? '',
       },
     })
   }
@@ -158,94 +212,152 @@ function ProductDetailPage() {
 
   return (
     <div className="bg-page text-ink">
-      <div className="layout-container pt-12 pb-12">
-        <nav aria-label="현재 위치" className="mb-10">
-          <ol className="flex items-center gap-1 text-body-sm text-muted">
-            <Link to={'/home'} className="hover:text-ink transition-colors">
-              홈
-            </Link>
-            <li aria-hidden="true"><ChevronRight className="size-3.5 shrink-0" strokeWidth={2} /></li>
-            <li>
-              <Link to={`/shop?categoryId=${encodeURIComponent(product.categoryId ?? product.categoryCode)}`} className="hover:text-ink transition-colors">
-                {category?.navLabel ?? product.category}
-              </Link>
-            </li>
-            <li aria-hidden="true"><ChevronRight className="size-3.5 shrink-0" strokeWidth={2} /></li>
-            <li className="truncate text-ink font-medium" aria-current="page">{product.name}</li>
-          </ol>
-        </nav>
-        <section className="a11y-grid-2col grid grid-cols-detail gap-14 max-lg:grid-cols-1">
-          <div>
-            <div className="relative overflow-hidden rounded-md border border-border-soft bg-surface">
-              <img className="h-product w-full object-cover" src={product.image} alt={product.name} />
+      <div className="layout-container pt-8 pb-12">
+        <div className="mb-10">
+          <ShopBreadcrumb
+            items={[
+              { label: '홈', to: '/home' },
+              {
+                label: category?.navLabel ?? product.category,
+                to: `/shop?categoryId=${encodeURIComponent(product.categoryId ?? product.categoryCode)}`,
+              },
+              { label: product.name, isCurrent: true },
+            ]}
+          />
+        </div>
+        <section className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)] lg:items-start lg:gap-10">
+          <div className="min-w-0 w-full lg:max-w-none">
+            <div className="relative aspect-product overflow-hidden rounded-md bg-surface-muted">
+              <img
+                className="absolute inset-0 h-full w-full object-cover"
+                src={product.image}
+                alt={product.name}
+              />
             </div>
             <div className="a11y-grid-4col mt-2 grid grid-cols-4 gap-2">
               {thumbnails.map((thumbnail, index) => (
-                <div className="relative h-thumb overflow-hidden rounded-md bg-placeholder" key={thumbnail}>
-                  <img className="h-full w-full object-cover" src={thumbnail} alt="" />
-                  {index === 3 && <span className="absolute inset-0 grid place-items-center bg-ink/35 text-2xl font-bold text-white">+4</span>}
+                <div
+                  className="relative aspect-square min-w-0 overflow-hidden rounded-md bg-surface-muted"
+                  key={thumbnail}
+                >
+                  <img
+                    className="absolute inset-0 h-full w-full object-cover"
+                    src={thumbnail}
+                    alt=""
+                  />
+                  {index === 3 && (
+                    <span className="absolute inset-0 grid place-items-center bg-ink/35 text-2xl font-bold text-white">
+                      +4
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
           </div>
 
-          <div>
-            <p className="mb-1 text-body font-bold text-brand">{product.category}</p>
-            <h1 className="text-2xl font-medium">{product.name}</h1>
+          <div className="min-w-0">
+            <div className="flex items-end justify-between gap-10">
+              <div className="min-w-0 flex-1">
+                <p className="mb-1 text-body font-bold text-brand">{product.category}</p>
+                <h1 className="text-2xl font-medium tracking-tight">{product.name}</h1>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="size-12 shrink-0 rounded-full border-border hover:border-ink"
+                aria-label={`${product.name} 찜하기`}
+                onClick={handleWishlistClick}
+              >
+                <Heart
+                  className={`size-6 transition-colors ${isBookmarked ? 'fill-brand text-brand' : 'text-muted'}`}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
+              </Button>
+            </div>
             <span className="sr-only">별점 {averageRate.toFixed(1)}점, 리뷰 {reviewCount}건</span>
             <div className="mt-4 flex items-center gap-1" aria-hidden="true">
-              <span className="flex gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`size-5 ${star <= filledStars ? 'fill-rating text-rating' : 'fill-border text-border-soft'}`}
-                    strokeWidth={0}
-                  />
-                ))}
-              </span>
-              <span className="ml-2 text-body-sm font-semibold text-ink">{averageRate.toFixed(1)}</span>
-              <span className="text-body-sm text-muted">(리뷰 {reviewCount}건)</span>
+              <span className="text-body-sm font-semibold leading-none text-ink">{averageRate.toFixed(1)}</span>
+              <Star className="size-4 shrink-0 fill-rating text-rating" strokeWidth={0} aria-hidden="true" />
+              <a
+                href="#reviews"
+                className="focus-ring ml-0.5 text-body-sm font-medium leading-none text-muted underline underline-offset-2 hover:text-ink"
+                onClick={(event) => {
+                  event.preventDefault()
+                  scrollTo('reviews')
+                }}
+              >
+                리뷰 {reviewCount}건
+              </a>
             </div>
-            <p className="text-body-lg text-gray-400 mt-6"><span className="sr-only">원가 </span><span className="line-through">{product.originPrice?.toLocaleString()}원</span></p>
-              <div className="mt-1 flex items-center gap-4">
-                <p className="text-3xl font-bold tracking-tight">
-                  <span className="sr-only">할인가</span>
-                  {product.salePrice?.toLocaleString()}원</p>
-                <span className="rounded-sm bg-brand px-3 py-1 text-caption font-extrabold text-white">{product.discountRate}% 할인</span>
-              </div>
-                  <p className="flex items-center gap-1.5 text-body font-medium text-gray-600 mt-4"><Truck className="size-4" strokeWidth={2.0} aria-hidden="true"/> {product.deliveryFee === 0 ? `무료 배송` : `배송비 ${product.deliveryFee.toLocaleString()}원`}</p>
+            {hasDiscount && (
+              <p className="mt-6 text-body-sm text-muted">
+                <span className="sr-only">원가 </span>
+                <span className="line-through">{originPrice.toLocaleString()}원</span>
+              </p>
+            )}
+            <div className={`flex items-baseline gap-2 ${hasDiscount ? 'mt-1' : 'mt-6'}`}>
+              {discountRate > 0 && (
+                <span className="text-xl font-semibold text-brand">{discountRate}%</span>
+              )}
+              <p className="flex items-baseline gap-0.5 text-xl font-semibold tracking-tight text-ink">
+                <span className="sr-only">판매가 </span>
+                <span>{salePrice.toLocaleString()}</span>
+                <span className="text-body-sm font-medium text-ink">원</span>
+              </p>
+            </div>
+            <p className="mt-4 flex items-center gap-1.5 text-body-sm font-medium text-muted">
+              <Truck className="size-4" strokeWidth={2.0} aria-hidden="true" />
+              {product.deliveryFee === 0 ? '무료 배송' : `배송비 ${product.deliveryFee.toLocaleString()}원`}
+            </p>
 
-            <div className="mt-9 flex gap-4 items-center">
-                <p className="mb-2 text-body-sm font-semibold">수량</p>
-                <div className="inline-flex h-11 overflow-hidden rounded border border-border bg-white">
-                  <button className="px-4 focus-ring focus-ring-inset focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink" type="button" onClick={() => setQuantity((current) => Math.max(1, current - 1))}><Minus className="size-4" /></button>
-                  <input
-                      type="number"
-                      min={1}
-                      max={product.stockQuantity}
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.min(product.stockQuantity, Math.max(1, Number(e.target.value))))}
-                      className="w-14 text-center focus-ring focus-ring-inset focus-visible:ring-2 focus-visible:ring-inset"
-                  />
-                  <button className="px-4 focus-ring focus-ring-inset focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink" type="button" onClick={() => setQuantity((q) => Math.min(product.stockQuantity, q + 1))}><Plus className="size-4" /></button>
+            <div className="mt-8 rounded-md bg-surface-muted px-4 py-4">
+              <div className="flex items-center justify-between gap-4">
+                <QuantitySelector
+                  quantity={quantity}
+                  min={1}
+                  max={product.stockQuantity}
+                  onDecrease={() => setQuantity((current) => Math.max(1, current - 1))}
+                  onIncrease={() => setQuantity((current) => Math.min(product.stockQuantity, current + 1))}
+                />
+                <p className="flex items-baseline gap-0.5 text-body-sm font-semibold text-ink">
+                  <span className="sr-only">상품 금액 </span>
+                  <span>{lineTotal.toLocaleString()}</span>
+                  <span>원</span>
+                </p>
               </div>
             </div>
-            <div className="mt-12 flex flex-wrap gap-4">
-              <Button className="h-14 px-12" type="button" variant="primary" size="md"
-              onClick={handleOrder}>
-                주문하기
-              </Button>
+
+            <div className="mt-6 flex items-center justify-between gap-4 border-t-2 border-ink pt-4">
+              <span className="text-body-sm font-semibold text-ink">총 {quantity}개</span>
+              <p className="flex items-baseline gap-2">
+                <span className="text-body-sm">총 상품 금액</span>
+                <span className="inline-flex items-baseline gap-0.5 text-2xl font-bold text-brand">
+                  <span>{lineTotal.toLocaleString()}</span>
+                  <span className="text-body font-medium">원</span>
+                </span>
+              </p>
+            </div>
+
+            <div className="mt-10 flex flex-col gap-2 sm:flex-row">
               <Button
-                  className="h-14 px-8"
-                  type="button"
-                  variant="outline"
-                  size="md"
-                  onClick={handleAddToCartClick}>
-                <ShoppingCart className="size-5" aria-hidden="true" />
+                className="h-12 flex-1"
+                type="button"
+                variant="outline"
+                size="md"
+                onClick={handleAddToCartClick}
+              >
                 장바구니 담기
               </Button>
-              <Button type="button" variant="outline" size="icon" className="h-14 w-16" aria-label={`${product.name} 찜하기`} onClick={handleWishlistClick}>
-                <Heart className={`size-6 transition-colors ${isBookmarked ? 'fill-brand text-brand' : ''}`} aria-hidden="true" />
+              <Button
+                  className="h-12 flex-1"
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  onClick={handleOrder}
+              >
+                바로 구매하기
               </Button>
             </div>
           </div>
@@ -267,7 +379,7 @@ function ProductDetailPage() {
           <nav className="flex" aria-label="상품 상세 탭">
             {[
               { id: 'detail-info', label: '상세정보' },
-              { id: 'reviews', label: `리뷰${product.reviewCount > 0 ? ` (${product.reviewCount})` : ''}` },
+              { id: 'reviews', label: product.reviewCount > 0 ? `리뷰 ${product.reviewCount}` : '리뷰' },
             ].map(({ id, label }) => (
               <button
                 key={id}
@@ -304,23 +416,19 @@ function ProductDetailPage() {
           reviewCount={product.reviewCount ?? 0}
         />
 
-        <section className="mt-24">
-          <div className="mb-10 flex justify-between">
-            <div>
-              <h2 className="mt-2 text-xl">함께 구매하면 좋은 상품</h2>
-            </div>
-            <Link className="text-body" to={`/shop?categoryId=${encodeURIComponent(product.categoryId ?? product.categoryCode)}`}>카테고리 보기 →</Link>
-          </div>
-          <div className="a11y-grid-products grid grid-cols-4 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
+        <section className="mt-20 border-t border-border-soft pt-12">
+          <h2 className="mb-6 text-body-lg font-semibold text-ink">함께 구매하면 좋은 상품</h2>
+          <div className="a11y-grid-products grid grid-cols-5 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
             {relatedProducts.map((relatedProduct) => (
-              <article key={relatedProduct.id} aria-label={relatedProduct.name}>
-                <Link to={`/shop/${relatedProduct.id}`} className="focus-ring focus-ring-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink">
-                  <img className="h-card w-full rounded-md border border-border-soft object-cover" src={relatedProduct.image} alt={relatedProduct.name} />
-                  <p className="mt-4 text-caption text-foreground">{relatedProduct.category}</p>
-                  <h3 className="mt-1 text-body-md font-bold">{relatedProduct.name}</h3>
-                  <p className="mt-1 text-body-md">{relatedProduct.price}</p>
-                </Link>
-              </article>
+              <ProductCard
+                key={relatedProduct.id}
+                product={relatedProduct}
+                to={`/shop/${relatedProduct.id}`}
+                showCategory={false}
+                showBookmark={false}
+                showCartButton={false}
+                isDislikeView={false}
+              />
             ))}
           </div>
         </section>
