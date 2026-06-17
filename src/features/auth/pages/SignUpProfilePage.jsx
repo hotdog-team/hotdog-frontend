@@ -64,7 +64,7 @@ function SignUpProfilePage() {
         className="layout-container-auth layout-container-auth--lg flex flex-1 flex-col justify-center py-10 max-sm:py-8"
         aria-labelledby="signup-profile-title"
       >
-        <AuthLogo className="mx-auto mb-8 h-8 max-sm:mb-6" />
+        <AuthLogo className="mx-auto mb-0 h-12 max-sm:mb-6" />
 
         <div className="mx-auto w-full max-w-2xl rounded-lg bg-surface px-6 py-8 shadow-card max-sm:px-5 max-sm:py-6">
           <h1

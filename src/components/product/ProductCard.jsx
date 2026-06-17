@@ -296,7 +296,7 @@ function ProductCard({
         )}
 
         <h3 className="line-clamp-2 text-body font-medium text-muted tracking-tight">{product.name}</h3>
-        <div className="mt-1 flex h-7 items-center justify-between gap-2">
+        <div className="mt-0.5 flex h-7 items-center justify-between gap-2">
           <p className="flex min-w-0 items-baseline gap-1 text-body-lg font-bold text-ink">
             {discountRate > 0 && (
               <span className="text-[0.9em] text-brand">{discountRate}%</span>
@@ -317,6 +317,11 @@ function ProductCard({
           </button>
           )}
         </div>
+        {Number(product.deliveryFee ?? 0) === 0 && (
+            <span className="mt-2 inline-block border border-gray-400 px-1 py-0 text-caption text-gray-500">
+            무료배송
+          </span>
+        )}
         <div className="mt-1 flex items-center gap-1 text-caption font-medium text-ink">
           <Star
             className={`size-3 shrink-0 ${hasRating ? 'fill-rating text-rating' : 'fill-border text-border-soft'}`}

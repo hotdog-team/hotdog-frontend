@@ -136,6 +136,7 @@ function ProductDetailPage() {
   const originPrice = Number(product.originPrice ?? 0)
   const lineTotal = salePrice * quantity
   const hasDiscount = discountRate > 0 && originPrice > salePrice
+  const isSoldOut = product.status === 'SOLD_OUT' || Number(product.stockQuantity ?? 0) <= 0
 
   const handleWishlistClick = async (event) => {
     event.stopPropagation();
@@ -233,6 +234,11 @@ function ProductDetailPage() {
                 src={product.image}
                 alt={product.name}
               />
+              {isSoldOut && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <span className="text-xl font-bold text-white">품절</span>
+                </div>
+              )}
             </div>
             <div className="a11y-grid-4col mt-2 grid grid-cols-4 gap-2">
               {thumbnails.map((thumbnail, index) => (
@@ -317,7 +323,8 @@ function ProductDetailPage() {
                 <QuantitySelector
                   quantity={quantity}
                   min={1}
-                  max={product.stockQuantity}
+                  max={isSoldOut ? 1 : product.stockQuantity}
+                  disabled={isSoldOut}
                   onDecrease={() => setQuantity((current) => Math.max(1, current - 1))}
                   onIncrease={() => setQuantity((current) => Math.min(product.stockQuantity, current + 1))}
                 />
@@ -346,18 +353,20 @@ function ProductDetailPage() {
                 type="button"
                 variant="outline"
                 size="md"
+                disabled={isSoldOut}
                 onClick={handleAddToCartClick}
               >
-                장바구니 담기
+                {isSoldOut ? '품절' : '장바구니 담기'}
               </Button>
               <Button
                   className="h-12 flex-1"
                   type="button"
                   variant="primary"
                   size="md"
+                  disabled={isSoldOut}
                   onClick={handleOrder}
               >
-                바로 구매하기
+                {isSoldOut ? '품절' : '바로 구매하기'}
               </Button>
             </div>
           </div>

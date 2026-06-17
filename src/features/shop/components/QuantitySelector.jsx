@@ -12,12 +12,13 @@ export default function QuantitySelector({
   onDecrease,
   min = 1,
   max,
+  disabled = false,
   ariaLabel = '수량 조절',
   valueLabel = '수량',
   className = '',
 }) {
-  const isDecreaseDisabled = quantity <= min
-  const isIncreaseDisabled = max != null && quantity >= max
+  const isDecreaseDisabled = disabled || quantity <= min
+  const isIncreaseDisabled = disabled || (max != null && quantity >= max)
 
   return (
     <div
