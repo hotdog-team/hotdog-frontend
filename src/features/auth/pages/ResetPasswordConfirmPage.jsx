@@ -1,96 +1,46 @@
-import { useEffect, useState } from 'react'
-import { ArrowLeft, Circle, CircleAlert, CircleCheck, Eye, EyeOff } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Circle, CircleAlert, CircleCheck } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo.jsx'
-import { Button, formControlFocusMutedClass } from '../../../components/index.js'
-
-const passwordPattern =
-  '(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9])[\\s\\S]{8,16}'
-
-const passwordRequirement =
-  '영문 대문자와 소문자, 숫자, 특수문자를 포함해 8자 이상 16자 이하로 입력해 주세요.'
+import {
+  Button,
+  InputField,
+  PasswordToggleButton,
+} from '../../../components/index.js'
 
 const passwordRules = [
-  {
-    label: '최소 8자 이상',
-    validate: (value) => value.length >= 8,
-  },
-  {
-    label: '영문 대소문자 포함',
-    validate: (value) => /[a-z]/.test(value) && /[A-Z]/.test(value),
-  },
-  {
-    label: '숫자 및 특수문자 포함',
-    validate: (value) => /\d/.test(value) && /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value),
-  },
+  { label: '8자 이상 16자 이하', validate: (value) => value.length >= 8 && value.length <= 16 },
+  { label: '영문 소문자 포함', validate: (value) => /[a-z]/.test(value) },
+  { label: '영문 대문자 포함', validate: (value) => /[A-Z]/.test(value) },
+  { label: '숫자 포함', validate: (value) => /\d/.test(value) },
+  { label: '특수문자 포함', validate: (value) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value) },
 ]
-
-const inputClass =
-  `h-18 w-full bg-surface-muted px-8 pr-18 text-xl text-ink placeholder:text-muted max-sm:h-14 max-sm:px-5 max-sm:pr-14 max-sm:text-base ${formControlFocusMutedClass}`
 
 function PasswordRequirementItem({ isActive, isValid, label }) {
   const Icon = !isActive ? Circle : isValid ? CircleCheck : CircleAlert
   const statusClass = !isActive ? 'text-muted' : isValid ? 'text-success' : 'text-error'
-  const statusLabel = !isActive ? '' : isValid ? '충족' : '미충족'
 
   return (
-    <li
-      className={`flex items-center gap-3 ${statusClass}`}
-      aria-label={`${label}${statusLabel ? ` — ${statusLabel}` : ''}`}
-    >
-      <Icon className="size-5 shrink-0" strokeWidth={2.2} aria-hidden="true" />
-      <span aria-hidden="true">{label}</span>
+    <li className={`flex items-center gap-2 text-body-sm ${statusClass}`}>
+      <Icon className="size-3.5 shrink-0" strokeWidth={2.4} aria-hidden="true" />
+      <span>{label}</span>
     </li>
   )
 }
 
-function PasswordInput({
-  id,
-  label,
-  placeholder,
-  value,
-  isVisible,
-  isInvalid,
-  describedBy,
-  onChange,
-  onToggleVisibility,
-}) {
-  const VisibilityIcon = isVisible ? EyeOff : Eye
+function buildPasswordStatusSummary(password, passwordConfirm, hasPassword, hasPasswordConfirm) {
+  const parts = []
 
-  return (
-    <div className="grid gap-3 text-base font-bold text-ink max-sm:text-sm">
-      <label htmlFor={id}>{label}</label>
-      <span className="relative block">
-        <input
-          id={id}
-          name={id}
-          className={inputClass}
-          type={isVisible ? 'text' : 'password'}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={placeholder}
-          autoComplete="new-password"
-          minLength={8}
-          maxLength={16}
-          pattern={passwordPattern}
-          required
-          aria-required="true"
-          aria-invalid={isInvalid ? 'true' : 'false'}
-          aria-describedby={describedBy}
-          title={passwordRequirement}
-        />
-        <button
-          className="absolute top-1/2 right-5 inline-flex -translate-y-1/2 items-center justify-center text-muted hover:text-ink max-sm:right-4"
-          type="button"
-          onClick={onToggleVisibility}
-          aria-label={isVisible ? `${label} 숨기기` : `${label} 보기`}
-          aria-pressed={isVisible}
-        >
-          <VisibilityIcon size={26} strokeWidth={2.2} aria-hidden="true" />
-        </button>
-      </span>
-    </div>
-  )
+  if (hasPassword) {
+    const passed = passwordRules.filter((rule) => rule.validate(password)).length
+    parts.push(`비밀번호 요구사항 ${passed}개 중 ${passwordRules.length}개 충족`)
+  }
+
+  if (hasPasswordConfirm) {
+    parts.push(password === passwordConfirm ? '비밀번호 확인이 일치합니다.' : '비밀번호 확인이 일치하지 않습니다.')
+  }
+
+  return parts.join(' ')
 }
 
 function ResetPasswordConfirmPage() {
@@ -101,6 +51,7 @@ function ResetPasswordConfirmPage() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isPasswordConfirmVisible, setIsPasswordConfirmVisible] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     document.title = '비밀번호 재설정 | D-TO'
@@ -111,16 +62,22 @@ function ResetPasswordConfirmPage() {
   const isPasswordValid = passwordRules.every((rule) => rule.validate(password))
   const isPasswordConfirmValid = hasPasswordConfirm && password === passwordConfirm
   const canSubmit = isPasswordValid && isPasswordConfirmValid
-  const passwordDescriptionIds = 'reset-confirm-description reset-password-hint'
-  const passwordConfirmDescriptionIds = 'reset-confirm-description reset-password-match-error'
+
+  const passwordStatusSummary = useMemo(
+    () => buildPasswordStatusSummary(password, passwordConfirm, hasPassword, hasPasswordConfirm),
+    [password, passwordConfirm, hasPassword, hasPasswordConfirm],
+  )
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    setStatusMessage('')
 
     if (!canSubmit) {
       setStatusMessage('비밀번호 요구사항과 비밀번호 확인 일치 여부를 다시 확인해 주세요.')
       return
     }
+
+    setIsSubmitting(true)
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/password-reset/confirm`, {
@@ -137,99 +94,100 @@ function ResetPasswordConfirmPage() {
     } catch (error) {
       console.error('에러 발생:', error)
       setStatusMessage(error.message)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-page py-16 text-ink max-sm:py-8">
-      <a className="skip-link" href="#reset-confirm-content">
-        본문으로 건너뛰기
-      </a>
+    <main className="flex min-h-svh flex-col bg-page text-foreground">
       <section
-        id="reset-confirm-content"
-        className="layout-container-auth layout-container-auth--md w-full"
+        className="layout-container-auth flex flex-1 flex-col justify-center py-10 max-sm:py-8"
         aria-labelledby="reset-confirm-title"
       >
-        <div className="mb-11 grid justify-items-center gap-2 max-sm:mb-7">
-          <AuthLogo className="h-14 max-sm:h-12" />
-          <p className="m-0 text-sm font-extrabold tracking-widest text-muted max-sm:text-xs">
-            임직원 전용 플랫폼
-          </p>
-        </div>
+        <AuthLogo className="mx-auto h-12 max-sm:mb-6" />
 
-        <form
-          className="border border-border bg-surface px-14 pt-14 pb-15 shadow-card max-sm:px-6 max-sm:py-9"
-          onSubmit={handleSubmit}
-          data-reset-token={token}
-          noValidate
-        >
-          <label className="sr-only" htmlFor="reset-username">
-            계정 아이디
-          </label>
-          <input
-            id="reset-username"
-            className="sr-only"
-            type="text"
-            name="username"
-            autoComplete="username"
-            tabIndex={-1}
-            aria-hidden="true"
-          />
-
-          <div className="mb-14 text-center max-sm:mb-9">
-            <h1 id="reset-confirm-title" className="mb-8 text-4xl leading-tight font-medium text-ink max-sm:mb-5 max-sm:text-3xl">
-              비밀번호 재설정
-            </h1>
-            <p id="reset-confirm-description" className="mx-auto max-w-auth-copy text-xl leading-relaxed text-muted max-sm:text-base">
-              계정 보안을 위해 새로운 비밀번호를 설정해 주세요.
-            </p>
-          </div>
-
-          <p id="reset-password-hint" className="sr-only">
-            영문 대문자와 소문자, 숫자, 특수문자를 포함해 8자 이상 16자 이하로 입력해 주세요.
+        <div className="mx-auto w-full max-w-md rounded-lg bg-surface px-6 py-8 shadow-card max-sm:px-5 max-sm:py-6">
+          <h1
+            id="reset-confirm-title"
+            className="mb-2 text-center text-3xl font-light text-ink max-sm:text-xl"
+          >
+            비밀번호 재설정
+          </h1>
+          <p className="mb-6 text-center text-body-sm leading-relaxed tracking-tight text-muted">
+            계정 보안을 위해 새로운 비밀번호를 설정해 주세요.
           </p>
 
-          <div className="grid gap-6">
-            <PasswordInput
+          <form className="grid gap-5 text-left" onSubmit={handleSubmit} noValidate>
+            <label className="sr-only" htmlFor="reset-username">
+              계정 아이디
+            </label>
+            <input
+              id="reset-username"
+              className="sr-only"
+              type="text"
+              name="username"
+              autoComplete="username"
+              tabIndex={-1}
+              aria-hidden="true"
+            />
+
+            {statusMessage && (
+              <p className="text-body-sm font-medium text-error" role="alert" aria-live="polite">
+                {statusMessage}
+              </p>
+            )}
+
+            <InputField
               id="new-password"
               label="새 비밀번호"
+              size="md"
+              type={isPasswordVisible ? 'text' : 'password'}
               placeholder="새 비밀번호를 입력하세요"
               value={password}
-              isVisible={isPasswordVisible}
-              isInvalid={hasPassword && !isPasswordValid}
-              describedBy={passwordDescriptionIds}
-              onChange={setPassword}
-              onToggleVisibility={() => setIsPasswordVisible((current) => !current)}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="new-password"
+              minLength={8}
+              maxLength={16}
+              required
+              describedBy="password-requirement-summary"
+              trailing={
+                <PasswordToggleButton
+                  visible={isPasswordVisible}
+                  onToggle={() => setIsPasswordVisible((current) => !current)}
+                />
+              }
             />
-            <PasswordInput
+
+            <InputField
               id="new-password-confirm"
               label="새 비밀번호 확인"
-              placeholder="비밀번호를 한번 더 입력하세요"
+              size="md"
+              type={isPasswordConfirmVisible ? 'text' : 'password'}
+              placeholder="비밀번호를 다시 입력하세요"
               value={passwordConfirm}
-              isVisible={isPasswordConfirmVisible}
-              isInvalid={hasPasswordConfirm && !isPasswordConfirmValid}
-              describedBy={passwordConfirmDescriptionIds}
-              onChange={setPasswordConfirm}
-              onToggleVisibility={() => setIsPasswordConfirmVisible((current) => !current)}
+              onChange={(event) => setPasswordConfirm(event.target.value)}
+              autoComplete="new-password"
+              minLength={8}
+              maxLength={16}
+              required
+              invalid={hasPasswordConfirm && !isPasswordConfirmValid}
+              error={hasPasswordConfirm && !isPasswordConfirmValid ? '비밀번호가 일치하지 않습니다.' : undefined}
+              describedBy="password-requirement-summary"
+              trailing={
+                <PasswordToggleButton
+                  visible={isPasswordConfirmVisible}
+                  labelPrefix="비밀번호 확인"
+                  onToggle={() => setIsPasswordConfirmVisible((current) => !current)}
+                />
+              }
             />
-          </div>
 
-          <p id="reset-password-match-error" className="sr-only">
-            새 비밀번호 확인 입력값은 새 비밀번호와 일치해야 합니다.
-          </p>
+            <p id="password-requirement-summary" className="sr-only" aria-live="polite" aria-atomic="true">
+              {passwordStatusSummary}
+            </p>
 
-          <div
-            id="reset-password-requirements"
-            className="mt-6 rounded border border-border-soft bg-error-soft px-5 py-5 text-body-lg leading-relaxed text-muted max-sm:text-sm"
-          >
-            <p className="mb-2 font-extrabold text-ink" aria-hidden="true">비밀번호 요구사항:</p>
-            <ul
-              className="grid gap-1.5"
-              aria-label="비밀번호 요구사항"
-              aria-live="polite"
-              aria-atomic="false"
-              aria-relevant="text"
-            >
+            <ul id="password-requirement-list" className="grid gap-1.5" aria-hidden="true">
               {passwordRules.map((rule) => (
                 <PasswordRequirementItem
                   key={rule.label}
@@ -244,32 +202,28 @@ function ResetPasswordConfirmPage() {
                 label="비밀번호 확인 일치"
               />
             </ul>
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              fullWidth
+              loading={isSubmitting}
+              disabled={!canSubmit}
+            >
+              비밀번호 변경하기
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <Link
+              className="text-body-sm font-medium text-muted hover:text-ink hover:underline focus-ring rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink"
+              to="/login"
+            >
+              로그인으로 돌아가기
+            </Link>
           </div>
-
-          <Button
-            className="mt-10 max-sm:mt-9"
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            disabled={!canSubmit}
-            aria-disabled={!canSubmit}
-          >
-            비밀번호 변경하기
-          </Button>
-
-          <p className="sr-only" role="status" aria-live="polite">
-            {statusMessage}
-          </p>
-
-          <Link
-            className="mx-auto mt-12 flex w-fit items-center gap-2 text-base font-semibold text-ink max-sm:mt-8 max-sm:text-sm"
-            to="/"
-          >
-            <ArrowLeft size={19} aria-hidden="true" />
-            로그인 페이지로 돌아가기
-          </Link>
-        </form>
+        </div>
       </section>
     </main>
   )
