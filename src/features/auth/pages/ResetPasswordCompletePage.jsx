@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Check, ShieldCheck } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import AuthLogo from '../components/AuthLogo.jsx'
+import { Check } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../../../components/index.js'
 
 function ResetPasswordCompletePage() {
@@ -14,7 +13,7 @@ function ResetPasswordCompletePage() {
 
   useEffect(() => {
     if (remainingSeconds === 0) {
-      navigate('/', { replace: true })
+      navigate('/login', { replace: true })
       return undefined
     }
 
@@ -26,46 +25,38 @@ function ResetPasswordCompletePage() {
   }, [navigate, remainingSeconds])
 
   const handleLoginClick = () => {
-    navigate('/', { replace: true })
+    navigate('/login', { replace: true })
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-page py-16 text-ink max-sm:py-8">
-      <a className="skip-link" href="#reset-complete-content">
-        본문으로 건너뛰기
-      </a>
+    <main className="flex min-h-svh flex-col bg-page text-foreground">
       <section
-        id="reset-complete-content"
-        className="layout-container-auth layout-container-auth--md grid w-full justify-items-center"
+        className="layout-container-auth flex flex-1 flex-col justify-center py-10 max-sm:py-8"
         aria-labelledby="reset-complete-title"
       >
-        <div className="mb-12 grid justify-items-center max-sm:mb-8">
-          <AuthLogo className="h-9 max-sm:h-8" />
-        </div>
 
-        <div className="w-full border border-star-empty bg-surface px-13 pt-13 pb-13 text-center shadow-card max-sm:px-6 max-sm:py-9">
-          <div className="mx-auto mb-8 flex size-icon-box items-center justify-center rounded-2xl bg-auth-success-panel max-sm:size-icon-box-sm">
-            <span className="flex size-14 items-center justify-center rounded-full bg-brand text-white max-sm:size-12">
-              <Check size={35} strokeWidth={4} aria-hidden="true" />
-            </span>
+        <div className="mx-auto w-full max-w-md rounded-lg bg-surface px-6 py-8 text-center shadow-card max-sm:px-5 max-sm:py-6">
+          <div className="mx-auto mb-6 flex size-14 items-center justify-center rounded-full bg-brand text-white">
+            <Check className="size-7" strokeWidth={2.5} aria-hidden="true" />
           </div>
 
           <h1
             id="reset-complete-title"
-            className="mb-6 text-3xl leading-tight font-medium text-ink max-sm:text-2xl"
+            className="mb-2 text-3xl font-light text-ink max-sm:text-xl"
           >
             비밀번호가 변경되었습니다
           </h1>
-          <p className="mx-auto mb-7 max-w-copy text-xl leading-relaxed font-medium text-muted max-sm:mb-6 max-sm:text-base">
-            새로운 비밀번호로 안전하게 변경되었습니다. 이제 다시 로그인하여 서비스를 이용하실 수 있습니다.
+          <p className="mb-6 text-body-sm leading-relaxed tracking-tight text-muted">
+            새로운 비밀번호로 변경되었습니다.
+            <br />
+            로그인 후 서비스를 이용해 주세요.
           </p>
 
-          <p className="mb-9 text-sm font-semibold text-muted max-sm:mb-7" role="status" aria-live="polite">
+          <p className="mb-6 text-body-sm font-medium text-muted" role="status" aria-live="polite">
             {remainingSeconds}초 후 로그인 페이지로 이동합니다.
           </p>
 
           <Button
-            className="tracking-label"
             type="button"
             variant="primary"
             size="md"
@@ -74,12 +65,16 @@ function ResetPasswordCompletePage() {
           >
             로그인 페이지로 이동
           </Button>
-        </div>
 
-        <p className="mt-13 inline-flex items-center gap-2 text-sm font-bold tracking-wide text-muted max-sm:mt-9 max-sm:text-xs">
-          <ShieldCheck size={16} strokeWidth={2.2} aria-hidden="true" />
-          SECURE CORPORATE PORTAL
-        </p>
+          <div className="mt-6 text-center">
+            <Link
+              className="text-body-sm font-medium text-muted hover:text-ink hover:underline focus-ring rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink"
+              to="/login"
+            >
+              로그인으로 돌아가기
+            </Link>
+          </div>
+        </div>
       </section>
     </main>
   )
