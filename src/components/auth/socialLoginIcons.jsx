@@ -1,6 +1,6 @@
 function NaverIcon() {
   return (
-    <svg className="size-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="white">
+    <svg className="size-4 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="white">
       <path d="M16.273 12.845 7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845Z" />
     </svg>
   )
@@ -8,7 +8,7 @@ function NaverIcon() {
 
 function KakaoIcon() {
   return (
-    <svg className="size-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="currentColor">
+    <svg className="size-6 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="currentColor">
       <path d="M12 3C7.03 3 3 6.58 3 11c0 2.39 1.18 4.52 3.02 5.95L5 21l4.45-2.22c.82.12 1.66.18 2.55.18 4.97 0 9-3.58 9-8s-4.03-8-9-8z" />
     </svg>
   )
@@ -59,7 +59,7 @@ export const socialLoginIcons = {
 }
 
 export const socialLoginStyles = {
-  naver: 'rounded-md bg-naver text-white hover:bg-naver-hover',
-  kakao: 'rounded-md bg-kakao text-kakao-ink hover:bg-kakao-hover',
-  google: 'rounded-md border-2 border-neutral-400 bg-surface text-ink hover:bg-surface-muted',
+  naver: 'bg-naver text-white hover:bg-naver-hover',
+  kakao: 'bg-kakao text-kakao-ink hover:bg-kakao-hover',
+  google: 'border border-border bg-surface text-ink hover:bg-surface-muted',
 }
