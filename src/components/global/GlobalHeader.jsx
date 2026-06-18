@@ -208,7 +208,7 @@ function GlobalHeader({
           to="/home"
           aria-label="메인으로 가기"
         >
-          <img className="h-8.5 w-auto object-contain" src={dtoLogo} aria-hidden="true" alt=""/>
+          <img className="h-9 w-auto object-contain" src={dtoLogo} aria-hidden="true" alt=""/>
         </Link>
 
         <nav className="min-w-0 shrink-0 overflow-x-auto py-1" aria-label="상품 카테고리">

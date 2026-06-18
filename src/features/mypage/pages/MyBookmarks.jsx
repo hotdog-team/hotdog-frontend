@@ -16,6 +16,7 @@ function BookmarkCard({ item, onRemove }) {
   const salePrice = Number(item.salePrice ?? item.originPrice ?? 0)
   const originPrice = Number(item.originPrice ?? 0)
   const hasDiscount = discountRate > 0
+  const isSoldOut = item.status === 'SOLD_OUT'
 
   return (
     <article className="overflow-hidden rounded-md border border-border bg-surface shadow-card">
@@ -39,6 +40,11 @@ function BookmarkCard({ item, onRemove }) {
             ) : (
               <div className="flex h-full w-full items-center justify-center text-caption text-muted">
                 이미지 없음
+              </div>
+            )}
+            {isSoldOut && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                <span className="text-body font-bold text-white">품절</span>
               </div>
             )}
           </div>
