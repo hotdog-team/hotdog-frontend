@@ -1,120 +1,145 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import LoginPage from './features/auth/pages/LoginPage.jsx'
+import HomePage from './features/main/pages/HomePage.jsx'
+import MyOrders from './features/mypage/pages/MyOrders.jsx'
+import MyBookmarks from './features/mypage/pages/MyBookmarks.jsx'
+import MyInquiries from './features/mypage/pages/MyInquiries.jsx'
+import MyReviews from './features/mypage/pages/MyReviews.jsx'
+import MyA11ySettings from './features/mypage/pages/MyA11ySettings.jsx'
+import ResetPasswordCompletePage from './features/auth/pages/ResetPasswordCompletePage.jsx'
+import ResetPasswordPage from './features/auth/pages/ResetPasswordPage.jsx'
+import ResetPasswordConfirmPage from './features/auth/pages/ResetPasswordConfirmPage.jsx'
+import ProductDetailPage from './features/shop/pages/ProductDetailPage.jsx'
+import ProductListPage from './features/shop/pages/ProductListPage.jsx'
+import RecentlyViewedPage from './features/shop/pages/RecentlyViewedPage.jsx'
+import CartPage from './features/shop/pages/CartPage'
+import CheckoutPage from "./features/shop/pages/CheckoutPage.jsx";
+import SignUpPage from './features/auth/pages/SignUpPage.jsx'
+import SignUpProfilePage from './features/auth/pages/SignUpProfilePage.jsx'
+import { useAuthStore } from './store/useAuthStore';
+import SocialSuccessPage from './features/auth/pages/SocialSuccessPage.jsx';
+import RequireAuth from './features/auth/RequireAuth.jsx';
+import RequireAdmin from './features/auth/RequireAdmin.jsx';
+import GlobalLayout from './layout/GlobalLayout.jsx';
+import OrderFlowLayout from './layout/OrderFlowLayout.jsx';
+import MyPageLayout from './layout/MyPageLayout.jsx';
+import MyPageProfile from './features/mypage/pages/MyPageProfile.jsx';
+import AddressManagement from './features/mypage/pages/AddressManagement.jsx'
+import AdminLayout from './layout/AdminLayout.jsx'
+import AdminPlaceholderPage from './features/admin/pages/AdminPlaceholderPage.jsx'
+import AdminDashboard from './features/admin/pages/AdminDashboard.jsx'
+import CategoryManagement from './features/admin/pages/CategoryManagement.jsx'
+import MetaTagManagement from './features/admin/pages/MetaTagManagement.jsx'
+import MemberManagement from './features/admin/pages/MemberManagement.jsx'
+import ModerationManagement from './features/admin/pages/ModerationManagement.jsx'
+import ProductManagement from './features/admin/pages/ProductManagement.jsx'
+import OrderManagement from './features/admin/pages/OrderManagement.jsx'
+import NaverProductManagement from './features/admin/pages/NaverProductManagement';
+import AdminReviewManagement from './features/admin/pages/AdminReviewManagement.jsx';
+import OrderDetailPage from './features/order/pages/OrderDetailPage'
+import PaymentSuccessPage from './features/payment/pages/PaymentSuccessPage'
+import PaymentFailPage from './features/payment/pages/PaymentFailPage'
+
+
+function LoginEntry() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+
+  if (isAuthenticated) {
+    return <Navigate to="/home" replace />
+  }
+
+  return <LoginPage />
+}
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0 })
+  }, [pathname])
+
+  return null
+}
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/login" element={<LoginEntry />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/reset-password/complete" element={<ResetPasswordCompletePage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordConfirmPage />} />
+        <Route path="/social-success" element={<SocialSuccessPage />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/signup/profile" element={<SignUpProfilePage />} />
+        </Route>
+        <Route element={<GlobalLayout />}>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/shop" element={<ProductListPage />} />
+          <Route path="/shop/:productId" element={<ProductDetailPage />} />
+          <Route path="/recent-products" element={<RecentlyViewedPage />} />
+          <Route element={<RequireAuth />}>
+            <Route element={<OrderFlowLayout />}>
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/orders/checkout" element={<CheckoutPage />} />
+              <Route
+                path="/mypage/orders/:orderId"
+                element={<OrderDetailPage />}
+              />
+            </Route>
+            <Route path="/payment/success" element={<PaymentSuccessPage />} />
+            <Route path="/payment/fail" element={<PaymentFailPage />} />
+            <Route path="/mypage" element={<MyPageLayout />}>
+              <Route index element={<Navigate to="profile" replace />} />
+              <Route path="profile" element={<MyPageProfile />} />
+              <Route path="settings" element={<MyA11ySettings />} />
+              <Route path="orders" element={<MyOrders />} />
+              <Route path="bookmarks" element={<MyBookmarks />} />
+              <Route path="inquiries" element={<MyInquiries />} />
+              <Route path="addresses" element={<AddressManagement />} />
+              <Route path="reviews" element={<MyReviews />} />
+            </Route>
+          </Route>
+        </Route>
+        <Route element={<RequireAuth />}>
+          <Route element={<RequireAdmin />}>
+            <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="categories" element={<CategoryManagement />} />
+            <Route path="meta-tags" element={<MetaTagManagement />} />
+            <Route path="members" element={<MemberManagement />} />
 
-      <div className="ticks"></div>
+            <Route path="moderation" element={<ModerationManagement />} />
+            <Route path="inquiries" element={<ModerationManagement />} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+            <Route path="products" element={<ProductManagement />} />
+            <Route path="products/naver" element={<NaverProductManagement />} />
+            <Route path="orders" element={<OrderManagement />} />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+            <Route path="reviews" element={<AdminReviewManagement />} />
+            </Route>
+          </Route>
+        </Route>
+        <Route path="*" element={<Navigate to="/home" replace />} />
+      </Routes>
+      <ToastContainer
+        position="top-right"
+        autoClose={1800}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        theme="light"
+        role="status"
+        aria-live="polite"
+      />
     </>
   )
 }
