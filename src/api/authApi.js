@@ -22,7 +22,6 @@ export async function login({ email, password }) {
         throw new Error(message);
     }
     return res.json();
-    
 }
 
 //회원가입 관련 처리
@@ -42,8 +41,14 @@ export async function signup(data) {
     }
 }
 
+// 소셜 로그인
 export function startSocialLogin(provider) {
-    window.location.href = `${BASE_URL}/oauth2/authorization/${provider}`
+    if (provider === 'google') {
+        const googleBaseUrl = import.meta.env.VITE_GOOGLE_OAUTH_BASE_URL;
+        window.location.href = `${googleBaseUrl}/oauth2/authorization/google`;
+    } else {
+        window.location.href = `${BASE_URL}/oauth2/authorization/${provider}`;
+    }
 }
 
 export async function logout(accessToken) {
