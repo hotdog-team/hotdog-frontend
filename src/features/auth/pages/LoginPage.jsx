@@ -51,7 +51,7 @@ function LoginPage() {
       >
         <AuthLogo className="mx-auto h-12 max-sm:mb-6" />
 
-        <div className="mx-auto w-full max-w-md rounded-lg bg-surface px-6 py-8 shadow-card max-sm:px-5 max-sm:py-6">
+        <div className="mx-auto w-full max-w-md rounded-lg bg-surface px-6 py-8 max-sm:px-5 max-sm:py-6">
           <h1 id="login-title" className="mb-6 text-center text-3xl font-light text-ink max-sm:text-xl">
             로그인
           </h1>
@@ -125,7 +125,7 @@ function LoginPage() {
               </Link>
             </div>
 
-            <SocialLoginGroup className="mt-1" />
+            <SocialLoginGroup className="mt-4" />
           </form>
         </div>
       </section>

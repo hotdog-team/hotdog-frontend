@@ -13,9 +13,9 @@ export default function PasswordToggleButton({ visible, onToggle, labelPrefix = 
       onClick={onToggle}
     >
       {visible ? (
-        <EyeOff size={20} strokeWidth={2.5} aria-hidden="true" />
-      ) : (
         <Eye size={20} strokeWidth={2.5} aria-hidden="true" />
+      ) : (
+        <EyeOff size={20} strokeWidth={2.5} aria-hidden="true" />
       )}
     </button>
   )
