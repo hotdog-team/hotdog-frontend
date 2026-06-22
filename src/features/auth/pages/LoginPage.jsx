@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthLogo from '../components/AuthLogo.jsx'
 import { useAuthStore } from '../../../store/useAuthStore'
@@ -27,6 +27,19 @@ function LoginPage() {
   const location = useLocation()
   const login = useAuthStore((s) => s.login)
   const isEmailInvalid = email.length > 0 && !isValidEmail(email)
+
+    useEffect(() => {
+      const params = new URLSearchParams(location.search);
+      const error = params.get('error');
+
+      if (error === 'cooling_off') {
+        toast.error('탈퇴 대기 중인 계정입니다. 30일 후 재가입 및 로그인이 가능합니다.');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (error === 'no_permission') {
+        toast.error('이용이 정지되거나 접근 권한이 없는 계정입니다.');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }, [location.search]);
 
   const handleSubmit = async (event) => {
     event.preventDefault()

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Circle, CircleAlert, CircleCheck } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import AuthLogo from '../components/AuthLogo.jsx'
 import {
   Button,
@@ -46,6 +47,9 @@ function buildPasswordStatusSummary(password, passwordConfirm, hasPassword, hasP
 function ResetPasswordConfirmPage() {
   const { token = '' } = useParams()
   const navigate = useNavigate()
+
+  const [isValidating, setIsValidating] = useState(true)
+
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
@@ -56,6 +60,33 @@ function ResetPasswordConfirmPage() {
   useEffect(() => {
     document.title = '비밀번호 재설정 | D-TO'
   }, [])
+
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!token) {
+        toast.error('비정상적인 접근입니다.')
+        navigate('/login', { replace: true })
+        return
+      }
+
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/password-reset/validate?token=${token}`)
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null)
+          throw new Error(errorData?.message || '유효하지 않거나 만료된 링크입니다.')
+        }
+
+        // 백엔드에서 정상 확인되면 화면을 열어줌
+        setIsValidating(false)
+      } catch (error) {
+        toast.error(error.message)
+        navigate('/login', { replace: true })
+      }
+    }
+
+    validateToken()
+  }, [token, navigate])
 
   const hasPassword = password.length > 0
   const hasPasswordConfirm = passwordConfirm.length > 0
@@ -86,17 +117,30 @@ function ResetPasswordConfirmPage() {
         body: JSON.stringify({ token, newPassword: password }),
       })
 
+      const data = await response.json().catch(() => null)
+
       if (!response.ok) {
-        throw new Error('비밀번호 재설정에 실패했습니다. 다시 시도해 주세요.')
+        throw new Error(data?.message || '비밀번호 재설정에 실패했습니다. 다시 시도해 주세요.')
       }
 
-      navigate('/reset-password/complete')
+      toast.success(data?.message || '비밀번호가 성공적으로 변경되었습니다.')
+      navigate('/reset-password/complete', { replace: true })
     } catch (error) {
       console.error('에러 발생:', error)
       setStatusMessage(error.message)
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isValidating) {
+    return (
+      <main className="flex min-h-svh items-center justify-center bg-page text-foreground">
+        <div className="text-center">
+          <p className="text-lg font-medium text-muted">안전한 재설정 링크인지 검증 중입니다...</p>
+        </div>
+      </main>
+    )
   }
 
   return (
