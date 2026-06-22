@@ -177,13 +177,13 @@ function MyPageProfile() {
   }
 
   const handleWithdraw = async () => {
-    if (!window.confirm('정말 탈퇴하시겠습니까? 탈퇴 후에는 로그인할 수 없습니다.')) {
+    if (!window.confirm('정말 탈퇴하시겠습니까? 탈퇴 후 30일 동안은 동일한 계정으로 재가입 및 로그인이 불가능합니다.')) {
       return
     }
 
     try {
       await axiosInstance.delete('/api/members/me')
-      toast.warn('회원 탈퇴가 완료되었습니다.')
+      toast.warn('회원 탈퇴가 완료되었습니다. 30일 후 재가입이 가능합니다.')
       localStorage.clear()
       window.location.href = '/login'
     } catch {
