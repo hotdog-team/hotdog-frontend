@@ -17,6 +17,7 @@ export default function ProductManagement() {
 
   const [products, setProducts] = useState([])
   const [availableTags, setAvailableTags] = useState([])
+  const [categories, setCategories] = useState([])
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
@@ -38,6 +39,16 @@ export default function ProductManagement() {
     description: '', specInfo: ''
   })
   const [editSelectedTagIds, setEditSelectedTagIds] = useState([])
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axiosInstance.get('/api/categories')
+      const data = response.data
+      setCategories(Array.isArray(data) ? data : (data.data || []))
+    } catch (err) {
+      console.error('카테고리 목록 로드 실패', err)
+    }
+  }
 
   const fetchProducts = async () => {
     try {
@@ -79,6 +90,7 @@ export default function ProductManagement() {
 
   useEffect(() => {
     fetchTags()
+    fetchCategories()
   }, [])
 
   useEffect(() => {
@@ -403,8 +415,20 @@ export default function ProductManagement() {
                     <input type="text" required value={newProduct.name} onChange={(e) => setNewProduct({...newProduct, name: e.target.value})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-ink mb-1">카테고리 ID *</label>
-                    <input type="number" required value={newProduct.categoryId} onChange={(e) => setNewProduct({...newProduct, categoryId: Number(e.target.value)})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                    <label className="block text-sm font-bold text-ink mb-1">카테고리 *</label>
+                    <select
+                      required
+                      value={newProduct.categoryId}
+                      onChange={(e) => setNewProduct({...newProduct, categoryId: Number(e.target.value)})}
+                      className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none bg-white"
+                    >
+                      <option value="" disabled>카테고리를 선택하세요</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-ink mb-1">브랜드</label>
@@ -530,8 +554,20 @@ export default function ProductManagement() {
                     <input type="text" required value={editProductData.name} onChange={(e) => setEditProductData({...editProductData, name: e.target.value})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-ink mb-1">카테고리 ID *</label>
-                    <input type="number" required value={editProductData.categoryId} onChange={(e) => setEditProductData({...editProductData, categoryId: Number(e.target.value)})} className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none" />
+                    <label className="block text-sm font-bold text-ink mb-1">카테고리 *</label>
+                    <select
+                      required
+                      value={editProductData.categoryId}
+                      onChange={(e) => setEditProductData({...editProductData, categoryId: Number(e.target.value)})}
+                      className="w-full p-2 border border-border-soft rounded-md focus:border-brand outline-none bg-white"
+                    >
+                      <option value="" disabled>카테고리를 선택하세요</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-ink mb-1">브랜드</label>
