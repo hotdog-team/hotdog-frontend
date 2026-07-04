@@ -29,7 +29,6 @@ import MyPageLayout from './layout/MyPageLayout.jsx';
 import MyPageProfile from './features/mypage/pages/MyPageProfile.jsx';
 import AddressManagement from './features/mypage/pages/AddressManagement.jsx'
 import AdminLayout from './layout/AdminLayout.jsx'
-import AdminPlaceholderPage from './features/admin/pages/AdminPlaceholderPage.jsx'
 import AdminDashboard from './features/admin/pages/AdminDashboard.jsx'
 import CategoryManagement from './features/admin/pages/CategoryManagement.jsx'
 import MetaTagManagement from './features/admin/pages/MetaTagManagement.jsx'
@@ -88,13 +87,13 @@ function App() {
             <Route element={<OrderFlowLayout />}>
               <Route path="/cart" element={<CartPage />} />
               <Route path="/orders/checkout" element={<CheckoutPage />} />
+              <Route path="/payment/success" element={<PaymentSuccessPage />} />
+              <Route path="/payment/fail" element={<PaymentFailPage />} />
               <Route
                 path="/mypage/orders/:orderId"
                 element={<OrderDetailPage />}
               />
             </Route>
-            <Route path="/payment/success" element={<PaymentSuccessPage />} />
-            <Route path="/payment/fail" element={<PaymentFailPage />} />
             <Route path="/mypage" element={<MyPageLayout />}>
               <Route index element={<Navigate to="profile" replace />} />
               <Route path="profile" element={<MyPageProfile />} />
